@@ -10,7 +10,7 @@
 	],
 	"scripts": {
 		"build": "tsc && rollup -c",
-		"doc": "typedoc && mv example/dist/ docs/example",
+		"doc": "typedoc",
 		"lint": "eslint 'src/**/*.{js,ts,tsx}' --fix",
 		"format": "prettier --write ./src/**/*",
 		"test": "jest",
