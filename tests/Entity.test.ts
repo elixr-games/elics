@@ -1,6 +1,7 @@
 import { Component, ComponentMask } from '../src/Component';
 
 import { Entity } from '../src/Entity';
+import { Query } from '../src/Query';
 import { World } from '../src/World';
 
 // Mock component classes
@@ -43,5 +44,25 @@ describe('Entity', () => {
 		expect(componentTypes).toContain(MockComponent);
 		expect(componentTypes).toContain(AnotherComponent);
 		expect(componentTypes.length).toBe(2);
+	});
+
+	test('should mark entity as inactive upon destruction', () => {
+		entity.destroy();
+		expect(entity.isActive).toBeFalsy();
+	});
+
+	test('should clear components upon destruction', () => {
+		entity.addComponent(MockComponent);
+		entity.destroy();
+
+		expect(() => entity.getComponent(MockComponent)).toThrow();
+		expect(() => entity.getComponentTypes()).toThrow();
+	});
+
+	test('should be removed from world upon destruction', () => {
+		entity.destroy();
+		const query = new Query([MockComponent]);
+		const matchingEntities = world.getEntities(query);
+		expect(matchingEntities).not.toContain(entity);
 	});
 });

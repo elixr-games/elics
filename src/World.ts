@@ -9,12 +9,12 @@ export const PRIVATE = Symbol('@elics/world');
 
 export class World {
 	[PRIVATE]: {
-		entities: Entity[];
+		entities: Set<Entity>;
 		entityIndex: Map<ComponentMask, Set<Entity>>;
 		componentTypes: Map<typeof Component, ComponentType>;
 		nextComponentTypeId: number;
 	} = {
-		entities: [],
+		entities: new Set(),
 		entityIndex: new Map(),
 		componentTypes: new Map(),
 		nextComponentTypeId: 0,
@@ -43,20 +43,29 @@ export class World {
 
 	createEntity(): Entity {
 		const entity = new Entity(this);
-		this[PRIVATE].entities.push(entity);
+		this[PRIVATE].entities.add(entity);
 		this.updateEntityIndex(entity);
 		return entity;
 	}
 
+	removeEntity(entity: Entity): void {
+		// call this method before an entity is destroyed
+		const mask = entity[ENTITY_MASK].componentMask;
+		this[PRIVATE].entityIndex.get(mask)?.delete(entity);
+		this[PRIVATE].entities.delete(entity);
+	}
+
 	// Call this method whenever an entity's components change
 	updateEntity(entity: Entity): void {
-		// Remove from old mask set
-		this[PRIVATE].entityIndex.forEach((entities, _mask) => {
-			entities.delete(entity);
-		});
+		if (entity.isActive) {
+			// Remove from old mask set
+			this[PRIVATE].entityIndex.forEach((entities, _mask) => {
+				entities.delete(entity);
+			});
 
-		// Add to new mask set
-		this.updateEntityIndex(entity);
+			// Add to new mask set
+			this.updateEntityIndex(entity);
+		}
 	}
 
 	getEntities(query: Query): Entity[] {
