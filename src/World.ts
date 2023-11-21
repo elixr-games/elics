@@ -1,5 +1,6 @@
 import { Component, ComponentMask } from './Component';
-import { PRIVATE as ENTITY_MASK, Entity } from './Entity';
+import { PRIVATE as ENTITY_PRIVATE, Entity } from './Entity';
+import { PRIVATE as SYSTEM_PRIVATE, System } from './System';
 
 import { Query } from './Query';
 
@@ -13,11 +14,13 @@ export class World {
 		entityIndex: Map<ComponentMask, Set<Entity>>;
 		componentTypes: Map<typeof Component, ComponentType>;
 		nextComponentTypeId: number;
+		systems: System[];
 	} = {
 		entities: new Set(),
 		entityIndex: new Map(),
 		componentTypes: new Map(),
 		nextComponentTypeId: 0,
+		systems: [],
 	};
 
 	registerComponent<T extends typeof Component>(componentClass: T): void {
@@ -34,7 +37,7 @@ export class World {
 
 	// Updated methods to manage the entity index
 	private updateEntityIndex(entity: Entity): void {
-		const mask = entity[ENTITY_MASK].componentMask;
+		const mask = entity[ENTITY_PRIVATE].componentMask;
 		if (!this[PRIVATE].entityIndex.has(mask)) {
 			this[PRIVATE].entityIndex.set(mask, new Set());
 		}
@@ -50,7 +53,7 @@ export class World {
 
 	removeEntity(entity: Entity): void {
 		// call this method before an entity is destroyed
-		const mask = entity[ENTITY_MASK].componentMask;
+		const mask = entity[ENTITY_PRIVATE].componentMask;
 		this[PRIVATE].entityIndex.get(mask)?.delete(entity);
 		this[PRIVATE].entities.delete(entity);
 	}
@@ -76,5 +79,58 @@ export class World {
 			}
 		});
 		return matchingEntities;
+	}
+
+	registerSystem(
+		systemClass: new (world: World, priority?: number) => System,
+		priority?: number,
+	): void {
+		if (this[PRIVATE].systems.some((system) => system instanceof systemClass)) {
+			throw new Error('System already registered');
+		}
+
+		const systemInstance = new systemClass(this, priority);
+		systemInstance.init();
+
+		// Determine the correct position for the new system based on priority
+		const insertIndex = this[PRIVATE].systems.findIndex(
+			(s) =>
+				s[SYSTEM_PRIVATE].priority > systemInstance[SYSTEM_PRIVATE].priority,
+		);
+
+		if (insertIndex === -1) {
+			this[PRIVATE].systems.push(systemInstance);
+		} else {
+			this[PRIVATE].systems.splice(insertIndex, 0, systemInstance);
+		}
+	}
+
+	unregisterSystem(systemClass: typeof System): void {
+		this[PRIVATE].systems = this[PRIVATE].systems.filter(
+			(system) => !(system instanceof systemClass),
+		);
+	}
+
+	update(delta: number, time: number): void {
+		this[PRIVATE].systems.forEach((system) => {
+			if (!system[SYSTEM_PRIVATE].isPaused) {
+				system.update(delta, time);
+			}
+		});
+	}
+
+	getSystem<T extends System>(
+		systemClass: new (...args: any[]) => T,
+	): T | undefined {
+		for (const system of this[PRIVATE].systems) {
+			if (system instanceof systemClass) {
+				return system as T;
+			}
+		}
+		return undefined;
+	}
+
+	getSystems(): System[] {
+		return [...this[PRIVATE].systems];
 	}
 }
