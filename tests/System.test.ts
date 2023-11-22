@@ -1,5 +1,17 @@
+import { Component, ComponentMask } from '../src/Component';
+
+import { EntityPool } from '../src/EntityPool';
+import { Query } from '../src/Query';
 import { System } from '../src/System';
 import { World } from '../src/World';
+
+class MockComponent extends Component {
+	static bitmask: ComponentMask = 1 << 0;
+}
+
+class AnotherComponent extends Component {
+	static bitmask: ComponentMask = 1 << 1;
+}
 
 class MockSystem extends System {
 	updateCalled = false;
@@ -16,10 +28,14 @@ class MockSystem extends System {
 describe('System', () => {
 	let world: World;
 	let system: MockSystem;
+	let entityPool: EntityPool;
 
 	beforeEach(() => {
 		world = new World();
-		system = new MockSystem(world);
+		entityPool = new EntityPool(world);
+		system = new MockSystem(world, entityPool);
+		world.registerComponent(MockComponent);
+		world.registerComponent(AnotherComponent);
 	});
 
 	test('should be initialized correctly', () => {
@@ -33,5 +49,20 @@ describe('System', () => {
 
 		system.stop();
 		expect(system.isPaused).toBeTruthy();
+	});
+
+	test('should get entities based on query', () => {
+		const entityWithMock = entityPool.getEntity();
+		entityWithMock.addComponent(MockComponent);
+
+		const entityWithBoth = entityPool.getEntity();
+		entityWithBoth.addComponent(MockComponent);
+		entityWithBoth.addComponent(AnotherComponent);
+
+		const query = new Query([MockComponent]);
+		const entities = system.getEntities(query);
+
+		expect(entities).toContain(entityWithMock);
+		expect(entities).toContain(entityWithBoth);
 	});
 });

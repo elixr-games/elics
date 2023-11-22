@@ -1,5 +1,6 @@
 import { Component, ComponentMask } from './Component';
 
+import { EntityPool } from './EntityPool';
 import { World } from './World';
 
 export const PRIVATE = Symbol('@elics/entity');
@@ -14,16 +15,19 @@ export class Entity {
 		componentMask: ComponentMask;
 		components: Map<typeof Component, Component>;
 		world: World;
+		entityPool: EntityPool;
 		active: boolean;
 	} = {
 		componentMask: 0,
 		components: new Map(),
 		world: null as any,
+		entityPool: null as any,
 		active: true,
 	};
 
-	constructor(world: World) {
+	constructor(world: World, entityPool: EntityPool) {
 		this[PRIVATE].world = world;
+		this[PRIVATE].entityPool = entityPool;
 	}
 
 	get isActive() {
@@ -36,7 +40,7 @@ export class Entity {
 			this[PRIVATE].componentMask |= componentClass.bitmask;
 			const componentInstance = new componentClass();
 			this[PRIVATE].components.set(componentClass, componentInstance);
-			this[PRIVATE].world.updateEntity(this);
+			this[PRIVATE].entityPool.updateEntityIndex(this);
 		} else {
 			throw new Error('Component type not registered');
 		}
@@ -50,7 +54,7 @@ export class Entity {
 		) {
 			this[PRIVATE].componentMask &= ~componentClass.bitmask;
 			this[PRIVATE].components.delete(componentClass);
-			this[PRIVATE].world.updateEntity(this);
+			this[PRIVATE].entityPool.updateEntityIndex(this);
 		} else {
 			throw new Error('Component not found');
 		}
@@ -81,7 +85,7 @@ export class Entity {
 
 	destroy(): void {
 		if (!this[PRIVATE].active) throw new Error(ERRORS.MODIFY_DESTROYED_ENTITY);
-		this[PRIVATE].world.removeEntity(this);
+		this[PRIVATE].entityPool.returnEntity(this);
 		// Mark the entity as inactive
 		this[PRIVATE].active = false;
 

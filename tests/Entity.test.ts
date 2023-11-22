@@ -1,6 +1,7 @@
 import { Component, ComponentMask } from '../src/Component';
 
 import { Entity } from '../src/Entity';
+import { EntityPool } from '../src/EntityPool';
 import { Query } from '../src/Query';
 import { World } from '../src/World';
 
@@ -15,13 +16,15 @@ class AnotherComponent extends Component {
 
 describe('Entity', () => {
 	let world: World;
+	let entityPool: EntityPool;
 	let entity: Entity;
 
 	beforeEach(() => {
 		world = new World();
+		entityPool = new EntityPool(world);
 		world.registerComponent(MockComponent);
 		world.registerComponent(AnotherComponent);
-		entity = new Entity(world);
+		entity = entityPool.getEntity();
 	});
 
 	test('should add components correctly', () => {
@@ -60,9 +63,11 @@ describe('Entity', () => {
 	});
 
 	test('should be removed from world upon destruction', () => {
+		entity.addComponent(MockComponent);
 		entity.destroy();
+
 		const query = new Query([MockComponent]);
-		const matchingEntities = world.getEntities(query);
+		const matchingEntities = entityPool.getEntities(query);
 		expect(matchingEntities).not.toContain(entity);
 	});
 });

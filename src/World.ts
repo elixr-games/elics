@@ -1,8 +1,8 @@
-import { Component, ComponentMask } from './Component';
-import { PRIVATE as ENTITY_PRIVATE, Entity } from './Entity';
 import { PRIVATE as SYSTEM_PRIVATE, System } from './System';
 
-import { Query } from './Query';
+import { Component } from './Component';
+import { Entity } from './Entity';
+import { EntityPool } from './EntityPool';
 
 enum ComponentType {}
 
@@ -10,14 +10,12 @@ export const PRIVATE = Symbol('@elics/world');
 
 export class World {
 	[PRIVATE]: {
-		entities: Set<Entity>;
-		entityIndex: Map<ComponentMask, Set<Entity>>;
+		entityPool: EntityPool;
 		componentTypes: Map<typeof Component, ComponentType>;
 		nextComponentTypeId: number;
 		systems: System[];
 	} = {
-		entities: new Set(),
-		entityIndex: new Map(),
+		entityPool: new EntityPool(this),
 		componentTypes: new Map(),
 		nextComponentTypeId: 0,
 		systems: [],
@@ -35,61 +33,27 @@ export class World {
 		this[PRIVATE].componentTypes.set(componentClass, typeId);
 	}
 
-	// Updated methods to manage the entity index
-	private updateEntityIndex(entity: Entity): void {
-		const mask = entity[ENTITY_PRIVATE].componentMask;
-		if (!this[PRIVATE].entityIndex.has(mask)) {
-			this[PRIVATE].entityIndex.set(mask, new Set());
-		}
-		this[PRIVATE].entityIndex.get(mask)!.add(entity);
-	}
-
 	createEntity(): Entity {
-		const entity = new Entity(this);
-		this[PRIVATE].entities.add(entity);
-		this.updateEntityIndex(entity);
-		return entity;
-	}
-
-	removeEntity(entity: Entity): void {
-		// call this method before an entity is destroyed
-		const mask = entity[ENTITY_PRIVATE].componentMask;
-		this[PRIVATE].entityIndex.get(mask)?.delete(entity);
-		this[PRIVATE].entities.delete(entity);
-	}
-
-	// Call this method whenever an entity's components change
-	updateEntity(entity: Entity): void {
-		if (entity.isActive) {
-			// Remove from old mask set
-			this[PRIVATE].entityIndex.forEach((entities, _mask) => {
-				entities.delete(entity);
-			});
-
-			// Add to new mask set
-			this.updateEntityIndex(entity);
-		}
-	}
-
-	getEntities(query: Query): Entity[] {
-		let matchingEntities: Entity[] = [];
-		this[PRIVATE].entityIndex.forEach((entities, mask) => {
-			if (query.matchesMask(mask)) {
-				matchingEntities.push(...entities);
-			}
-		});
-		return matchingEntities;
+		return this[PRIVATE].entityPool.getEntity();
 	}
 
 	registerSystem(
-		systemClass: new (world: World, priority?: number) => System,
+		systemClass: new (
+			world: World,
+			entityPool: EntityPool,
+			priority?: number,
+		) => System,
 		priority?: number,
 	): void {
 		if (this[PRIVATE].systems.some((system) => system instanceof systemClass)) {
 			throw new Error('System already registered');
 		}
 
-		const systemInstance = new systemClass(this, priority);
+		const systemInstance = new systemClass(
+			this,
+			this[PRIVATE].entityPool,
+			priority,
+		);
 		systemInstance.init();
 
 		// Determine the correct position for the new system based on priority
