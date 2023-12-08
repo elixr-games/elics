@@ -2,6 +2,7 @@
 	"name": "elics",
 	"version": "0.1.0",
 	"description": "lightweight, flexible ECS for web games",
+	"type": "module",
 	"main": "lib/index.js",
 	"types": "lib/index.d.ts",
 	"files": [

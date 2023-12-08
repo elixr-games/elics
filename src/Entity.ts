@@ -34,13 +34,14 @@ export class Entity {
 		return this[PRIVATE].active;
 	}
 
-	addComponent<T extends typeof Component>(componentClass: T): void {
+	addComponent<T extends typeof Component>(componentClass: T) {
 		if (!this[PRIVATE].active) throw new Error(ERRORS.MODIFY_DESTROYED_ENTITY);
 		if (componentClass.bitmask !== null) {
 			this[PRIVATE].componentMask |= componentClass.bitmask;
 			const componentInstance = new componentClass();
 			this[PRIVATE].components.set(componentClass, componentInstance);
 			this[PRIVATE].entityPool.updateEntityIndex(this);
+			return componentInstance;
 		} else {
 			throw new Error('Component type not registered');
 		}
