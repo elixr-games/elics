@@ -31,7 +31,7 @@ describe('QueryManager', () => {
 	test('registerQuery should store the results of initial query', () => {
 		const query = new Query([MockComponent]);
 
-		const entity = new Entity(world, entityPool);
+		const entity = new Entity(world, entityPool, queryManager);
 		entity.addComponent(MockComponent);
 		queryManager.registerQuery(query);
 
@@ -41,7 +41,7 @@ describe('QueryManager', () => {
 	});
 
 	test('updateEntity should correctly update query results', () => {
-		const entity = entityPool.getEntity();
+		const entity = entityPool.getEntity(queryManager);
 		entity.addComponent(MockComponent);
 		entityPool.updateEntityIndex(entity);
 
@@ -59,11 +59,11 @@ describe('QueryManager', () => {
 		queryManager.registerQuery(queryWithMock);
 		queryManager.registerQuery(queryWithAnother);
 
-		const entityWithMock = entityPool.getEntity();
+		const entityWithMock = entityPool.getEntity(queryManager);
 		entityWithMock.addComponent(MockComponent);
 		entityPool.updateEntityIndex(entityWithMock);
 
-		const entityWithAnother = entityPool.getEntity();
+		const entityWithAnother = entityPool.getEntity(queryManager);
 		entityWithAnother.addComponent(AnotherComponent);
 		entityPool.updateEntityIndex(entityWithAnother);
 

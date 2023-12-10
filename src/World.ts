@@ -41,7 +41,7 @@ export class World {
 	}
 
 	createEntity(): Entity {
-		return this[PRIVATE].entityPool.getEntity();
+		return this[PRIVATE].entityPool.getEntity(this[PRIVATE].queryManager);
 	}
 
 	registerSystem(

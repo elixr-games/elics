@@ -2,6 +2,7 @@ import { PRIVATE as ENTITY_PRIVATE, Entity } from './Entity';
 
 import { ComponentMask } from './Component';
 import { Query } from './Query';
+import { QueryManager } from './QueryManager';
 import { World } from './World';
 
 export const PRIVATE = Symbol('@elics/entity-pool');
@@ -22,13 +23,13 @@ export class EntityPool {
 		this[PRIVATE].entityIndex = new Map();
 	}
 
-	getEntity(): Entity {
+	getEntity(queryManager: QueryManager): Entity {
 		let entity;
 		if (this[PRIVATE].pool.length > 0) {
 			entity = this[PRIVATE].pool.pop()!;
 			entity[ENTITY_PRIVATE].active = true;
 		} else {
-			entity = new Entity(this[PRIVATE].world, this);
+			entity = new Entity(this[PRIVATE].world, this, queryManager);
 		}
 
 		this.updateEntityIndex(entity);

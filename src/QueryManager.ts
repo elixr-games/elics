@@ -27,6 +27,12 @@ export class QueryManager {
 	}
 
 	updateEntity(entity: Entity): void {
+		if (entity[ENTITY_PRIVATE].componentMask === 0) {
+			// Remove entity from all query results if it has no components
+			this[PRIVATE].queries.forEach((entities) => entities.delete(entity));
+			return;
+		}
+
 		this[PRIVATE].queries.forEach((entities, queryId) => {
 			const matches = Query.matchesQuery(
 				queryId,

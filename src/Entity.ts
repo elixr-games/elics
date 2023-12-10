@@ -1,6 +1,7 @@
 import { Component, ComponentMask } from './Component';
 
 import { EntityPool } from './EntityPool';
+import { QueryManager } from './QueryManager';
 import { World } from './World';
 
 export const PRIVATE = Symbol('@elics/entity');
@@ -16,18 +17,25 @@ export class Entity {
 		components: Map<typeof Component, Component>;
 		world: World;
 		entityPool: EntityPool;
+		queryManager: QueryManager;
 		active: boolean;
 	} = {
 		componentMask: 0,
 		components: new Map(),
 		world: null as any,
 		entityPool: null as any,
+		queryManager: null as any,
 		active: true,
 	};
 
-	constructor(world: World, entityPool: EntityPool) {
+	constructor(
+		world: World,
+		entityPool: EntityPool,
+		queryManager: QueryManager,
+	) {
 		this[PRIVATE].world = world;
 		this[PRIVATE].entityPool = entityPool;
+		this[PRIVATE].queryManager = queryManager;
 	}
 
 	get isActive() {
@@ -41,6 +49,7 @@ export class Entity {
 			const componentInstance = new componentClass();
 			this[PRIVATE].components.set(componentClass, componentInstance);
 			this[PRIVATE].entityPool.updateEntityIndex(this);
+			this[PRIVATE].queryManager.updateEntity(this);
 			return componentInstance;
 		} else {
 			throw new Error('Component type not registered');
@@ -56,6 +65,7 @@ export class Entity {
 			this[PRIVATE].componentMask &= ~componentClass.bitmask;
 			this[PRIVATE].components.delete(componentClass);
 			this[PRIVATE].entityPool.updateEntityIndex(this);
+			this[PRIVATE].queryManager.updateEntity(this);
 		} else {
 			throw new Error('Component not found');
 		}
@@ -93,5 +103,6 @@ export class Entity {
 		// Clear the components map and reset the component mask
 		this[PRIVATE].components.clear();
 		this[PRIVATE].componentMask = 0;
+		this[PRIVATE].queryManager.updateEntity(this);
 	}
 }

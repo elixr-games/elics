@@ -3,6 +3,7 @@ import { Component, ComponentMask } from '../src/Component';
 import { Entity } from '../src/Entity';
 import { EntityPool } from '../src/EntityPool';
 import { Query } from '../src/Query';
+import { QueryManager } from '../src/QueryManager';
 import { World } from '../src/World';
 
 // Mock component classes
@@ -17,14 +18,16 @@ class AnotherComponent extends Component {
 describe('Entity', () => {
 	let world: World;
 	let entityPool: EntityPool;
+	let queryManager: QueryManager;
 	let entity: Entity;
 
 	beforeEach(() => {
 		world = new World();
 		entityPool = new EntityPool(world);
+		queryManager = new QueryManager(entityPool);
 		world.registerComponent(MockComponent);
 		world.registerComponent(AnotherComponent);
-		entity = entityPool.getEntity();
+		entity = entityPool.getEntity(queryManager);
 	});
 
 	test('should add components correctly', () => {

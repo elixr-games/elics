@@ -55,10 +55,10 @@ describe('System', () => {
 	});
 
 	test('should get entities based on query', () => {
-		const entityWithMock = entityPool.getEntity();
+		const entityWithMock = entityPool.getEntity(queryManager);
 		entityWithMock.addComponent(MockComponent);
 
-		const entityWithBoth = entityPool.getEntity();
+		const entityWithBoth = entityPool.getEntity(queryManager);
 		entityWithBoth.addComponent(MockComponent);
 		entityWithBoth.addComponent(AnotherComponent);
 
