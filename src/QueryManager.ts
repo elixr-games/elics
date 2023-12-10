@@ -44,6 +44,9 @@ export class QueryManager {
 
 	getEntities(query: Query): Entity[] {
 		const identifier = query.queryId;
+		if (!this[PRIVATE].queries.has(identifier)) {
+			throw new Error(`Query not registered: ${identifier}`);
+		}
 		return Array.from(this[PRIVATE].queries.get(identifier) || []);
 	}
 }

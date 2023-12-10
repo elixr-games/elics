@@ -2,6 +2,7 @@ import { Component, ComponentMask } from '../src/Component';
 
 import { EntityPool } from '../src/EntityPool';
 import { Query } from '../src/Query';
+import { QueryManager } from '../src/QueryManager';
 import { System } from '../src/System';
 import { World } from '../src/World';
 
@@ -29,11 +30,13 @@ describe('System', () => {
 	let world: World;
 	let system: MockSystem;
 	let entityPool: EntityPool;
+	let queryManager: QueryManager;
 
 	beforeEach(() => {
 		world = new World();
 		entityPool = new EntityPool(world);
-		system = new MockSystem(world, entityPool);
+		queryManager = new QueryManager(entityPool);
+		system = new MockSystem(world, queryManager);
 		world.registerComponent(MockComponent);
 		world.registerComponent(AnotherComponent);
 	});
@@ -60,6 +63,7 @@ describe('System', () => {
 		entityWithBoth.addComponent(AnotherComponent);
 
 		const query = new Query([MockComponent]);
+		system.registerQuery(query);
 		const entities = system.getEntities(query);
 
 		expect(entities).toContain(entityWithMock);

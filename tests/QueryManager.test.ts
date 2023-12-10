@@ -18,11 +18,10 @@ class AnotherComponent extends Component {
 describe('QueryManager', () => {
 	let entityPool: EntityPool;
 	let queryManager: QueryManager;
-	let world: World; // Assuming World is defined elsewhere in your ECS
+	let world: World;
 
 	beforeEach(() => {
-		// Mock World
-		world = new World(); // Adjust as per your actual World class
+		world = new World();
 
 		// Setup EntityPool and QueryManager
 		entityPool = new EntityPool(world);
@@ -78,5 +77,13 @@ describe('QueryManager', () => {
 		expect(queryManager.getEntities(queryWithMock)).not.toContain(
 			entityWithAnother,
 		);
+	});
+
+	test('getEntities should throw an error for an unregistered query', () => {
+		const unregisteredQuery = new Query([MockComponent]);
+
+		expect(() => {
+			queryManager.getEntities(unregisteredQuery);
+		}).toThrow(`Query not registered: ${unregisteredQuery.queryId}`);
 	});
 });

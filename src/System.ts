@@ -1,6 +1,6 @@
 import { Entity } from './Entity';
-import { EntityPool } from './EntityPool';
 import { Query } from './Query';
+import { QueryManager } from './QueryManager';
 import { World } from './World';
 
 export const PRIVATE = Symbol('@elics/system');
@@ -10,19 +10,19 @@ export abstract class System {
 
 	[PRIVATE]: {
 		world: World;
-		entityPool: EntityPool;
+		queryManager: QueryManager;
 		isPaused: boolean;
 		priority: number;
 	} = {
 		world: null as any,
-		entityPool: null as any,
+		queryManager: null as any,
 		isPaused: false,
 		priority: 0,
 	};
 
-	constructor(world: World, entityPool: EntityPool, priority: number = 0) {
+	constructor(world: World, queryManager: QueryManager, priority: number = 0) {
 		this[PRIVATE].world = world;
-		this[PRIVATE].entityPool = entityPool;
+		this[PRIVATE].queryManager = queryManager;
 		this[PRIVATE].priority = priority;
 	}
 
@@ -34,8 +34,12 @@ export abstract class System {
 		return this[PRIVATE].isPaused;
 	}
 
+	registerQuery(query: Query): void {
+		this[PRIVATE].queryManager.registerQuery(query);
+	}
+
 	getEntities(query: Query): Entity[] {
-		return this[PRIVATE].entityPool.getEntities(query);
+		return this[PRIVATE].queryManager.getEntities(query);
 	}
 
 	init(): void {

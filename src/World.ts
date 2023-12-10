@@ -3,6 +3,7 @@ import { PRIVATE as SYSTEM_PRIVATE, System } from './System';
 import { Component } from './Component';
 import { Entity } from './Entity';
 import { EntityPool } from './EntityPool';
+import { QueryManager } from './QueryManager';
 
 enum ComponentType {}
 
@@ -11,15 +12,21 @@ export const PRIVATE = Symbol('@elics/world');
 export class World {
 	[PRIVATE]: {
 		entityPool: EntityPool;
+		queryManager: QueryManager;
 		componentTypes: Map<typeof Component, ComponentType>;
 		nextComponentTypeId: number;
 		systems: System[];
 	} = {
 		entityPool: new EntityPool(this),
+		queryManager: null as any,
 		componentTypes: new Map(),
 		nextComponentTypeId: 0,
 		systems: [],
 	};
+
+	constructor() {
+		this[PRIVATE].queryManager = new QueryManager(this[PRIVATE].entityPool);
+	}
 
 	registerComponent<T extends typeof Component>(componentClass: T): void {
 		const typeId = 1 << this[PRIVATE].nextComponentTypeId;
@@ -40,7 +47,7 @@ export class World {
 	registerSystem(
 		systemClass: new (
 			world: World,
-			entityPool: EntityPool,
+			queryManager: QueryManager,
 			priority?: number,
 		) => System,
 		priority?: number,
@@ -51,7 +58,7 @@ export class World {
 
 		const systemInstance = new systemClass(
 			this,
-			this[PRIVATE].entityPool,
+			this[PRIVATE].queryManager,
 			priority,
 		);
 		systemInstance.init();
