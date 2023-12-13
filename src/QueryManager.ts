@@ -1,6 +1,5 @@
 import { PRIVATE as ENTITY_PRIVATE, Entity } from './Entity';
 
-import { EntityPool } from './EntityPool';
 import { Query } from './Query';
 
 export const PRIVATE = Symbol('@elics/query-manager');
@@ -8,21 +7,14 @@ export const PRIVATE = Symbol('@elics/query-manager');
 export class QueryManager {
 	[PRIVATE]: {
 		queries: Map<string, Set<Entity>>;
-		entityPool: EntityPool;
 	} = {
 		queries: new Map(),
-		entityPool: null as any,
 	};
-
-	constructor(entityPool: EntityPool) {
-		this[PRIVATE].entityPool = entityPool;
-	}
 
 	registerQuery(query: Query): void {
 		const identifier = query.queryId;
 		if (!this[PRIVATE].queries.has(identifier)) {
-			const matchingEntities = this[PRIVATE].entityPool.getEntities(query);
-			this[PRIVATE].queries.set(identifier, new Set(matchingEntities));
+			this[PRIVATE].queries.set(identifier, new Set());
 		}
 	}
 

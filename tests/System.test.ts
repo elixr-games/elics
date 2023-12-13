@@ -1,10 +1,10 @@
 import { Component, ComponentMask } from '../src/Component';
+import { PRIVATE as WORLD_PRIVATE, World } from '../src/World';
 
-import { EntityPool } from '../src/EntityPool';
+import { EntityManager } from '../src/EntityManager';
 import { Query } from '../src/Query';
 import { QueryManager } from '../src/QueryManager';
 import { System } from '../src/System';
-import { World } from '../src/World';
 
 class MockComponent extends Component {
 	static bitmask: ComponentMask = 1 << 0;
@@ -29,13 +29,13 @@ class MockSystem extends System {
 describe('System', () => {
 	let world: World;
 	let system: MockSystem;
-	let entityPool: EntityPool;
+	let entityManager: EntityManager;
 	let queryManager: QueryManager;
 
 	beforeEach(() => {
 		world = new World();
-		entityPool = new EntityPool(world);
-		queryManager = new QueryManager(entityPool);
+		entityManager = world[WORLD_PRIVATE].entityManager;
+		queryManager = world[WORLD_PRIVATE].queryManager;
 		system = new MockSystem(world, queryManager);
 		world.registerComponent(MockComponent);
 		world.registerComponent(AnotherComponent);
@@ -55,15 +55,15 @@ describe('System', () => {
 	});
 
 	test('should get entities based on query', () => {
-		const entityWithMock = entityPool.getEntity(queryManager);
+		const query = new Query([MockComponent]);
+		queryManager.registerQuery(query);
+		const entityWithMock = entityManager.requestEntityInstance();
 		entityWithMock.addComponent(MockComponent);
 
-		const entityWithBoth = entityPool.getEntity(queryManager);
+		const entityWithBoth = entityManager.requestEntityInstance();
 		entityWithBoth.addComponent(MockComponent);
 		entityWithBoth.addComponent(AnotherComponent);
 
-		const query = new Query([MockComponent]);
-		system.registerQuery(query);
 		const entities = system.getEntities(query);
 
 		expect(entities).toContain(entityWithMock);

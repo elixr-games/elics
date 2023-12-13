@@ -1,8 +1,9 @@
 import { Component, ComponentMask } from './Component';
+import { PRIVATE as WORLD_PRIVATE, World } from './World';
 
-import { EntityPool } from './EntityPool';
+import { ComponentManager } from './ComponentManager';
+import { EntityManager } from './EntityManager';
 import { QueryManager } from './QueryManager';
-import { World } from './World';
 
 export const PRIVATE = Symbol('@elics/entity');
 
@@ -16,39 +17,42 @@ export class Entity {
 		componentMask: ComponentMask;
 		components: Map<typeof Component, Component>;
 		world: World;
-		entityPool: EntityPool;
+		entityManager: EntityManager;
 		queryManager: QueryManager;
+		componentManager: ComponentManager;
 		active: boolean;
 	} = {
 		componentMask: 0,
 		components: new Map(),
 		world: null as any,
-		entityPool: null as any,
+		entityManager: null as any,
 		queryManager: null as any,
+		componentManager: null as any,
 		active: true,
 	};
 
-	constructor(
-		world: World,
-		entityPool: EntityPool,
-		queryManager: QueryManager,
-	) {
+	constructor(world: World) {
 		this[PRIVATE].world = world;
-		this[PRIVATE].entityPool = entityPool;
-		this[PRIVATE].queryManager = queryManager;
+		this[PRIVATE].entityManager = world[WORLD_PRIVATE].entityManager;
+		this[PRIVATE].queryManager = world[WORLD_PRIVATE].queryManager;
+		this[PRIVATE].componentManager = world[WORLD_PRIVATE].componentManager;
 	}
 
 	get isActive() {
 		return this[PRIVATE].active;
 	}
 
-	addComponent<T extends typeof Component>(componentClass: T) {
+	addComponent<T extends typeof Component>(
+		componentClass: T,
+		initialData: { [key: string]: any } = {},
+	) {
 		if (!this[PRIVATE].active) throw new Error(ERRORS.MODIFY_DESTROYED_ENTITY);
 		if (componentClass.bitmask !== null) {
 			this[PRIVATE].componentMask |= componentClass.bitmask;
-			const componentInstance = new componentClass();
+			const componentInstance = this[
+				PRIVATE
+			].componentManager.requestComponentInstance(componentClass, initialData);
 			this[PRIVATE].components.set(componentClass, componentInstance);
-			this[PRIVATE].entityPool.updateEntityIndex(this);
 			this[PRIVATE].queryManager.updateEntity(this);
 			return componentInstance;
 		} else {
@@ -62,9 +66,12 @@ export class Entity {
 			componentClass.bitmask !== null &&
 			this[PRIVATE].components.has(componentClass)
 		) {
+			const componentInstance = this[PRIVATE].components.get(componentClass);
+			this[PRIVATE].componentManager.releaseComponentInstance(
+				componentInstance!,
+			);
 			this[PRIVATE].componentMask &= ~componentClass.bitmask;
 			this[PRIVATE].components.delete(componentClass);
-			this[PRIVATE].entityPool.updateEntityIndex(this);
 			this[PRIVATE].queryManager.updateEntity(this);
 		} else {
 			throw new Error('Component not found');
@@ -73,14 +80,11 @@ export class Entity {
 
 	hasComponent<T extends typeof Component>(componentClass: T): boolean {
 		if (!this[PRIVATE].active) throw new Error(ERRORS.ACCESS_DESTROYED_ENTITY);
-		if (componentClass.bitmask === null) {
-			return false;
-		}
-		return (this[PRIVATE].componentMask & componentClass.bitmask) !== 0;
+		return this[PRIVATE].components.has(componentClass);
 	}
 
 	getComponent<T extends Component>(componentClass: {
-		new (): T;
+		new (_cm: ComponentManager, _mi: number): T;
 		bitmask: ComponentMask;
 	}): T | null {
 		if (!this[PRIVATE].active) throw new Error(ERRORS.ACCESS_DESTROYED_ENTITY);
@@ -96,11 +100,14 @@ export class Entity {
 
 	destroy(): void {
 		if (!this[PRIVATE].active) throw new Error(ERRORS.MODIFY_DESTROYED_ENTITY);
-		this[PRIVATE].entityPool.returnEntity(this);
+		this[PRIVATE].entityManager.releaseEntityInstance(this);
 		// Mark the entity as inactive
 		this[PRIVATE].active = false;
 
 		// Clear the components map and reset the component mask
+		this[PRIVATE].components.forEach((component) => {
+			this[PRIVATE].componentManager.releaseComponentInstance(component);
+		});
 		this[PRIVATE].components.clear();
 		this[PRIVATE].componentMask = 0;
 		this[PRIVATE].queryManager.updateEntity(this);

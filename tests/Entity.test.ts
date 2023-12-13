@@ -1,76 +1,71 @@
-import { Component, ComponentMask } from '../src/Component';
+import { PRIVATE as WORLD_PRIVATE, World } from '../src/World';
 
+import { Component } from '../src/Component';
+import { ComponentManager } from '../src/ComponentManager';
 import { Entity } from '../src/Entity';
-import { EntityPool } from '../src/EntityPool';
-import { Query } from '../src/Query';
-import { QueryManager } from '../src/QueryManager';
-import { World } from '../src/World';
+import { EntityManager } from '../src/EntityManager';
 
-// Mock component classes
 class MockComponent extends Component {
-	static bitmask: ComponentMask = 1 << 0; // Example bitmask
+	static bitmask = 1;
 }
 
-class AnotherComponent extends Component {
-	static bitmask: ComponentMask = 1 << 1; // Example bitmask
-}
-
-describe('Entity', () => {
+describe('Entity and EntityManager', () => {
 	let world: World;
-	let entityPool: EntityPool;
-	let queryManager: QueryManager;
+	let entityManager: EntityManager;
 	let entity: Entity;
+	let componentManager: ComponentManager;
 
 	beforeEach(() => {
 		world = new World();
-		entityPool = new EntityPool(world);
-		queryManager = new QueryManager(entityPool);
-		world.registerComponent(MockComponent);
-		world.registerComponent(AnotherComponent);
-		entity = entityPool.getEntity(queryManager);
+		entityManager = world[WORLD_PRIVATE].entityManager;
+		componentManager = world[WORLD_PRIVATE].componentManager;
+		entity = entityManager.requestEntityInstance();
+		componentManager.registerComponent(MockComponent);
 	});
 
-	test('should add components correctly', () => {
-		entity.addComponent(MockComponent);
-		expect(entity.hasComponent(MockComponent)).toBeTruthy();
-		expect(entity.getComponent(MockComponent)).toBeInstanceOf(MockComponent);
+	test('should create a new entity instance', () => {
+		expect(entity).toBeInstanceOf(Entity);
+		expect(entity.isActive).toBe(true);
 	});
 
-	test('should remove components correctly', () => {
+	test('should add and remove components', () => {
 		entity.addComponent(MockComponent);
+		expect(entity.hasComponent(MockComponent)).toBe(true);
+
 		entity.removeComponent(MockComponent);
-		expect(entity.hasComponent(MockComponent)).toBeFalsy();
-		expect(entity.getComponent(MockComponent)).toBeNull();
+		expect(entity.hasComponent(MockComponent)).toBe(false);
 	});
 
-	test('should list component types correctly', () => {
+	test('should retrieve a component', () => {
 		entity.addComponent(MockComponent);
-		entity.addComponent(AnotherComponent);
-		const componentTypes = entity.getComponentTypes();
-		expect(componentTypes).toContain(MockComponent);
-		expect(componentTypes).toContain(AnotherComponent);
-		expect(componentTypes.length).toBe(2);
+		const component = entity.getComponent(MockComponent);
+		expect(component).toBeInstanceOf(MockComponent);
 	});
 
-	test('should mark entity as inactive upon destruction', () => {
+	test('should return null when getting a non-existent component', () => {
+		const component = entity.getComponent(MockComponent);
+		expect(component).toBeNull();
+	});
+
+	test('should destroy the entity', () => {
 		entity.destroy();
-		expect(entity.isActive).toBeFalsy();
+		expect(entity.isActive).toBe(false);
 	});
 
-	test('should clear components upon destruction', () => {
-		entity.addComponent(MockComponent);
+	test('should throw error when modifying a destroyed entity', () => {
 		entity.destroy();
-
-		expect(() => entity.getComponent(MockComponent)).toThrow();
-		expect(() => entity.getComponentTypes()).toThrow();
+		expect(() => {
+			entity.addComponent(MockComponent);
+		}).toThrow();
 	});
 
-	test('should be removed from world upon destruction', () => {
-		entity.addComponent(MockComponent);
-		entity.destroy();
+	test('EntityManager should reuse released entities', () => {
+		const firstEntity = entityManager.requestEntityInstance();
+		entityManager.releaseEntityInstance(firstEntity);
+		const secondEntity = entityManager.requestEntityInstance();
 
-		const query = new Query([MockComponent]);
-		const matchingEntities = entityPool.getEntities(query);
-		expect(matchingEntities).not.toContain(entity);
+		expect(secondEntity).toBe(firstEntity);
 	});
+
+	// Additional tests as needed...
 });

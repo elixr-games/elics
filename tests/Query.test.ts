@@ -1,6 +1,8 @@
 import { Component, ComponentMask } from '../src/Component';
 
+import { Entity } from '../src/Entity';
 import { Query } from '../src/Query';
+import { QueryManager } from '../src/QueryManager';
 import { World } from '../src/World';
 
 // Mock component classes
@@ -14,31 +16,62 @@ class AnotherComponent extends Component {
 
 describe('Query', () => {
 	let world: World;
+	let queryManager: QueryManager;
 	let queryWithMock: Query;
 	let queryWithBoth: Query;
 	let queryWithExclusion: Query;
 
 	beforeEach(() => {
 		world = new World();
+		queryManager = new QueryManager();
 		world.registerComponent(MockComponent);
 		world.registerComponent(AnotherComponent);
 
 		queryWithMock = new Query([MockComponent]);
 		queryWithBoth = new Query([MockComponent, AnotherComponent]);
 		queryWithExclusion = new Query([MockComponent], [AnotherComponent]);
+
+		queryManager.registerQuery(queryWithMock);
+		queryManager.registerQuery(queryWithBoth);
+		queryManager.registerQuery(queryWithExclusion);
 	});
 
-	test('should correctly identify matching component masks', () => {
-		const mockMask = MockComponent.bitmask;
-		const anotherMask = AnotherComponent.bitmask;
-		const combinedMask = mockMask | anotherMask;
+	test('QueryManager should register and retrieve entities based on queries', () => {
+		const entity = new Entity(world);
+		entity.addComponent(MockComponent);
+		entity.addComponent(AnotherComponent);
 
-		expect(queryWithMock.matchesMask(mockMask)).toBeTruthy();
-		expect(queryWithMock.matchesMask(combinedMask)).toBeTruthy();
-		expect(queryWithBoth.matchesMask(combinedMask)).toBeTruthy();
-		expect(queryWithBoth.matchesMask(mockMask)).toBeFalsy();
-		expect(queryWithExclusion.matchesMask(mockMask)).toBeTruthy();
-		expect(queryWithExclusion.matchesMask(combinedMask)).toBeFalsy();
+		queryManager.updateEntity(entity);
+
+		expect(queryManager.getEntities(queryWithMock)).toContain(entity);
+		expect(queryManager.getEntities(queryWithBoth)).toContain(entity);
+		expect(queryManager.getEntities(queryWithExclusion)).not.toContain(entity);
+	});
+
+	test('QueryManager should update entities correctly when components are added or removed', () => {
+		const entity = new Entity(world);
+		entity.addComponent(MockComponent);
+
+		// Initially, the entity should match queryWithMock
+		queryManager.updateEntity(entity);
+		expect(queryManager.getEntities(queryWithMock)).toContain(entity);
+
+		// Add AnotherComponent, should now also match queryWithBoth
+		entity.addComponent(AnotherComponent);
+		queryManager.updateEntity(entity);
+		expect(queryManager.getEntities(queryWithBoth)).toContain(entity);
+
+		// Remove MockComponent, should no longer match queryWithMock
+		entity.removeComponent(MockComponent);
+		queryManager.updateEntity(entity);
+		expect(queryManager.getEntities(queryWithMock)).not.toContain(entity);
+	});
+
+	test('QueryManager should handle unregistered queries', () => {
+		const unregisteredQuery = new Query([AnotherComponent]);
+		expect(() => {
+			queryManager.getEntities(unregisteredQuery);
+		}).toThrow(`Query not registered: ${unregisteredQuery.queryId}`);
 	});
 
 	test('should correctly generate query identifiers', () => {

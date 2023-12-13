@@ -45,22 +45,6 @@ export class Query {
 		return `required:${requiredMask}|excluded:${excludedMask}`;
 	}
 
-	matchesMask(mask: ComponentMask): boolean {
-		for (let requiredMask of this[PRIVATE].requiredComponents) {
-			if ((mask & requiredMask) !== requiredMask) {
-				return false;
-			}
-		}
-
-		for (let excludedMask of this[PRIVATE].excludedComponents) {
-			if ((mask & excludedMask) === excludedMask) {
-				return false;
-			}
-		}
-
-		return true;
-	}
-
 	static matchesQuery(queryId: string, mask: ComponentMask): boolean {
 		const [requiredPart, excludedPart] = queryId.split('|');
 		const requiredMask = parseInt(requiredPart.split(':')[1]);

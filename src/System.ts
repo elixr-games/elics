@@ -5,19 +5,22 @@ import { World } from './World';
 
 export const PRIVATE = Symbol('@elics/system');
 
-export abstract class System {
+export class System {
 	static isSystem = true;
+	static queries: { [key: string]: Query } = {};
 
 	[PRIVATE]: {
 		world: World;
 		queryManager: QueryManager;
 		isPaused: boolean;
 		priority: number;
+		queries: { [key: string]: Query };
 	} = {
 		world: null as any,
 		queryManager: null as any,
 		isPaused: false,
 		priority: 0,
+		queries: {},
 	};
 
 	constructor(world: World, queryManager: QueryManager, priority: number = 0) {
@@ -34,8 +37,12 @@ export abstract class System {
 		return this[PRIVATE].isPaused;
 	}
 
-	registerQuery(query: Query): void {
-		this[PRIVATE].queryManager.registerQuery(query);
+	get queries(): { [key: string]: Query } {
+		return this[PRIVATE].queries;
+	}
+
+	get priority(): number {
+		return this[PRIVATE].priority;
 	}
 
 	getEntities(query: Query): Entity[] {

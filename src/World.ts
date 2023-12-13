@@ -1,32 +1,27 @@
 import { PRIVATE as SYSTEM_PRIVATE, System } from './System';
 
 import { Component } from './Component';
+import { ComponentManager } from './ComponentManager';
 import { Entity } from './Entity';
-import { EntityPool } from './EntityPool';
+import { EntityManager } from './EntityManager';
 import { QueryManager } from './QueryManager';
-
-enum ComponentType {}
 
 export const PRIVATE = Symbol('@elics/world');
 
 export class World {
 	[PRIVATE]: {
-		entityPool: EntityPool;
+		entityManager: EntityManager;
 		queryManager: QueryManager;
-		componentTypes: Map<typeof Component, ComponentType>;
+		componentManager: ComponentManager;
 		nextComponentTypeId: number;
 		systems: System[];
 	} = {
-		entityPool: new EntityPool(this),
-		queryManager: null as any,
-		componentTypes: new Map(),
+		entityManager: new EntityManager(this),
+		queryManager: new QueryManager(),
+		componentManager: new ComponentManager(),
 		nextComponentTypeId: 0,
 		systems: [],
 	};
-
-	constructor() {
-		this[PRIVATE].queryManager = new QueryManager(this[PRIVATE].entityPool);
-	}
 
 	registerComponent<T extends typeof Component>(componentClass: T): void {
 		const typeId = 1 << this[PRIVATE].nextComponentTypeId;
@@ -37,21 +32,15 @@ export class World {
 		}
 
 		componentClass.bitmask = typeId;
-		this[PRIVATE].componentTypes.set(componentClass, typeId);
+
+		this[PRIVATE].componentManager.registerComponent(componentClass);
 	}
 
 	createEntity(): Entity {
-		return this[PRIVATE].entityPool.getEntity(this[PRIVATE].queryManager);
+		return this[PRIVATE].entityManager.requestEntityInstance();
 	}
 
-	registerSystem(
-		systemClass: new (
-			world: World,
-			queryManager: QueryManager,
-			priority?: number,
-		) => System,
-		priority?: number,
-	): void {
+	registerSystem(systemClass: typeof System, priority?: number): void {
 		if (this[PRIVATE].systems.some((system) => system instanceof systemClass)) {
 			throw new Error('System already registered');
 		}
@@ -61,6 +50,12 @@ export class World {
 			this[PRIVATE].queryManager,
 			priority,
 		);
+
+		Object.entries(systemClass.queries).forEach(([queryName, query]) => {
+			this[PRIVATE].queryManager.registerQuery(query);
+			systemInstance[SYSTEM_PRIVATE].queries[queryName] = query;
+		});
+
 		systemInstance.init();
 
 		// Determine the correct position for the new system based on priority
