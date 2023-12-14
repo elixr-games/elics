@@ -38,17 +38,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build library
-        run: npm run build
-
       - name: Build doc site
-        run: npm run doc
+        run: npm run docs:build
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v2 # Update to latest version if available
+        uses: actions/upload-pages-artifact@v2
         with:
-          path: './docs'
+          path: ./docs/.vitepress/dist
 
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v2 # Update to latest version if available
+        uses: actions/deploy-pages@v2
