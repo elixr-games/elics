@@ -1,10 +1,10 @@
+import { Query, QueryConfig } from './Query.js';
 import { PRIVATE as SYSTEM_PRIVATE, System } from './System.js';
 
 import { Component } from './Component.js';
 import { ComponentManager } from './ComponentManager.js';
 import { Entity } from './Entity.js';
 import { EntityManager } from './EntityManager.js';
-import { Query } from './Query.js';
 import { QueryManager } from './QueryManager.js';
 
 export const PRIVATE = Symbol('@elics/world');
@@ -24,7 +24,7 @@ export class World {
 		systems: [],
 	};
 
-	registerComponent<T extends typeof Component>(componentClass: T): void {
+	registerComponent<T extends typeof Component>(componentClass: T): World {
 		const typeId = 1 << this[PRIVATE].nextComponentTypeId;
 		this[PRIVATE].nextComponentTypeId++;
 
@@ -35,13 +35,15 @@ export class World {
 		componentClass.bitmask = typeId;
 
 		this[PRIVATE].componentManager.registerComponent(componentClass);
+
+		return this;
 	}
 
 	createEntity(): Entity {
 		return this[PRIVATE].entityManager.requestEntityInstance();
 	}
 
-	registerSystem(systemClass: typeof System, priority?: number): void {
+	registerSystem(systemClass: typeof System, priority?: number): World {
 		if (this[PRIVATE].systems.some((system) => system instanceof systemClass)) {
 			throw new Error('System already registered');
 		}
@@ -71,12 +73,20 @@ export class World {
 		} else {
 			this[PRIVATE].systems.splice(insertIndex, 0, systemInstance);
 		}
+
+		return this;
 	}
 
 	unregisterSystem(systemClass: typeof System): void {
 		this[PRIVATE].systems = this[PRIVATE].systems.filter(
 			(system) => !(system instanceof systemClass),
 		);
+	}
+
+	registerQuery(queryConfig: QueryConfig): World {
+		const query = new Query(queryConfig);
+		this[PRIVATE].queryManager.registerQuery(query);
+		return this;
 	}
 
 	update(delta: number, time: number): void {

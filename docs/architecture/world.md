@@ -45,6 +45,21 @@ class YourSystem extends System {
 world.registerSystem(YourSystem);
 ```
 
+### Chainable Registration
+
+In this example, method chaining allows for a more fluent and concise setup of the world, improving the readability and ease of configuration.
+
+```ts
+const world = new World();
+world
+	.registerComponent(YourComponent)
+	.registerSystem(YourSystem)
+	.registerQuery({
+		required: [ComponentA],
+		excluded: [ComponentC],
+	});
+```
+
 ### Updating the World
 
 To be called within your application's main loop:
@@ -68,14 +83,14 @@ const yourSystemInstance = world.getSystem(YourSystem);
 
 ### `registerComponent`
 
-Registers a new component type in the world.
+Registers a new component type in the world and returns the world instance for method chaining.
 
 ```ts
-registerComponent<T extends typeof Component>(componentClass: T): void
+registerComponent<T extends typeof Component>(componentClass: T): World
 ```
 
 - **componentClass** (`T` extends `typeof Component`): Class of the component to be registered.
-- **Returns**: `void`.
+- **Returns**: `World` - The world instance for chaining.
 
 ### `createEntity`
 
@@ -89,15 +104,15 @@ createEntity(): Entity
 
 ### `registerSystem`
 
-Registers a new system in the world, with an optional execution priority.
+Registers a new system in the world, with an optional execution priority, and returns the world instance for method chaining.
 
 ```ts
-registerSystem(systemClass: typeof System, priority?: number): void
+registerSystem(systemClass: typeof System, priority?: number): World
 ```
 
 - **systemClass** (`typeof System`): Class of the system to be registered.
 - **priority** (`number`, optional): Execution priority, where lower values indicate higher priority.
-- **Returns**: `void`.
+- **Returns**: `World` - The world instance for chaining.
 
 ### `unregisterSystem`
 
@@ -109,6 +124,17 @@ unregisterSystem(systemClass: typeof System): void
 
 - **systemClass** (`typeof System`): The system class to be unregistered.
 - **Returns**: `void`.
+
+### `registerQuery`
+
+Registers a new query configuration in the world and returns the world instance for method chaining.
+
+```ts
+registerQuery(queryConfig: QueryConfig): World
+```
+
+- **queryConfig** (`QueryConfig`): Configuration object for the query, specifying required and optional excluded components.
+- **Returns**: `World` - The world instance for chaining.
 
 ### `update`
 

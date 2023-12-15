@@ -23,6 +23,22 @@ The querying mechanism in EliCS leverages bitmasking, a technique that significa
 
 Through this efficient querying mechanism, EliCS provides a robust and performant way to manage and interact with entities based on their component makeup, making it ideal for applications requiring dynamic and flexible entity management.
 
+### Query Registration and Entity Creation
+
+In EliCS, the `QueryManager` starts tracking entities for a particular query configuration only after the query has been registered with it. This behavior is crucial to understand, especially when working with systems and their associated queries.
+
+#### System Registration and Query Collection
+
+When utilizing `System.queries` for auto-registering queries as systems are registered, it is important to avoid creating entities that match a query before the query (and thus the system) is registered. This typically isn't an issue if you register all components and systems before creating entities.
+
+::: warning
+However, if a system (with its queries) needs to be registered later in the execution cycle, it's essential to preemptively register the query configurations with the `QueryManager`. This ensures that when the system is eventually registered, the query has already been collecting the appropriate entities.
+:::
+
+#### Query Uniqueness
+
+EliCS treats different query instances with the same configuration (i.e., same required and excluded components) as equivalent. This means that the querying mechanism will function correctly regardless of the specific instance of a query, as long as the configuration matches.
+
 ## Usage
 
 ### Creating and Using a Query in a System
