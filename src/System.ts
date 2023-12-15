@@ -1,3 +1,4 @@
+import { Component } from './Component';
 import { Entity } from './Entity';
 import { Query } from './Query';
 import { QueryManager } from './QueryManager';
@@ -7,7 +8,12 @@ export const PRIVATE = Symbol('@elics/system');
 
 export class System {
 	static isSystem = true;
-	static queries: { [key: string]: Query } = {};
+	static queries: {
+		[key: string]: {
+			required: (typeof Component)[];
+			excluded: (typeof Component)[];
+		};
+	} = {};
 
 	[PRIVATE]: {
 		world: World;
