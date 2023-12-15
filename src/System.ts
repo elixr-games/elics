@@ -1,8 +1,8 @@
-import { Query, QueryConfig } from './Query';
+import { Query, QueryConfig } from './Query.js';
 
-import { Entity } from './Entity';
-import { QueryManager } from './QueryManager';
-import { World } from './World';
+import { Entity } from './Entity.js';
+import { QueryManager } from './QueryManager.js';
+import { World } from './World.js';
 
 export const PRIVATE = Symbol('@elics/system');
 

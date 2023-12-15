@@ -1,4 +1,4 @@
-import { ComponentManager } from './ComponentManager';
+import { ComponentManager } from './ComponentManager.js';
 
 export type ComponentMask = number;
 

@@ -1,4 +1,4 @@
-import { PRIVATE as COMPONENT_PRIVATE, Component } from './Component';
+import { PRIVATE as COMPONENT_PRIVATE, Component } from './Component.js';
 
 export const PRIVATE = Symbol('@elics/component-manager');
 

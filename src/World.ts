@@ -1,11 +1,11 @@
-import { PRIVATE as SYSTEM_PRIVATE, System } from './System';
+import { PRIVATE as SYSTEM_PRIVATE, System } from './System.js';
 
-import { Component } from './Component';
-import { ComponentManager } from './ComponentManager';
-import { Entity } from './Entity';
-import { EntityManager } from './EntityManager';
-import { Query } from './Query';
-import { QueryManager } from './QueryManager';
+import { Component } from './Component.js';
+import { ComponentManager } from './ComponentManager.js';
+import { Entity } from './Entity.js';
+import { EntityManager } from './EntityManager.js';
+import { Query } from './Query.js';
+import { QueryManager } from './QueryManager.js';
 
 export const PRIVATE = Symbol('@elics/world');
 

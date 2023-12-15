@@ -1,4 +1,4 @@
-import { Component, ComponentMask } from './Component';
+import { Component, ComponentMask } from './Component.js';
 
 export const PRIVATE = Symbol('@elics/query');
 

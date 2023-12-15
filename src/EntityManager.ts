@@ -1,7 +1,7 @@
-import { PRIVATE as ENTITY_PRIVATE, Entity } from './Entity';
+import { PRIVATE as ENTITY_PRIVATE, Entity } from './Entity.js';
 
-import { ComponentMask } from './Component';
-import { World } from './World';
+import { ComponentMask } from './Component.js';
+import { World } from './World.js';
 
 export const PRIVATE = Symbol('@elics/entity-manager');
 

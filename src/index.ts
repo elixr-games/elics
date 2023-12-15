@@ -1,5 +1,5 @@
-export { Entity } from './Entity';
-export { World } from './World';
-export { Component } from './Component';
-export { Query, QueryConfig } from './Query';
-export { System } from './System';
+export { Entity } from './Entity.js';
+export { World } from './World.js';
+export { Component } from './Component.js';
+export { Query, QueryConfig } from './Query.js';
+export { System } from './System.js';

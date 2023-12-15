@@ -1,9 +1,9 @@
-import { Component, ComponentMask } from './Component';
-import { PRIVATE as WORLD_PRIVATE, World } from './World';
+import { Component, ComponentMask } from './Component.js';
+import { PRIVATE as WORLD_PRIVATE, World } from './World.js';
 
-import { ComponentManager } from './ComponentManager';
-import { EntityManager } from './EntityManager';
-import { QueryManager } from './QueryManager';
+import { ComponentManager } from './ComponentManager.js';
+import { EntityManager } from './EntityManager.js';
+import { QueryManager } from './QueryManager.js';
 
 export const PRIVATE = Symbol('@elics/entity');
 

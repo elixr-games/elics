@@ -1,6 +1,6 @@
-import { PRIVATE as ENTITY_PRIVATE, Entity } from './Entity';
+import { PRIVATE as ENTITY_PRIVATE, Entity } from './Entity.js';
 
-import { Query } from './Query';
+import { Query } from './Query.js';
 
 export const PRIVATE = Symbol('@elics/query-manager');
 
