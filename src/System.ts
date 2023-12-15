@@ -1,6 +1,6 @@
-import { Component } from './Component';
+import { Query, QueryConfig } from './Query';
+
 import { Entity } from './Entity';
-import { Query } from './Query';
 import { QueryManager } from './QueryManager';
 import { World } from './World';
 
@@ -9,10 +9,7 @@ export const PRIVATE = Symbol('@elics/system');
 export class System {
 	static isSystem = true;
 	static queries: {
-		[key: string]: {
-			required: (typeof Component)[];
-			excluded: (typeof Component)[];
-		};
+		[key: string]: QueryConfig;
 	} = {};
 
 	[PRIVATE]: {

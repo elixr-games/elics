@@ -55,7 +55,7 @@ describe('System', () => {
 	});
 
 	test('should get entities based on query', () => {
-		const query = new Query([MockComponent]);
+		const query = new Query({ required: [MockComponent] });
 		queryManager.registerQuery(query);
 		const entityWithMock = entityManager.requestEntityInstance();
 		entityWithMock.addComponent(MockComponent);

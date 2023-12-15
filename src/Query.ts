@@ -2,6 +2,11 @@ import { Component, ComponentMask } from './Component';
 
 export const PRIVATE = Symbol('@elics/query');
 
+export type QueryConfig = {
+	required: (typeof Component)[];
+	excluded?: (typeof Component)[];
+};
+
 export class Query {
 	[PRIVATE]: {
 		requiredComponents: Set<ComponentMask>;
@@ -13,10 +18,7 @@ export class Query {
 		queryId: '',
 	};
 
-	constructor(
-		required: (typeof Component)[],
-		excluded: (typeof Component)[] = [],
-	) {
+	constructor({ required, excluded = [] }: QueryConfig) {
 		this[PRIVATE].requiredComponents = new Set(
 			required.map((c) => c.bitmask || 0),
 		);

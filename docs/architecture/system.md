@@ -21,9 +21,14 @@ import { System, Query, Entity } from 'elics';
 
 class YourSystem extends System {
 	static queries = {
-		yourQuery: new Query([
-			/* component types */
-		]),
+		yourQuery: {
+			required: [
+				/* required component types */
+			],
+			excluded: [
+				/* optional excluded component types */
+			],
+		},
 	};
 
 	init() {
