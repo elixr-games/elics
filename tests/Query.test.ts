@@ -27,9 +27,12 @@ describe('Query', () => {
 		world.registerComponent(MockComponent);
 		world.registerComponent(AnotherComponent);
 
-		queryWithMock = new Query([MockComponent]);
-		queryWithBoth = new Query([MockComponent, AnotherComponent]);
-		queryWithExclusion = new Query([MockComponent], [AnotherComponent]);
+		queryWithMock = new Query({ required: [MockComponent] });
+		queryWithBoth = new Query({ required: [MockComponent, AnotherComponent] });
+		queryWithExclusion = new Query({
+			required: [MockComponent],
+			excluded: [AnotherComponent],
+		});
 
 		queryManager.registerQuery(queryWithMock);
 		queryManager.registerQuery(queryWithBoth);
@@ -68,7 +71,7 @@ describe('Query', () => {
 	});
 
 	test('QueryManager should handle unregistered queries', () => {
-		const unregisteredQuery = new Query([AnotherComponent]);
+		const unregisteredQuery = new Query({ required: [AnotherComponent] });
 		expect(() => {
 			queryManager.getEntities(unregisteredQuery);
 		}).toThrow(`Query not registered: ${unregisteredQuery.queryId}`);
@@ -122,11 +125,14 @@ describe('Query', () => {
 		const anotherMask = AnotherComponent.bitmask;
 
 		// Query with no excluded components (excluded mask is 0)
-		const queryNoExclude = new Query([MockComponent]);
+		const queryNoExclude = new Query({ required: [MockComponent] });
 		expect(Query.matchesQuery(queryNoExclude.queryId, mockMask)).toBeTruthy();
 
 		// Query with an excluded component (excluded mask is not 0)
-		const queryWithExclude = new Query([MockComponent], [AnotherComponent]);
+		const queryWithExclude = new Query({
+			required: [MockComponent],
+			excluded: [AnotherComponent],
+		});
 		expect(Query.matchesQuery(queryWithExclude.queryId, mockMask)).toBeTruthy();
 		expect(
 			Query.matchesQuery(queryWithExclude.queryId, anotherMask),

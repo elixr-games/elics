@@ -4,6 +4,7 @@ import { Component } from './Component';
 import { ComponentManager } from './ComponentManager';
 import { Entity } from './Entity';
 import { EntityManager } from './EntityManager';
+import { Query } from './Query';
 import { QueryManager } from './QueryManager';
 
 export const PRIVATE = Symbol('@elics/world');
@@ -51,7 +52,8 @@ export class World {
 			priority,
 		);
 
-		Object.entries(systemClass.queries).forEach(([queryName, query]) => {
+		Object.entries(systemClass.queries).forEach(([queryName, queryConfig]) => {
+			const query = new Query(queryConfig);
 			this[PRIVATE].queryManager.registerQuery(query);
 			systemInstance[SYSTEM_PRIVATE].queries[queryName] = query;
 		});

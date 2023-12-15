@@ -39,8 +39,9 @@ import { ComponentA, ComponentB, ComponentC } from 'your-components';
 
 class GenericSystem extends System {
 	// Define a query for entities with ComponentA but excluding ComponentC
+	// Queries will be automatically constructed when the system is initialized
 	static queries = {
-		entities: new Query([ComponentA], [ComponentC]),
+		entities: { required: [ComponentA], excluded: [ComponentC] },
 	};
 
 	update() {
@@ -48,13 +49,11 @@ class GenericSystem extends System {
 		const entities = this.getEntities(GenericSystem.queries.entities);
 
 		entities.forEach((entity: Entity) => {
-			// No need to check entity.hasComponent(ComponentA) since the query guarantees it
 			const componentA = entity.getComponent(ComponentA);
 
 			// Example operation: creating a new entity and adding ComponentB
 			const newEntity = this.world.createEntity();
 			newEntity.addComponent(ComponentB);
-			// Assuming ComponentB has a property 'value'
 			newEntity.getComponent(ComponentB).value = componentA.value;
 		});
 	}
@@ -65,13 +64,13 @@ In this example, `GenericSystem` utilizes a query to select entities that have `
 
 ## Constructor
 
-Constructs a new query instance with specified required and excluded components.
+Constructs a new query instance with specified required components and optionally excluded components.
 
 ```ts
-constructor(
+constructor({ required, excluded }: {
     required: (typeof Component)[],
     excluded?: (typeof Component)[]
-)
+})
 ```
 
 - **required**: `(typeof Component)[]` - An array of component classes that entities must have to match the query.
@@ -100,7 +99,7 @@ static generateQueryId(
 ```
 
 - **requiredComponents**: `Set<ComponentMask>` - A set of bitmasks representing the required components.
-- **excludedComponents**: `Set<ComponentMask>` - A set of bitmasks representing the excluded components.
+- **excludedComponents**: `Set<ComponentMask>` (optional) - A set of bitmasks representing the excluded components.
 
 ### `matchesQuery`
 
