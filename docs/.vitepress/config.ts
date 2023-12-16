@@ -9,11 +9,68 @@ export default defineConfig({
 		// https://vitepress.dev/reference/default-theme-config
 		logo: '/elixr.svg',
 		nav: [
-			{ text: 'Home', link: '/' },
-			{ text: 'Documentation', link: '/architecture/overview ' },
+			{ text: 'About', link: '/introduction' },
+			{ text: 'Guide', link: '/getting-started' },
+			{ text: 'Docs', link: '/architecture/overview ' },
+			{
+				text: 'v0.1.2',
+				items: [
+					{ text: 'NPM', link: 'https://www.npmjs.com/package/elics' },
+					{
+						text: 'License',
+						link: 'https://github.com/elixr-games/elics/blob/main/LICENSE.md',
+					},
+				],
+			},
 		],
 
 		sidebar: [
+			{
+				text: 'Introduction',
+				items: [
+					{
+						text: 'About EliCS',
+						link: '/introduction#what-is-elics',
+					},
+					{
+						text: 'About EliXR Games',
+						link: '/introduction#about-elixr-games',
+					},
+				],
+			},
+			{
+				text: 'Getting Started',
+				items: [
+					{
+						text: 'ECS Principles',
+						link: '/getting-started#ecs-principles',
+					},
+					{
+						text: 'Adding EliCS to Your Project',
+						link: '/getting-started#adding-elics-to-your-project',
+					},
+					{
+						text: 'Creating a World',
+						link: '/getting-started#creating-a-world',
+					},
+					{
+						text: 'Defining Components',
+						link: '/getting-started#defining-components',
+					},
+					{
+						text: 'Creating Entities',
+						link: '/getting-started#creating-entities',
+					},
+					{
+						text: 'Creating Systems',
+						link: '/getting-started#creating-systems',
+					},
+					{
+						text: 'Updating the World',
+						link: '/getting-started#updating-the-world',
+					},
+				],
+			},
 			{
 				text: 'Architecture',
 				items: [

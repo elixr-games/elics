@@ -97,6 +97,12 @@ A static property that acts as a unique identifier for each component type.
 
 - **Type**: `ComponentMask`
 
+### `defaults`
+
+A static property that provides default values for new instances of the `Component` class. This property is designed to be overridden in derived classes to specify custom default values for each specific component type. When a new instance of `Component` or a derived class is created, the values in `defaults` are used to initialize the instance's properties, ensuring that all instances have a consistent set of default values.
+
+- **Type**: `{ [key: string]: any }`
+
 ## Methods
 
 ### `reset`

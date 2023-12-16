@@ -86,6 +86,7 @@ export class Entity {
 	getComponent<T extends Component>(componentClass: {
 		new (_cm: ComponentManager, _mi: number): T;
 		bitmask: ComponentMask;
+		defaults: { [key: string]: any };
 	}): T | null {
 		if (!this[PRIVATE].active) throw new Error(ERRORS.ACCESS_DESTROYED_ENTITY);
 		const component = this[PRIVATE].components.get(componentClass);

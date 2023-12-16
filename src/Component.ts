@@ -6,6 +6,7 @@ export const PRIVATE = Symbol('@elics/component');
 
 export class Component {
 	static bitmask: ComponentMask | null = null;
+	static defaults: { [key: string]: any } = {};
 
 	public reset(): void {
 		// noop
@@ -27,6 +28,7 @@ export class Component {
 		this[PRIVATE].componentManager = componentManager;
 		this[PRIVATE].index = index;
 
+		Object.assign(this, (this.constructor as typeof Component).defaults);
 		Object.assign(this, initialData);
 	}
 }

@@ -31,6 +31,7 @@ export class ComponentManager {
 		if (free.length > 0) {
 			const index = free.pop()!;
 			const instance = pool[index];
+			Object.assign(instance, ComponentClass.defaults);
 			Object.assign(instance, initialData);
 			return instance;
 		} else {
