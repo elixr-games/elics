@@ -13,7 +13,7 @@ export default defineConfig({
 			{ text: 'Guide', link: '/getting-started' },
 			{ text: 'Docs', link: '/architecture/overview ' },
 			{
-				text: 'v0.1.2',
+				text: 'v0.1.3',
 				items: [
 					{ text: 'NPM', link: 'https://www.npmjs.com/package/elics' },
 					{
