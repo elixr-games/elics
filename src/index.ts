@@ -1,4 +1,4 @@
-export { Entity } from './Entity.js';
+export { Entity, EntityLike } from './Entity.js';
 export { World } from './World.js';
 export { Component } from './Component.js';
 export { Query, QueryConfig } from './Query.js';

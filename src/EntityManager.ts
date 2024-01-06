@@ -1,15 +1,15 @@
-import { PRIVATE as ENTITY_PRIVATE, Entity } from './Entity.js';
+import { PRIVATE as WORLD_PRIVATE, World } from './World.js';
 
 import { ComponentMask } from './Component.js';
-import { World } from './World.js';
+import { EntityLike } from './Entity.js';
 
 export const PRIVATE = Symbol('@elics/entity-manager');
 
 export class EntityManager {
 	[PRIVATE]: {
 		world: World;
-		pool: Entity[];
-		entityIndex: Map<ComponentMask, Set<Entity>>;
+		pool: EntityLike[];
+		entityIndex: Map<ComponentMask, Set<EntityLike>>;
 	} = {
 		world: null as any,
 		pool: [],
@@ -21,19 +21,21 @@ export class EntityManager {
 		this[PRIVATE].entityIndex = new Map();
 	}
 
-	requestEntityInstance(): Entity {
+	requestEntityInstance(): EntityLike {
 		let entity;
 		if (this[PRIVATE].pool.length > 0) {
 			entity = this[PRIVATE].pool.pop()!;
-			entity[ENTITY_PRIVATE].active = true;
+			entity.active = true;
 		} else {
-			entity = new Entity(this[PRIVATE].world);
+			const entityPrototype =
+				this[PRIVATE].world[WORLD_PRIVATE].entityPrototype;
+			entity = new entityPrototype(this[PRIVATE].world);
 		}
 
 		return entity;
 	}
 
-	releaseEntityInstance(entity: Entity): void {
+	releaseEntityInstance(entity: EntityLike): void {
 		this[PRIVATE].pool.push(entity);
 	}
 }

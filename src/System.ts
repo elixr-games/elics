@@ -1,6 +1,6 @@
 import { Query, QueryConfig } from './Query.js';
 
-import { Entity } from './Entity.js';
+import { EntityLike } from './Entity.js';
 import { QueryManager } from './QueryManager.js';
 import { World } from './World.js';
 
@@ -48,7 +48,7 @@ export class System {
 		return this[PRIVATE].priority;
 	}
 
-	getEntities(query: Query): Entity[] {
+	getEntities(query: Query): EntityLike[] {
 		return this[PRIVATE].queryManager.getEntities(query);
 	}
 

@@ -1,9 +1,9 @@
+import { Entity, EntityLike } from './Entity.js';
 import { Query, QueryConfig } from './Query.js';
 import { PRIVATE as SYSTEM_PRIVATE, System } from './System.js';
 
 import { Component } from './Component.js';
 import { ComponentManager } from './ComponentManager.js';
-import { Entity } from './Entity.js';
 import { EntityManager } from './EntityManager.js';
 import { QueryManager } from './QueryManager.js';
 
@@ -16,13 +16,19 @@ export class World {
 		componentManager: ComponentManager;
 		nextComponentTypeId: number;
 		systems: System[];
+		entityPrototype: new (world: World) => EntityLike;
 	} = {
 		entityManager: new EntityManager(this),
 		queryManager: new QueryManager(),
 		componentManager: new ComponentManager(),
 		nextComponentTypeId: 0,
 		systems: [],
+		entityPrototype: Entity,
 	};
+
+	setEntityPrototype(prototype: new (world: World) => EntityLike): void {
+		this[PRIVATE].entityPrototype = prototype;
+	}
 
 	registerComponent<T extends typeof Component>(componentClass: T): World {
 		const typeId = 1 << this[PRIVATE].nextComponentTypeId;
@@ -39,7 +45,7 @@ export class World {
 		return this;
 	}
 
-	createEntity(): Entity {
+	createEntity(): EntityLike {
 		return this[PRIVATE].entityManager.requestEntityInstance();
 	}
 

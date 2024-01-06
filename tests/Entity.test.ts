@@ -1,8 +1,8 @@
+import { Entity, EntityLike } from '../src/Entity';
 import { PRIVATE as WORLD_PRIVATE, World } from '../src/World';
 
 import { Component } from '../src/Component';
 import { ComponentManager } from '../src/ComponentManager';
-import { Entity } from '../src/Entity';
 import { EntityManager } from '../src/EntityManager';
 
 class MockComponent extends Component {
@@ -12,7 +12,7 @@ class MockComponent extends Component {
 describe('Entity and EntityManager', () => {
 	let world: World;
 	let entityManager: EntityManager;
-	let entity: Entity;
+	let entity: EntityLike;
 	let componentManager: ComponentManager;
 
 	beforeEach(() => {
@@ -25,7 +25,7 @@ describe('Entity and EntityManager', () => {
 
 	test('should create a new entity instance', () => {
 		expect(entity).toBeInstanceOf(Entity);
-		expect(entity.isActive).toBe(true);
+		expect(entity.active).toBe(true);
 	});
 
 	test('should add and remove components', () => {
@@ -49,7 +49,7 @@ describe('Entity and EntityManager', () => {
 
 	test('should destroy the entity', () => {
 		entity.destroy();
-		expect(entity.isActive).toBe(false);
+		expect(entity.active).toBe(false);
 	});
 
 	test('should throw error when modifying a destroyed entity', () => {
@@ -66,6 +66,4 @@ describe('Entity and EntityManager', () => {
 
 		expect(secondEntity).toBe(firstEntity);
 	});
-
-	// Additional tests as needed...
 });
