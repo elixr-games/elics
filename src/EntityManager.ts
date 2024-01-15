@@ -1,6 +1,5 @@
 import { PRIVATE as WORLD_PRIVATE, World } from './World.js';
 
-import { ComponentMask } from './Component.js';
 import { EntityLike } from './Entity.js';
 
 export const PRIVATE = Symbol('@elics/entity-manager');
@@ -9,16 +8,13 @@ export class EntityManager {
 	[PRIVATE]: {
 		world: World;
 		pool: EntityLike[];
-		entityIndex: Map<ComponentMask, Set<EntityLike>>;
 	} = {
 		world: null as any,
 		pool: [],
-		entityIndex: new Map(),
 	};
 
 	constructor(world: World) {
 		this[PRIVATE].world = world;
-		this[PRIVATE].entityIndex = new Map();
 	}
 
 	requestEntityInstance(): EntityLike {
