@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2022 - 2024 EliXR Games
+Copyright (c) 2022 - present EliXR Games
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
