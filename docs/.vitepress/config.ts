@@ -13,7 +13,7 @@ export default defineConfig({
 			{ text: 'Guide', link: '/getting-started' },
 			{ text: 'Docs', link: '/architecture/overview ' },
 			{
-				text: 'v0.1.3',
+				text: 'v0.1.5',
 				items: [
 					{ text: 'NPM', link: 'https://www.npmjs.com/package/elics' },
 					{
@@ -98,7 +98,7 @@ export default defineConfig({
 
 		footer: {
 			message: 'MIT License | Made with ❤️ by Felix Z',
-			copyright: 'Copyright © 2022 - present Elixr Games',
+			copyright: 'Copyright © 2022 - present EliXR Games',
 		},
 	},
 	base: '/elics/',
