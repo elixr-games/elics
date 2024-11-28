@@ -9,7 +9,7 @@ export class EntityManager {
 		world: World;
 		pool: EntityLike[];
 	} = {
-		world: null as any,
+		world: undefined!,
 		pool: [],
 	};
 

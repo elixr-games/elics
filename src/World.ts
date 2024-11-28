@@ -1,8 +1,12 @@
+import { Component, ComponentConstructor } from './Component.js';
 import { Entity, EntityLike } from './Entity.js';
 import { Query, QueryConfig } from './Query.js';
-import { PRIVATE as SYSTEM_PRIVATE, System } from './System.js';
+import {
+	PRIVATE as SYSTEM_PRIVATE,
+	System,
+	SystemConstructor,
+} from './System.js';
 
-import { Component } from './Component.js';
 import { ComponentManager } from './ComponentManager.js';
 import { EntityManager } from './EntityManager.js';
 import { QueryManager } from './QueryManager.js';
@@ -30,7 +34,9 @@ export class World {
 		this[PRIVATE].entityPrototype = prototype;
 	}
 
-	registerComponent<T extends typeof Component>(componentClass: T): World {
+	registerComponent<T extends Component>(
+		componentClass: ComponentConstructor<T>,
+	): World {
 		const typeId = 1 << this[PRIVATE].nextComponentTypeId;
 		this[PRIVATE].nextComponentTypeId++;
 
@@ -49,7 +55,10 @@ export class World {
 		return this[PRIVATE].entityManager.requestEntityInstance();
 	}
 
-	registerSystem(systemClass: typeof System, priority?: number): World {
+	registerSystem<T extends System>(
+		systemClass: SystemConstructor<T>,
+		priority?: number,
+	): World {
 		if (this[PRIVATE].systems.some((system) => system instanceof systemClass)) {
 			throw new Error('System already registered');
 		}
@@ -83,7 +92,7 @@ export class World {
 		return this;
 	}
 
-	unregisterSystem(systemClass: typeof System): void {
+	unregisterSystem<T extends System>(systemClass: SystemConstructor<T>): void {
 		this[PRIVATE].systems = this[PRIVATE].systems.filter(
 			(system) => !(system instanceof systemClass),
 		);
@@ -104,7 +113,7 @@ export class World {
 	}
 
 	getSystem<T extends System>(
-		systemClass: new (...args: any[]) => T,
+		systemClass: SystemConstructor<T>,
 	): T | undefined {
 		for (const system of this[PRIVATE].systems) {
 			if (system instanceof systemClass) {

@@ -7,7 +7,7 @@ import { World } from './World.js';
 export const PRIVATE = Symbol('@elics/system');
 
 export class System {
-	static isSystem = true;
+	static isSystem: true = true;
 	static queries: {
 		[key: string]: QueryConfig;
 	} = {};
@@ -19,8 +19,8 @@ export class System {
 		priority: number;
 		queries: { [key: string]: Query };
 	} = {
-		world: null as any,
-		queryManager: null as any,
+		world: undefined!,
+		queryManager: undefined!,
 		isPaused: false,
 		priority: 0,
 		queries: {},
@@ -68,3 +68,11 @@ export class System {
 		this[PRIVATE].isPaused = true;
 	}
 }
+
+export type SystemConstructor<T extends System> = {
+	new (_w: World, _qm: QueryManager, _p?: number): T;
+	readonly isSystem: true;
+	queries: {
+		[key: string]: QueryConfig;
+	};
+};

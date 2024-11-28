@@ -1,13 +1,13 @@
-import { Component, ComponentMask } from './Component.js';
+import { Component, ComponentConstructor, ComponentMask } from './Component.js';
 
 export const PRIVATE = Symbol('@elics/query');
 
-export type QueryConfig = {
-	required: (typeof Component)[];
-	excluded?: (typeof Component)[];
+export type QueryConfig<T extends Component = Component> = {
+	required: ComponentConstructor<T>[];
+	excluded?: ComponentConstructor<T>[];
 };
 
-export class Query {
+export class Query<T extends Component = Component> {
 	[PRIVATE]: {
 		requiredComponents: Set<ComponentMask>;
 		excludedComponents: Set<ComponentMask>;
@@ -18,7 +18,7 @@ export class Query {
 		queryId: '',
 	};
 
-	constructor({ required, excluded = [] }: QueryConfig) {
+	constructor({ required, excluded = [] }: QueryConfig<T>) {
 		this[PRIVATE].requiredComponents = new Set(
 			required.map((c) => c.bitmask || 0),
 		);
@@ -49,8 +49,8 @@ export class Query {
 
 	static matchesQuery(queryId: string, mask: ComponentMask): boolean {
 		const [requiredPart, excludedPart] = queryId.split('|');
-		const requiredMask = parseInt(requiredPart.split(':')[1]);
-		const excludedMask = parseInt(excludedPart.split(':')[1]);
+		const requiredMask = parseInt(requiredPart.split(':')[1], 10);
+		const excludedMask = parseInt(excludedPart.split(':')[1], 10);
 
 		if ((mask & requiredMask) !== requiredMask) {
 			return false;

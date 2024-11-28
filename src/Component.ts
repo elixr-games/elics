@@ -28,7 +28,20 @@ export class Component {
 		this[PRIVATE].componentManager = componentManager;
 		this[PRIVATE].index = index;
 
-		Object.assign(this, (this.constructor as typeof Component).defaults);
+		Object.assign(
+			this,
+			(this.constructor as ComponentConstructor<any>).defaults,
+		);
 		Object.assign(this, initialData);
 	}
 }
+
+export type ComponentConstructor<T extends Component> = {
+	new (
+		_cm: ComponentManager,
+		_mi: number,
+		initialData?: { [key: string]: any },
+	): T;
+	bitmask: number | null; // Static property
+	defaults: { [key: string]: any }; // Other static properties, if needed
+};

@@ -1,4 +1,8 @@
-import { PRIVATE as COMPONENT_PRIVATE, Component } from './Component.js';
+import {
+	PRIVATE as COMPONENT_PRIVATE,
+	Component,
+	ComponentConstructor,
+} from './Component.js';
 
 export const PRIVATE = Symbol('@elics/component-manager');
 
@@ -11,13 +15,13 @@ export class ComponentManager {
 		freeInstances: new Map(),
 	};
 
-	registerComponent(ComponentClass: typeof Component): void {
+	registerComponent(ComponentClass: ComponentConstructor<any>): void {
 		this[PRIVATE].componentPools.set(ComponentClass.bitmask!, []);
 		this[PRIVATE].freeInstances.set(ComponentClass.bitmask!, []);
 	}
 
 	requestComponentInstance(
-		ComponentClass: typeof Component,
+		ComponentClass: ComponentConstructor<any>,
 		initialData: { [key: string]: any } = {},
 	): Component {
 		const pool = this[PRIVATE].componentPools.get(ComponentClass.bitmask!);
@@ -42,7 +46,8 @@ export class ComponentManager {
 	}
 
 	releaseComponentInstance(componentInstance: Component): void {
-		const ComponentClass = componentInstance.constructor as typeof Component;
+		const ComponentClass =
+			componentInstance.constructor as ComponentConstructor<any>;
 		const pool = this[PRIVATE].componentPools.get(ComponentClass.bitmask!);
 		const free = this[PRIVATE].freeInstances.get(ComponentClass.bitmask!);
 
