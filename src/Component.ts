@@ -20,17 +20,17 @@ export class Component {
 	static entityCapacity = 1000;
 	static bitmask: ComponentMask | null = null;
 
+	readonly index: number;
+
 	public reset(): void {
 		// noop
 	}
 
 	[PRIVATE]: {
 		componentManager: ComponentManager;
-		index: number;
 		assignInitialData: (initialData: { [key: string]: any }) => void;
 	} = {
 		componentManager: undefined!,
-		index: undefined!,
 		assignInitialData: (initialData: { [key: string]: any }) => {
 			for (const [key, { default: defaultValue }] of Object.entries(
 				(this.constructor as typeof Component).schema,
@@ -42,7 +42,7 @@ export class Component {
 
 	constructor(componentManager: ComponentManager, index: number) {
 		this[PRIVATE].componentManager = componentManager;
-		this[PRIVATE].index = index;
+		this.index = index;
 	}
 
 	static initializeStorage(): void {
@@ -63,14 +63,13 @@ export class Component {
 
 	get<T>(key: string): T {
 		return (this.constructor as typeof Component).typedArrays[key][
-			this[PRIVATE].index
+			this.index
 		] as T;
 	}
 
 	set<T>(key: string, value: T): void {
-		(this.constructor as typeof Component).typedArrays[key][
-			this[PRIVATE].index
-		] = value as any;
+		(this.constructor as typeof Component).typedArrays[key][this.index] =
+			value as any;
 	}
 }
 

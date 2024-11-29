@@ -66,6 +66,6 @@ export class ComponentManager<T extends Component = Component> {
 		componentInstance.reset();
 
 		// Add the index back to the free queue
-		free.push(componentInstance[COMPONENT_PRIVATE].index);
+		free.push(componentInstance.index);
 	}
 }
