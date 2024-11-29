@@ -5,9 +5,7 @@ import { Component } from '../src/Component';
 import { ComponentManager } from '../src/ComponentManager';
 import { EntityManager } from '../src/EntityManager';
 
-class MockComponent extends Component {
-	static bitmask = 1;
-}
+class MockComponent extends Component {}
 
 describe('Entity and EntityManager', () => {
 	let world: World;

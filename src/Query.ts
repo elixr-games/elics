@@ -1,5 +1,8 @@
 import { Component, ComponentConstructor, ComponentMask } from './Component.js';
 
+import BitSet from 'bitset';
+import { EntityLike } from './Entity.js';
+
 export const PRIVATE = Symbol('@elics/query');
 
 export type QueryConfig<T extends Component = Component> = {
@@ -7,64 +10,53 @@ export type QueryConfig<T extends Component = Component> = {
 	excluded?: ComponentConstructor<T>[];
 };
 
-export class Query<T extends Component = Component> {
+export class Query {
 	[PRIVATE]: {
-		requiredComponents: Set<ComponentMask>;
-		excludedComponents: Set<ComponentMask>;
+		requiredMask: ComponentMask;
+		excludedMask: ComponentMask;
 		queryId: string;
-	} = {
-		requiredComponents: new Set(),
-		excludedComponents: new Set(),
-		queryId: '',
 	};
 
-	constructor({ required, excluded = [] }: QueryConfig<T>) {
-		this[PRIVATE].requiredComponents = new Set(
-			required.map((c) => c.bitmask || 0),
-		);
-		this[PRIVATE].excludedComponents = new Set(
-			excluded.map((c) => c.bitmask || 0),
-		);
-
-		this[PRIVATE].queryId = Query.generateQueryId(
-			this[PRIVATE].requiredComponents,
-			this[PRIVATE].excludedComponents,
-		);
+	constructor(
+		requiredMask: ComponentMask,
+		excludedMask: ComponentMask,
+		queryId: string,
+	) {
+		this[PRIVATE] = {
+			requiredMask,
+			excludedMask,
+			queryId,
+		};
 	}
 
-	static generateQueryId(
-		requiredComponents: Set<ComponentMask>,
-		excludedComponents: Set<ComponentMask>,
-	): string {
-		const requiredMask = Array.from(requiredComponents).reduce(
-			(acc, val) => acc | val,
-			0,
-		);
-		const excludedMask = Array.from(excludedComponents).reduce(
-			(acc, val) => acc | val,
-			0,
-		);
-		return `required:${requiredMask}|excluded:${excludedMask}`;
+	matches(entity: EntityLike) {
+		const hasRequired = entity.bitmask
+			.and(this[PRIVATE].requiredMask)
+			.equals(this[PRIVATE].requiredMask);
+		const hasExcluded = !entity.bitmask
+			.and(this[PRIVATE].excludedMask)
+			.isEmpty();
+
+		return hasRequired && !hasExcluded;
 	}
 
-	static matchesQuery(queryId: string, mask: ComponentMask): boolean {
-		const [requiredPart, excludedPart] = queryId.split('|');
-		const requiredMask = parseInt(requiredPart.split(':')[1], 10);
-		const excludedMask = parseInt(excludedPart.split(':')[1], 10);
-
-		if ((mask & requiredMask) !== requiredMask) {
-			return false;
-		}
-
-		// Skip the excluded mask check if excludedMask is 0 (no components to exclude)
-		if (excludedMask !== 0 && (mask & excludedMask) === excludedMask) {
-			return false;
-		}
-
-		return true;
-	}
-
-	get queryId(): string {
+	get queryId() {
 		return this[PRIVATE].queryId;
+	}
+
+	static generateQueryInfo(queryConfig: QueryConfig) {
+		let requiredMask = new BitSet();
+		let excludedMask = new BitSet();
+		queryConfig.required.forEach((c) => {
+			requiredMask = requiredMask.or(c.bitmask!);
+		});
+		queryConfig.excluded?.forEach((c) => {
+			excludedMask = excludedMask.or(c.bitmask!);
+		});
+		return {
+			requiredMask,
+			excludedMask,
+			queryId: `required:${requiredMask.toString()}|excluded:${excludedMask.toString()}`,
+		};
 	}
 }

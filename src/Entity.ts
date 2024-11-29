@@ -1,6 +1,7 @@
 import { Component, ComponentConstructor, ComponentMask } from './Component.js';
 import { PRIVATE as WORLD_PRIVATE, World } from './World.js';
 
+import BitSet from 'bitset';
 import { ComponentManager } from './ComponentManager.js';
 import { EntityManager } from './EntityManager.js';
 import { QueryManager } from './QueryManager.js';
@@ -11,8 +12,9 @@ const ERRORS = {
 };
 
 export interface EntityLike {
-	componentMask: ComponentMask;
+	bitmask: ComponentMask;
 	active: boolean;
+	get index(): number;
 
 	addComponent<T extends Component>(
 		componentClass: ComponentConstructor<T>,
@@ -36,8 +38,10 @@ export interface EntityLike {
 	destroy(): void;
 }
 
+export const PRIVATE = Symbol('@elics/entity');
+
 export class Entity {
-	public componentMask: ComponentMask = 0;
+	public bitmask: ComponentMask = new BitSet();
 	public active = true;
 
 	protected components: Map<ComponentConstructor<Component>, Component> =
@@ -46,10 +50,19 @@ export class Entity {
 	protected queryManager: QueryManager;
 	protected componentManager: ComponentManager;
 
-	constructor(world: World) {
+	[PRIVATE]: {
+		index: number;
+	};
+
+	constructor(world: World, index: number) {
 		this.entityManager = world[WORLD_PRIVATE].entityManager;
 		this.queryManager = world[WORLD_PRIVATE].queryManager;
 		this.componentManager = world[WORLD_PRIVATE].componentManager;
+		this[PRIVATE] = { index };
+	}
+
+	get index(): number {
+		return this[PRIVATE].index;
 	}
 
 	addComponent<T extends Component>(
@@ -59,7 +72,7 @@ export class Entity {
 		if (!this.active) throw new Error(ERRORS.MODIFY_DESTROYED_ENTITY);
 
 		if (componentClass.bitmask !== null) {
-			this.componentMask |= componentClass.bitmask;
+			this.bitmask = this.bitmask.or(componentClass.bitmask);
 			const componentInstance = this.componentManager.requestComponentInstance(
 				componentClass,
 				initialData,
@@ -83,7 +96,7 @@ export class Entity {
 		) {
 			const componentInstance = this.components.get(componentClass);
 			this.componentManager.releaseComponentInstance(componentInstance!);
-			this.componentMask &= ~componentClass.bitmask;
+			this.bitmask = this.bitmask.andNot(componentClass.bitmask);
 			this.components.delete(componentClass);
 			this.queryManager.updateEntity(this);
 		} else {
@@ -124,7 +137,7 @@ export class Entity {
 			this.componentManager.releaseComponentInstance(component);
 		});
 		this.components.clear();
-		this.componentMask = 0;
+		this.bitmask = new BitSet();
 		this.queryManager.updateEntity(this);
 	}
 }

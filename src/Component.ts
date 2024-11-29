@@ -1,6 +1,7 @@
+import BitSet from 'bitset';
 import { ComponentManager } from './ComponentManager.js';
 
-export type ComponentMask = number;
+export type ComponentMask = BitSet;
 
 export const PRIVATE = Symbol('@elics/component');
 
@@ -42,6 +43,6 @@ export type ComponentConstructor<T extends Component> = {
 		_mi: number,
 		initialData?: { [key: string]: any },
 	): T;
-	bitmask: number | null; // Static property
+	bitmask: ComponentMask | null; // Static property
 	defaults: { [key: string]: any }; // Other static properties, if needed
 };

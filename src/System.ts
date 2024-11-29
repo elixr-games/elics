@@ -23,7 +23,7 @@ export class System {
 		queryManager: undefined!,
 		isPaused: false,
 		priority: 0,
-		queries: {},
+		queries: undefined!,
 	};
 
 	constructor(world: World, queryManager: QueryManager, priority: number = 0) {

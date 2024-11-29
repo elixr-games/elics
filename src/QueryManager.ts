@@ -1,31 +1,40 @@
+import { Query, QueryConfig } from './Query.js';
+
 import { EntityLike } from './Entity.js';
-import { Query } from './Query.js';
 
 export const PRIVATE = Symbol('@elics/query-manager');
 
 export class QueryManager {
 	[PRIVATE]: {
-		queries: Map<string, Set<EntityLike>>;
+		queries: Map<string, Query>;
+		results: Map<Query, Set<EntityLike>>;
 	} = {
 		queries: new Map(),
+		results: new Map(),
 	};
 
-	registerQuery(query: Query): void {
-		const identifier = query.queryId;
-		if (!this[PRIVATE].queries.has(identifier)) {
-			this[PRIVATE].queries.set(identifier, new Set());
+	registerQuery(query: QueryConfig): Query {
+		const { requiredMask, excludedMask, queryId } =
+			Query.generateQueryInfo(query);
+		if (!this[PRIVATE].queries.has(queryId)) {
+			this[PRIVATE].queries.set(
+				queryId,
+				new Query(requiredMask, excludedMask, queryId),
+			);
+			this[PRIVATE].results.set(this[PRIVATE].queries.get(queryId)!, new Set());
 		}
+		return this[PRIVATE].queries.get(queryId)!;
 	}
 
 	updateEntity(entity: EntityLike): void {
-		if (entity.componentMask === 0) {
+		if (entity.bitmask.isEmpty()) {
 			// Remove entity from all query results if it has no components
-			this[PRIVATE].queries.forEach((entities) => entities.delete(entity));
+			this[PRIVATE].results.forEach((entities) => entities.delete(entity));
 			return;
 		}
 
-		this[PRIVATE].queries.forEach((entities, queryId) => {
-			const matches = Query.matchesQuery(queryId, entity.componentMask);
+		this[PRIVATE].results.forEach((entities, query) => {
+			const matches = query.matches(entity);
 			const isInResultSet = entities.has(entity);
 
 			if (matches && !isInResultSet) {
@@ -37,10 +46,9 @@ export class QueryManager {
 	}
 
 	getEntities(query: Query): EntityLike[] {
-		const identifier = query.queryId;
-		if (!this[PRIVATE].queries.has(identifier)) {
-			throw new Error(`Query not registered: ${identifier}`);
+		if (!this[PRIVATE].queries.has(query.queryId)) {
+			throw new Error(`Query not registered: ${query.queryId}`);
 		}
-		return Array.from(this[PRIVATE].queries.get(identifier) || []);
+		return Array.from(this[PRIVATE].results.get(query) || []);
 	}
 }

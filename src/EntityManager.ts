@@ -8,9 +8,11 @@ export class EntityManager {
 	[PRIVATE]: {
 		world: World;
 		pool: EntityLike[];
+		entityIndex: number;
 	} = {
 		world: undefined!,
 		pool: [],
+		entityIndex: 0,
 	};
 
 	constructor(world: World) {
@@ -25,7 +27,10 @@ export class EntityManager {
 		} else {
 			const entityPrototype =
 				this[PRIVATE].world[WORLD_PRIVATE].entityPrototype;
-			entity = new entityPrototype(this[PRIVATE].world);
+			entity = new entityPrototype(
+				this[PRIVATE].world,
+				this[PRIVATE].entityIndex++,
+			);
 		}
 
 		return entity;

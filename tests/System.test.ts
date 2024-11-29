@@ -1,18 +1,13 @@
-import { Component, ComponentMask } from '../src/Component';
 import { PRIVATE as WORLD_PRIVATE, World } from '../src/World';
 
+import { Component } from '../src/Component';
 import { EntityManager } from '../src/EntityManager';
-import { Query } from '../src/Query';
 import { QueryManager } from '../src/QueryManager';
 import { System } from '../src/System';
 
-class MockComponent extends Component {
-	static bitmask: ComponentMask = 1 << 0;
-}
+class MockComponent extends Component {}
 
-class AnotherComponent extends Component {
-	static bitmask: ComponentMask = 1 << 1;
-}
+class AnotherComponent extends Component {}
 
 class MockSystem extends System {
 	updateCalled = false;
@@ -55,8 +50,7 @@ describe('System', () => {
 	});
 
 	test('should get entities based on query', () => {
-		const query = new Query({ required: [MockComponent] });
-		queryManager.registerQuery(query);
+		const query = queryManager.registerQuery({ required: [MockComponent] });
 		const entityWithMock = entityManager.requestEntityInstance();
 		entityWithMock.addComponent(MockComponent);
 

@@ -3,7 +3,6 @@ import { ComponentManager } from '../src/ComponentManager';
 
 // Mock component class for testing
 class MockComponent extends Component {
-	static bitmask = 1;
 	public testData: any;
 
 	public reset() {
@@ -52,9 +51,7 @@ describe('Component and ComponentManager', () => {
 	});
 
 	test('ComponentManager should throw an error for unregistered components', () => {
-		class UnregisteredComponent extends Component {
-			static bitmask = 2;
-		}
+		class UnregisteredComponent extends Component {}
 
 		expect(() => {
 			componentManager.requestComponentInstance(UnregisteredComponent);

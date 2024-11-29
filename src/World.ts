@@ -18,14 +18,12 @@ export class World {
 		entityManager: EntityManager;
 		queryManager: QueryManager;
 		componentManager: ComponentManager;
-		nextComponentTypeId: number;
 		systems: System[];
-		entityPrototype: new (world: World) => EntityLike;
+		entityPrototype: new (world: World, index: number) => EntityLike;
 	} = {
 		entityManager: new EntityManager(this),
 		queryManager: new QueryManager(),
 		componentManager: new ComponentManager(),
-		nextComponentTypeId: 0,
 		systems: [],
 		entityPrototype: Entity,
 	};
@@ -37,15 +35,6 @@ export class World {
 	registerComponent<T extends Component>(
 		componentClass: ComponentConstructor<T>,
 	): World {
-		const typeId = 1 << this[PRIVATE].nextComponentTypeId;
-		this[PRIVATE].nextComponentTypeId++;
-
-		if (this[PRIVATE].nextComponentTypeId >= 32) {
-			throw new Error('Exceeded the maximum number of unique components');
-		}
-
-		componentClass.bitmask = typeId;
-
 		this[PRIVATE].componentManager.registerComponent(componentClass);
 
 		return this;
@@ -63,18 +52,20 @@ export class World {
 			throw new Error('System already registered');
 		}
 
+		const queries: { [key: string]: Query } = {};
+
+		Object.entries(systemClass.queries).forEach(([queryName, queryConfig]) => {
+			queries[queryName] =
+				this[PRIVATE].queryManager.registerQuery(queryConfig);
+		});
+
 		const systemInstance = new systemClass(
 			this,
 			this[PRIVATE].queryManager,
 			priority,
 		);
 
-		Object.entries(systemClass.queries).forEach(([queryName, queryConfig]) => {
-			const query = new Query(queryConfig);
-			this[PRIVATE].queryManager.registerQuery(query);
-			systemInstance[SYSTEM_PRIVATE].queries[queryName] = query;
-		});
-
+		systemInstance[SYSTEM_PRIVATE].queries = queries;
 		systemInstance.init();
 
 		// Determine the correct position for the new system based on priority
@@ -99,8 +90,7 @@ export class World {
 	}
 
 	registerQuery(queryConfig: QueryConfig): World {
-		const query = new Query(queryConfig);
-		this[PRIVATE].queryManager.registerQuery(query);
+		this[PRIVATE].queryManager.registerQuery(queryConfig);
 		return this;
 	}
 

@@ -4,28 +4,35 @@ import {
 	ComponentConstructor,
 } from './Component.js';
 
+import BitSet from 'bitset';
+
 export const PRIVATE = Symbol('@elics/component-manager');
 
-export class ComponentManager {
+export class ComponentManager<T extends Component = Component> {
 	[PRIVATE]: {
-		componentPools: Map<number, Component[]>;
-		freeInstances: Map<number, number[]>;
+		componentPools: Map<ComponentConstructor<T>, Component[]>;
+		freeInstances: Map<ComponentConstructor<T>, number[]>;
+		nextComponentTypeId: number;
 	} = {
+		nextComponentTypeId: 0,
 		componentPools: new Map(),
 		freeInstances: new Map(),
 	};
 
-	registerComponent(ComponentClass: ComponentConstructor<any>): void {
-		this[PRIVATE].componentPools.set(ComponentClass.bitmask!, []);
-		this[PRIVATE].freeInstances.set(ComponentClass.bitmask!, []);
+	registerComponent(componentClass: ComponentConstructor<T>): void {
+		const typeId = this[PRIVATE].nextComponentTypeId++;
+		componentClass.bitmask = new BitSet();
+		componentClass.bitmask.set(typeId, 1);
+		this[PRIVATE].componentPools.set(componentClass, []);
+		this[PRIVATE].freeInstances.set(componentClass, []);
 	}
 
 	requestComponentInstance(
-		ComponentClass: ComponentConstructor<any>,
+		componentClass: ComponentConstructor<T>,
 		initialData: { [key: string]: any } = {},
 	): Component {
-		const pool = this[PRIVATE].componentPools.get(ComponentClass.bitmask!);
-		const free = this[PRIVATE].freeInstances.get(ComponentClass.bitmask!);
+		const pool = this[PRIVATE].componentPools.get(componentClass);
+		const free = this[PRIVATE].freeInstances.get(componentClass);
 
 		if (!pool || !free) {
 			throw new Error('Component class not registered');
@@ -35,11 +42,11 @@ export class ComponentManager {
 		if (free.length > 0) {
 			const index = free.pop()!;
 			const instance = pool[index];
-			Object.assign(instance, ComponentClass.defaults);
+			Object.assign(instance, componentClass.defaults);
 			Object.assign(instance, initialData);
 			return instance;
 		} else {
-			const newInstance = new ComponentClass(this, pool.length, initialData);
+			const newInstance = new componentClass(this, pool.length, initialData);
 			pool.push(newInstance);
 			return newInstance;
 		}
@@ -48,8 +55,8 @@ export class ComponentManager {
 	releaseComponentInstance(componentInstance: Component): void {
 		const ComponentClass =
 			componentInstance.constructor as ComponentConstructor<any>;
-		const pool = this[PRIVATE].componentPools.get(ComponentClass.bitmask!);
-		const free = this[PRIVATE].freeInstances.get(ComponentClass.bitmask!);
+		const pool = this[PRIVATE].componentPools.get(ComponentClass);
+		const free = this[PRIVATE].freeInstances.get(ComponentClass);
 
 		if (!pool || !free) {
 			throw new Error('Component class not registered');
