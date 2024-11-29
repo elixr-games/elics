@@ -1,12 +1,14 @@
 import { Component } from '../src/Component';
 import { ComponentManager } from '../src/ComponentManager';
+import { Types } from '../src/Types';
 
 // Mock component class for testing
 class MockComponent extends Component {
-	public testData: any;
-
-	public reset() {
-		delete this.testData;
+	static schema = {
+		testData: { type: Types.Int8, default: 0 },
+	};
+	public reset(): void {
+		// do nothing
 	}
 }
 
@@ -24,13 +26,13 @@ describe('Component and ComponentManager', () => {
 	});
 
 	test('should assign initial values to the component', () => {
-		const initialData = { testData: 'initial value' };
+		const initialData = { testData: 4 };
 		const component = componentManager.requestComponentInstance(
 			MockComponent,
 			initialData,
 		) as MockComponent;
 
-		expect(component.testData).toBe(initialData.testData);
+		expect(component.get('testData')).toBe(initialData.testData);
 	});
 
 	test('ComponentManager should reuse a released component instance', () => {

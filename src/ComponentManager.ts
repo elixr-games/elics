@@ -23,6 +23,7 @@ export class ComponentManager<T extends Component = Component> {
 		const typeId = this[PRIVATE].nextComponentTypeId++;
 		componentClass.bitmask = new BitSet();
 		componentClass.bitmask.set(typeId, 1);
+		componentClass.initializeStorage();
 		this[PRIVATE].componentPools.set(componentClass, []);
 		this[PRIVATE].freeInstances.set(componentClass, []);
 	}
@@ -39,17 +40,16 @@ export class ComponentManager<T extends Component = Component> {
 		}
 
 		// If there are free instances, use one
+		let instance;
 		if (free.length > 0) {
 			const index = free.pop()!;
-			const instance = pool[index];
-			Object.assign(instance, componentClass.defaults);
-			Object.assign(instance, initialData);
-			return instance;
+			instance = pool[index];
 		} else {
-			const newInstance = new componentClass(this, pool.length, initialData);
-			pool.push(newInstance);
-			return newInstance;
+			instance = new componentClass(this, pool.length, initialData);
+			pool.push(instance);
 		}
+		instance[COMPONENT_PRIVATE].assignInitialData(initialData);
+		return instance;
 	}
 
 	releaseComponentInstance(componentInstance: Component): void {

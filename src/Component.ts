@@ -1,3 +1,5 @@
+import { TypedArrayMap, Types } from './Types.js';
+
 import BitSet from 'bitset';
 import { ComponentManager } from './ComponentManager.js';
 
@@ -5,9 +7,18 @@ export type ComponentMask = BitSet;
 
 export const PRIVATE = Symbol('@elics/component');
 
+type TypedArray =
+	| Int8Array
+	| Int16Array
+	| Float32Array
+	| Float64Array
+	| Uint8Array;
+
 export class Component {
+	static schema: { [key: string]: { type: Types; default: any } } = {};
+	static typedArrays: { [key: string]: TypedArray } = {};
+	static entityCapacity = 1000;
 	static bitmask: ComponentMask | null = null;
-	static defaults: { [key: string]: any } = {};
 
 	public reset(): void {
 		// noop
@@ -16,24 +27,50 @@ export class Component {
 	[PRIVATE]: {
 		componentManager: ComponentManager;
 		index: number;
+		assignInitialData: (initialData: { [key: string]: any }) => void;
 	} = {
-		componentManager: null as any,
-		index: null as any,
+		componentManager: undefined!,
+		index: undefined!,
+		assignInitialData: (initialData: { [key: string]: any }) => {
+			for (const [key, { default: defaultValue }] of Object.entries(
+				(this.constructor as typeof Component).schema,
+			)) {
+				this.set(key, initialData[key] ?? defaultValue);
+			}
+		},
 	};
 
-	constructor(
-		componentManager: ComponentManager,
-		index: number,
-		initialData: { [key: string]: any } = {},
-	) {
+	constructor(componentManager: ComponentManager, index: number) {
 		this[PRIVATE].componentManager = componentManager;
 		this[PRIVATE].index = index;
+	}
 
-		Object.assign(
-			this,
-			(this.constructor as ComponentConstructor<any>).defaults,
-		);
-		Object.assign(this, initialData);
+	static initializeStorage(): void {
+		const schema = this.schema;
+		this.typedArrays = {};
+
+		for (const [key, { type, default: defaultValue }] of Object.entries(
+			schema,
+		)) {
+			const ArrayConstructor = TypedArrayMap[type];
+			if (!ArrayConstructor) {
+				throw new Error(`Unsupported type: ${type}`);
+			}
+			this.typedArrays[key] = new ArrayConstructor(this.entityCapacity);
+			this.typedArrays[key].fill(defaultValue); // Initialize with default values
+		}
+	}
+
+	get<T>(key: string): T {
+		return (this.constructor as typeof Component).typedArrays[key][
+			this[PRIVATE].index
+		] as T;
+	}
+
+	set<T>(key: string, value: T): void {
+		(this.constructor as typeof Component).typedArrays[key][
+			this[PRIVATE].index
+		] = value as any;
 	}
 }
 
@@ -44,5 +81,8 @@ export type ComponentConstructor<T extends Component> = {
 		initialData?: { [key: string]: any },
 	): T;
 	bitmask: ComponentMask | null; // Static property
-	defaults: { [key: string]: any }; // Other static properties, if needed
+	schema: { [key: string]: { type: Types; default: any } }; // Static property
+	typedArrays: { [key: string]: TypedArray }; // Static property
+	entityCapacity: number; // Static property
+	initializeStorage: () => void; // Static method
 };
