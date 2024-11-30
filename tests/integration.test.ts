@@ -3,24 +3,40 @@ import { System } from '../src/System';
 import { Types } from '../src/Types';
 import { World } from '../src/World';
 
-// Define some components for testing
+// Define components for testing
 class PositionComponent extends Component {
 	static schema = {
 		x: { type: Types.Float32, default: 0 },
 		y: { type: Types.Float32, default: 0 },
 	};
 }
-
 class VelocityComponent extends Component {
 	static schema = {
-		vx: { type: Types.Float32, default: 0 },
-		vy: { type: Types.Float32, default: 0 },
+		velocity: { type: Types.Vec2, default: [0, 0] },
 	};
 }
 
 class HealthComponent extends Component {
 	static schema = {
 		value: { type: Types.Int16, default: 100 },
+	};
+}
+
+class VectorComponent extends Component {
+	static schema = {
+		position: { type: Types.Vec3, default: [0, 0, 0] },
+	};
+}
+
+class NameComponent extends Component {
+	static schema = {
+		name: { type: Types.String, default: '' },
+	};
+}
+
+class CustomDataComponent extends Component {
+	static schema = {
+		data: { type: Types.Object, default: null },
 	};
 }
 
@@ -34,15 +50,17 @@ class MovementSystem extends System {
 
 	update(delta: number): void {
 		const entities = this.getEntities(this.queries.movingEntities);
-		const posX = PositionComponent.typedArrays['x'];
-		const posY = PositionComponent.typedArrays['y'];
-		const velX = VelocityComponent.typedArrays['vx'];
-		const velY = VelocityComponent.typedArrays['vy'];
 
 		for (const entity of entities) {
-			const index = entity.index;
-			posX[index] += velX[index] * delta;
-			posY[index] += velY[index] * delta;
+			// Use getValue and getVectorView methods
+			const posX = entity.getValue(PositionComponent, 'x') as number;
+			const posY = entity.getValue(PositionComponent, 'y') as number;
+
+			const velocity = entity.getVectorView(VelocityComponent, 'velocity');
+
+			// Update positions
+			entity.setValue(PositionComponent, 'x', posX + velocity[0] * delta);
+			entity.setValue(PositionComponent, 'y', posY + velocity[1] * delta);
 		}
 	}
 }
@@ -56,11 +74,10 @@ class HealthSystem extends System {
 
 	update(delta: number): void {
 		const entities = this.getEntities(this.queries.entitiesWithHealth);
-		const health = HealthComponent.typedArrays['value'];
 
 		for (const entity of entities) {
-			const index = entity.index;
-			health[index] -= 10 * delta; // Decrease health over time
+			const healthValue = entity.getValue(HealthComponent, 'value') as number;
+			entity.setValue(HealthComponent, 'value', healthValue - 10 * delta);
 		}
 	}
 }
@@ -74,6 +91,9 @@ describe('EliCS Integration Tests', () => {
 		world.registerComponent(PositionComponent);
 		world.registerComponent(VelocityComponent);
 		world.registerComponent(HealthComponent);
+		world.registerComponent(VectorComponent);
+		world.registerComponent(NameComponent);
+		world.registerComponent(CustomDataComponent);
 	});
 
 	// Entity Tests
@@ -88,16 +108,18 @@ describe('EliCS Integration Tests', () => {
 			const entity = world.createEntity();
 
 			entity.addComponent(PositionComponent, { x: 10, y: 20 });
-			entity.addComponent(VelocityComponent, { vx: 5, vy: 5 });
+			entity.addComponent(VelocityComponent, { velocity: [5, 5] });
 
 			expect(entity.hasComponent(PositionComponent)).toBe(true);
 			expect(entity.hasComponent(VelocityComponent)).toBe(true);
 
-			const index = entity.index;
-			expect(PositionComponent.typedArrays['x'][index]).toBe(10);
-			expect(PositionComponent.typedArrays['y'][index]).toBe(20);
-			expect(VelocityComponent.typedArrays['vx'][index]).toBe(5);
-			expect(VelocityComponent.typedArrays['vy'][index]).toBe(5);
+			// Use getValue and getVectorView
+			expect(entity.getValue(PositionComponent, 'x')).toBe(10);
+			expect(entity.getValue(PositionComponent, 'y')).toBe(20);
+
+			const velocity = entity.getVectorView(VelocityComponent, 'velocity');
+			expect(velocity[0]).toBe(5);
+			expect(velocity[1]).toBe(5);
 		});
 
 		test('Removing components', () => {
@@ -139,29 +161,69 @@ describe('EliCS Integration Tests', () => {
 			const entity = world.createEntity();
 			entity.addComponent(PositionComponent, { x: 5, y: 15 });
 
-			const index = entity.index;
-			const posX = PositionComponent.typedArrays['x'];
-			const posY = PositionComponent.typedArrays['y'];
-
-			expect(posX[index]).toBe(5);
-			expect(posY[index]).toBe(15);
+			// Use getValue and setValue
+			expect(entity.getValue(PositionComponent, 'x')).toBe(5);
+			expect(entity.getValue(PositionComponent, 'y')).toBe(15);
 
 			// Update component data
-			posX[index] = 25;
-			posY[index] = 35;
+			entity.setValue(PositionComponent, 'x', 25);
+			entity.setValue(PositionComponent, 'y', 35);
 
-			expect(posX[index]).toBe(25);
-			expect(posY[index]).toBe(35);
+			expect(entity.getValue(PositionComponent, 'x')).toBe(25);
+			expect(entity.getValue(PositionComponent, 'y')).toBe(35);
 		});
 
 		test('Component default values', () => {
 			const entity = world.createEntity();
 			entity.addComponent(HealthComponent);
 
-			const index = entity.index;
-			const health = HealthComponent.typedArrays['value'];
+			expect(entity.getValue(HealthComponent, 'value')).toBe(100); // Default value
+		});
 
-			expect(health[index]).toBe(100); // Default value
+		test('Vec3 component data access', () => {
+			const entity = world.createEntity();
+			entity.addComponent(VectorComponent, { position: [1.0, 2.0, 3.0] });
+
+			const position = entity.getVectorView(VectorComponent, 'position');
+
+			expect(position[0]).toBe(1.0);
+			expect(position[1]).toBe(2.0);
+			expect(position[2]).toBe(3.0);
+
+			// Update component data
+			position[0] = 4.0;
+			position[1] = 5.0;
+			position[2] = 6.0;
+
+			expect(position[0]).toBe(4.0);
+			expect(position[1]).toBe(5.0);
+			expect(position[2]).toBe(6.0);
+		});
+
+		test('String component data access', () => {
+			const entity = world.createEntity();
+			entity.addComponent(NameComponent, { name: 'TestEntity' });
+
+			expect(entity.getValue(NameComponent, 'name')).toBe('TestEntity');
+
+			// Update component data
+			entity.setValue(NameComponent, 'name', 'UpdatedEntity');
+
+			expect(entity.getValue(NameComponent, 'name')).toBe('UpdatedEntity');
+		});
+
+		test('Object component data access', () => {
+			const entity = world.createEntity();
+			const initialData = { key: 'value' };
+			entity.addComponent(CustomDataComponent, { data: initialData });
+
+			expect(entity.getValue(CustomDataComponent, 'data')).toEqual(initialData);
+
+			// Update component data
+			const newData = { newKey: 'newValue' };
+			entity.setValue(CustomDataComponent, 'data', newData);
+
+			expect(entity.getValue(CustomDataComponent, 'data')).toEqual(newData);
 		});
 	});
 
@@ -301,7 +363,7 @@ describe('EliCS Integration Tests', () => {
 			world.registerSystem(SecondSystem, 1); // Higher priority
 			world.registerSystem(FirstSystem, 0); // Lower priority
 
-			world.update(0, 0);
+			world.update(0, 1);
 
 			expect(executionOrder).toEqual(['FirstSystem', 'SecondSystem']);
 		});
@@ -310,16 +372,12 @@ describe('EliCS Integration Tests', () => {
 			world.registerSystem(MovementSystem);
 			const entity = world.createEntity();
 			entity.addComponent(PositionComponent, { x: 0, y: 0 });
-			entity.addComponent(VelocityComponent, { vx: 1, vy: 1 });
+			entity.addComponent(VelocityComponent, { velocity: [1, 1] });
 
 			world.update(1, 1); // delta = 1
 
-			const index = entity.index;
-			const posX = PositionComponent.typedArrays['x'];
-			const posY = PositionComponent.typedArrays['y'];
-
-			expect(posX[index]).toBe(1);
-			expect(posY[index]).toBe(1);
+			expect(entity.getValue(PositionComponent, 'x')).toBe(1);
+			expect(entity.getValue(PositionComponent, 'y')).toBe(1);
 		});
 
 		test('System pausing and resuming', () => {
@@ -337,7 +395,7 @@ describe('EliCS Integration Tests', () => {
 
 			// Initially, the system should execute
 			system!.executed = false;
-			world.update(0, 0);
+			world.update(0, 1);
 			expect(system!.executed).toBe(true);
 
 			// Pause the system
@@ -345,7 +403,7 @@ describe('EliCS Integration Tests', () => {
 
 			// System should not execute when paused
 			system!.executed = false;
-			world.update(0, 0);
+			world.update(0, 1);
 			expect(system!.executed).toBe(false);
 
 			// Resume the system
@@ -353,7 +411,7 @@ describe('EliCS Integration Tests', () => {
 
 			// System should execute again
 			system!.executed = false;
-			world.update(0, 0);
+			world.update(0, 1);
 			expect(system!.executed).toBe(true);
 		});
 
@@ -362,16 +420,13 @@ describe('EliCS Integration Tests', () => {
 			const entity = world.createEntity();
 			entity.addComponent(HealthComponent);
 
-			const index = entity.index;
-			const health = HealthComponent.typedArrays['value'];
-
-			expect(health[index]).toBe(100); // Initial health
+			expect(entity.getValue(HealthComponent, 'value')).toBe(100); // Initial health
 
 			world.update(1, 1); // delta = 1
-			expect(health[index]).toBe(90);
+			expect(entity.getValue(HealthComponent, 'value')).toBe(90);
 
 			world.update(2, 1); // delta = 2
-			expect(health[index]).toBe(70);
+			expect(entity.getValue(HealthComponent, 'value')).toBe(70);
 		});
 	});
 
@@ -383,41 +438,68 @@ describe('EliCS Integration Tests', () => {
 
 			const entity = world.createEntity();
 			entity.addComponent(PositionComponent, { x: 0, y: 0 });
-			entity.addComponent(VelocityComponent, { vx: 2, vy: 3 });
+			entity.addComponent(VelocityComponent, { velocity: [2, 3] });
 			entity.addComponent(HealthComponent);
 
-			const posX = PositionComponent.typedArrays['x'];
-			const posY = PositionComponent.typedArrays['y'];
-			const health = HealthComponent.typedArrays['value'];
-
-			const index = entity.index;
+			// Include Vec3 testing
+			const entity2 = world.createEntity();
+			entity2.addComponent(VectorComponent, { position: [1.0, 1.0, 1.0] });
+			entity2.addComponent(VelocityComponent, { velocity: [1.0, 1.0] });
 
 			// Initial state
-			expect(posX[index]).toBe(0);
-			expect(posY[index]).toBe(0);
-			expect(health[index]).toBe(100);
+			expect(entity.getValue(PositionComponent, 'x')).toBe(0);
+			expect(entity.getValue(PositionComponent, 'y')).toBe(0);
+			expect(entity.getValue(HealthComponent, 'value')).toBe(100);
+
+			const positionVec3 = entity2.getVectorView(VectorComponent, 'position');
+			expect(positionVec3[0]).toBe(1.0);
+			expect(positionVec3[1]).toBe(1.0);
+			expect(positionVec3[2]).toBe(1.0);
 
 			// First update
 			world.update(1, 1); // delta = 1
-			expect(posX[index]).toBe(2);
-			expect(posY[index]).toBe(3);
-			expect(health[index]).toBe(90);
+			expect(entity.getValue(PositionComponent, 'x')).toBe(2);
+			expect(entity.getValue(PositionComponent, 'y')).toBe(3);
+			expect(entity.getValue(HealthComponent, 'value')).toBe(90);
+
+			// Update Vec3 position manually
+			const velocityVec2 = entity2.getVectorView(VelocityComponent, 'velocity');
+			positionVec3[0] += velocityVec2[0] * 1; // delta = 1
+			positionVec3[1] += velocityVec2[1] * 1;
+			// z remains the same
+			expect(positionVec3[0]).toBe(2.0);
+			expect(positionVec3[1]).toBe(2.0);
+			expect(positionVec3[2]).toBe(1.0);
 
 			// Second update
 			world.update(1, 1); // delta = 1
-			expect(posX[index]).toBe(4);
-			expect(posY[index]).toBe(6);
-			expect(health[index]).toBe(80);
+			expect(entity.getValue(PositionComponent, 'x')).toBe(4);
+			expect(entity.getValue(PositionComponent, 'y')).toBe(6);
+			expect(entity.getValue(HealthComponent, 'value')).toBe(80);
+
+			// Update Vec3 position again
+			positionVec3[0] += velocityVec2[0] * 1;
+			positionVec3[1] += velocityVec2[1] * 1;
+			expect(positionVec3[0]).toBe(3.0);
+			expect(positionVec3[1]).toBe(3.0);
+			expect(positionVec3[2]).toBe(1.0);
 
 			// Remove HealthComponent
 			entity.removeComponent(HealthComponent);
 
 			// Third update
 			world.update(1, 1); // delta = 1
-			expect(posX[index]).toBe(6);
-			expect(posY[index]).toBe(9);
+			expect(entity.getValue(PositionComponent, 'x')).toBe(6);
+			expect(entity.getValue(PositionComponent, 'y')).toBe(9);
 			// Health should remain the same since HealthComponent was removed
-			expect(health[index]).toBe(80); // No further decrease
+			expect(entity.getValue(HealthComponent, 'value')).toBe(80); // No further decrease
+
+			// Update Vec3 position again
+			positionVec3[0] += velocityVec2[0] * 1;
+			positionVec3[1] += velocityVec2[1] * 1;
+			expect(positionVec3[0]).toBe(4.0);
+			expect(positionVec3[1]).toBe(4.0);
+			expect(positionVec3[2]).toBe(1.0);
 		});
 	});
 });
