@@ -87,7 +87,7 @@ describe('EliCS Integration Tests', () => {
 	let world: World;
 
 	beforeEach(() => {
-		world = new World(1000);
+		world = new World({ deferredEntityUpdates: true });
 		world.registerComponent(PositionComponent);
 		world.registerComponent(VelocityComponent);
 		world.registerComponent(HealthComponent);

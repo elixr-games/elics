@@ -5,11 +5,7 @@ import type { ComponentManager } from './ComponentManager.js';
 import type { EntityManager } from './EntityManager.js';
 import type { QueryManager } from './QueryManager.js';
 import { TypedArrayMap, type TypedArray } from './Types.js';
-
-const ERRORS = {
-	MODIFY_DESTROYED_ENTITY: 'Cannot modify a destroyed entity',
-	ACCESS_DESTROYED_ENTITY: 'Cannot access a destroyed entity',
-};
+import { assertCondition, ErrorMessages } from './Checks.js';
 
 export interface EntityLike {
 	bitmask: ComponentMask;
@@ -53,40 +49,40 @@ export class Entity {
 		componentClass: ComponentConstructor,
 		initialData: { [key: string]: any } = {},
 	): this {
-		if (!this.active) throw new Error(ERRORS.MODIFY_DESTROYED_ENTITY);
-
-		if (componentClass.bitmask !== null) {
-			this.bitmask = this.bitmask.or(componentClass.bitmask);
-			this.componentManager.attachComponentToEntity(
-				this.index,
-				componentClass,
-				initialData,
-			);
-			this.queryManager.updateEntity(this);
-			return this;
-		} else {
-			throw new Error('Component type not registered');
-		}
+		assertCondition(this.active, ErrorMessages.ModifyDestroyedEntity, this);
+		assertCondition(
+			componentClass.bitmask !== null,
+			ErrorMessages.ComponentNotRegistered,
+			componentClass,
+		);
+		this.bitmask = this.bitmask.or(componentClass.bitmask!);
+		this.componentManager.attachComponentToEntity(
+			this.index,
+			componentClass,
+			initialData,
+		);
+		this.queryManager.updateEntity(this);
+		return this;
 	}
 
 	removeComponent(componentClass: ComponentConstructor): void {
-		if (!this.active) throw new Error(ERRORS.MODIFY_DESTROYED_ENTITY);
-
-		if (componentClass.bitmask !== null) {
-			this.bitmask = this.bitmask.andNot(componentClass.bitmask);
-			this.queryManager.updateEntity(this);
-		} else {
-			throw new Error('Component not found');
-		}
+		assertCondition(this.active, ErrorMessages.ModifyDestroyedEntity, this);
+		assertCondition(
+			componentClass.bitmask !== null,
+			ErrorMessages.ComponentNotRegistered,
+			componentClass,
+		);
+		this.bitmask = this.bitmask.andNot(componentClass.bitmask!);
+		this.queryManager.updateEntity(this);
 	}
 
 	hasComponent(componentClass: ComponentConstructor): boolean {
-		const componentBitmask = componentClass.bitmask;
-		if (componentBitmask) {
-			return !this.bitmask.and(componentBitmask).isEmpty();
-		} else {
-			throw new Error('Component type not registered');
-		}
+		assertCondition(
+			componentClass.bitmask !== null,
+			ErrorMessages.ComponentNotRegistered,
+			componentClass,
+		);
+		return !this.bitmask.and(componentClass.bitmask!).isEmpty();
 	}
 
 	getValue(componentClass: ComponentConstructor, key: string): any {
@@ -120,7 +116,7 @@ export class Entity {
 	}
 
 	destroy(): void {
-		if (!this.active) throw new Error(ERRORS.MODIFY_DESTROYED_ENTITY);
+		assertCondition(this.active, ErrorMessages.ModifyDestroyedEntity, this);
 		this.entityManager.releaseEntityInstance(this);
 		this.active = false;
 		this.bitmask = new BitSet();

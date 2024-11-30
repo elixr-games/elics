@@ -1,3 +1,4 @@
+import { ErrorMessages, assertCondition } from './Checks.js';
 import { TypedArray, TypedArrayMap, Types } from './Types.js';
 
 import BitSet from 'bitset';
@@ -15,12 +16,17 @@ export class Component {
 		const schema = this.schema;
 		this.data = {};
 
-		for (const [key, { type }] of Object.entries(schema)) {
-			const { ArrayConstructor, length } = TypedArrayMap[type];
-			if (!ArrayConstructor) {
-				throw new Error(`Unsupported type: ${type}`);
-			}
-			this.data[key] = new ArrayConstructor(entityCapacity * length);
+		for (const [key, { type, default: defaultValue }] of Object.entries(
+			schema,
+		)) {
+			const { arrayConstructor, length } = TypedArrayMap[type];
+			assertCondition(arrayConstructor, ErrorMessages.TypeNotSupported, type);
+			this.data[key] = new arrayConstructor(entityCapacity * length);
+			assertCondition(
+				length === 1 || (defaultValue as Array<any>).length === length,
+				ErrorMessages.InvalidDefaultValue,
+				key,
+			);
 		}
 	}
 

@@ -1,4 +1,5 @@
 import { Entity, EntityConstructor, EntityLike } from './Entity.js';
+import { ErrorMessages, assertCondition, toggleChecks } from './Checks.js';
 import { Query, QueryConfig } from './Query.js';
 import { System, SystemConstructor } from './System.js';
 
@@ -7,20 +8,32 @@ import { ComponentManager } from './ComponentManager.js';
 import { EntityManager } from './EntityManager.js';
 import { QueryManager } from './QueryManager.js';
 
+interface WorldOptions {
+	entityCapacity?: number;
+	checksOn?: boolean;
+	deferredEntityUpdates?: boolean;
+}
+
 export class World {
 	public entityManager!: EntityManager;
-	public queryManager: QueryManager = new QueryManager();
+	public queryManager!: QueryManager;
 	public componentManager!: ComponentManager;
 	private systems: System[] = [];
 	public entityPrototype: EntityConstructor = Entity;
 
-	constructor(entityCapacity: number = 1000) {
+	constructor({
+		entityCapacity = 1000,
+		checksOn = true,
+		deferredEntityUpdates = false,
+	}: WorldOptions = {}) {
 		this.componentManager = new ComponentManager(entityCapacity);
+		this.queryManager = new QueryManager(deferredEntityUpdates);
 		this.entityManager = new EntityManager(
 			this.entityPrototype,
 			this.queryManager,
 			this.componentManager,
 		);
+		toggleChecks(checksOn);
 	}
 
 	registerComponent(componentClass: ComponentConstructor): World {
@@ -36,9 +49,11 @@ export class World {
 		systemClass: SystemConstructor<T>,
 		priority?: number,
 	): World {
-		if (this.systems.some((system) => system instanceof systemClass)) {
-			throw new Error('System already registered');
-		}
+		assertCondition(
+			!this.systems.some((system) => system instanceof systemClass),
+			ErrorMessages.SystemAlreadyRegistered,
+			systemClass,
+		);
 
 		const queries: { [key: string]: Query } = {};
 
@@ -82,6 +97,7 @@ export class World {
 				system.update(delta, time);
 			}
 		});
+		this.queryManager.deferredUpdate();
 	}
 
 	getSystem<T extends System>(
