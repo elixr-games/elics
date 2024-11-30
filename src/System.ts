@@ -4,52 +4,23 @@ import { EntityLike } from './Entity.js';
 import { QueryManager } from './QueryManager.js';
 import { World } from './World.js';
 
-export const PRIVATE = Symbol('@elics/system');
-
 export class System {
 	static isSystem: true = true;
 	static queries: {
 		[key: string]: QueryConfig;
 	} = {};
 
-	[PRIVATE]: {
-		world: World;
-		queryManager: QueryManager;
-		isPaused: boolean;
-		priority: number;
-		queries: { [key: string]: Query };
-	} = {
-		world: undefined!,
-		queryManager: undefined!,
-		isPaused: false,
-		priority: 0,
-		queries: undefined!,
-	};
+	public isPaused: boolean = false;
+	public queries!: { [key: string]: Query };
 
-	constructor(world: World, queryManager: QueryManager, priority: number = 0) {
-		this[PRIVATE].world = world;
-		this[PRIVATE].queryManager = queryManager;
-		this[PRIVATE].priority = priority;
-	}
-
-	get world(): World {
-		return this[PRIVATE].world;
-	}
-
-	get isPaused(): boolean {
-		return this[PRIVATE].isPaused;
-	}
-
-	get queries(): { [key: string]: Query } {
-		return this[PRIVATE].queries;
-	}
-
-	get priority(): number {
-		return this[PRIVATE].priority;
-	}
+	constructor(
+		public readonly world: World,
+		private queryManager: QueryManager,
+		public priority: number = 0,
+	) {}
 
 	getEntities(query: Query): EntityLike[] {
-		return this[PRIVATE].queryManager.getEntities(query);
+		return this.queryManager.getEntities(query);
 	}
 
 	init(): void {
@@ -61,11 +32,11 @@ export class System {
 	}
 
 	play(): void {
-		this[PRIVATE].isPaused = false;
+		this.isPaused = false;
 	}
 
 	stop(): void {
-		this[PRIVATE].isPaused = true;
+		this.isPaused = true;
 	}
 }
 

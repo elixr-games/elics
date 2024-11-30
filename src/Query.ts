@@ -1,47 +1,27 @@
-import { Component, ComponentConstructor, ComponentMask } from './Component.js';
+import type { ComponentConstructor, ComponentMask } from './Component.js';
 
 import BitSet from 'bitset';
-import { EntityLike } from './Entity.js';
+import type { EntityLike } from './Entity.js';
 
-export const PRIVATE = Symbol('@elics/query');
-
-export type QueryConfig<T extends Component = Component> = {
-	required: ComponentConstructor<T>[];
-	excluded?: ComponentConstructor<T>[];
+export type QueryConfig = {
+	required: ComponentConstructor[];
+	excluded?: ComponentConstructor[];
 };
 
 export class Query {
-	[PRIVATE]: {
-		requiredMask: ComponentMask;
-		excludedMask: ComponentMask;
-		queryId: string;
-	};
-
 	constructor(
-		requiredMask: ComponentMask,
-		excludedMask: ComponentMask,
-		queryId: string,
-	) {
-		this[PRIVATE] = {
-			requiredMask,
-			excludedMask,
-			queryId,
-		};
-	}
+		private requiredMask: ComponentMask,
+		private excludedMask: ComponentMask,
+		public queryId: string,
+	) {}
 
 	matches(entity: EntityLike) {
 		const hasRequired = entity.bitmask
-			.and(this[PRIVATE].requiredMask)
-			.equals(this[PRIVATE].requiredMask);
-		const hasExcluded = !entity.bitmask
-			.and(this[PRIVATE].excludedMask)
-			.isEmpty();
+			.and(this.requiredMask)
+			.equals(this.requiredMask);
+		const hasExcluded = !entity.bitmask.and(this.excludedMask).isEmpty();
 
 		return hasRequired && !hasExcluded;
-	}
-
-	get queryId() {
-		return this[PRIVATE].queryId;
 	}
 
 	static generateQueryInfo(queryConfig: QueryConfig) {

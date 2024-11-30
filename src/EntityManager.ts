@@ -1,35 +1,29 @@
-import { PRIVATE as WORLD_PRIVATE, World } from './World.js';
+import type { EntityConstructor, EntityLike } from './Entity.js';
 
-import { EntityLike } from './Entity.js';
-
-export const PRIVATE = Symbol('@elics/entity-manager');
+import type { ComponentManager } from './ComponentManager.js';
+import type { QueryManager } from './QueryManager.js';
 
 export class EntityManager {
-	[PRIVATE]: {
-		world: World;
-		pool: EntityLike[];
-		entityIndex: number;
-	} = {
-		world: undefined!,
-		pool: [],
-		entityIndex: 0,
-	};
+	pool: EntityLike[] = [];
+	private entityIndex = 0;
 
-	constructor(world: World) {
-		this[PRIVATE].world = world;
-	}
+	constructor(
+		public entityPrototype: EntityConstructor,
+		private queryManager: QueryManager,
+		private componentManager: ComponentManager,
+	) {}
 
 	requestEntityInstance(): EntityLike {
 		let entity;
-		if (this[PRIVATE].pool.length > 0) {
-			entity = this[PRIVATE].pool.pop()!;
+		if (this.pool.length > 0) {
+			entity = this.pool.pop()!;
 			entity.active = true;
 		} else {
-			const entityPrototype =
-				this[PRIVATE].world[WORLD_PRIVATE].entityPrototype;
-			entity = new entityPrototype(
-				this[PRIVATE].world,
-				this[PRIVATE].entityIndex++,
+			entity = new this.entityPrototype(
+				this,
+				this.queryManager,
+				this.componentManager,
+				this.entityIndex++,
 			);
 		}
 
@@ -37,6 +31,6 @@ export class EntityManager {
 	}
 
 	releaseEntityInstance(entity: EntityLike): void {
-		this[PRIVATE].pool.push(entity);
+		this.pool.push(entity);
 	}
 }
