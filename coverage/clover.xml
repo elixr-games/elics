@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1733084891770" clover="3.2.0">
-  <project timestamp="1733084891770" name="All files">
+<coverage generated="1733086135708" clover="3.2.0">
+  <project timestamp="1733086135708" name="All files">
     <metrics statements="225" coveredstatements="209" conditionals="70" coveredconditionals="64" methods="62" coveredmethods="50" elements="357" coveredelements="323" complexity="0" loc="225" ncloc="225" packages="1" files="10" classes="10"/>
     <file name="Checks.ts" path="/Users/felixz/Projects/elics/src/Checks.ts">
       <metrics statements="14" coveredstatements="13" conditionals="5" coveredconditionals="4" methods="3" coveredmethods="3"/>

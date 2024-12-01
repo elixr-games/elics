@@ -10,6 +10,8 @@
 		"lib"
 	],
 	"scripts": {
+		"generate:version": "node scripts/generate-version.js",
+		"prebuild": "npm run generate:version",
 		"clean": "rimraf ./lib ./build",
 		"build:ts": "tsc",
 		"build:rollup": "rollup -c",

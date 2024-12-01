@@ -1,3 +1,4 @@
+import { VERSION } from '../../src/Version';
 import { defineConfig } from 'vitepress';
 
 // https://vitepress.dev/reference/site-config
@@ -13,7 +14,7 @@ export default defineConfig({
 			{ text: 'Guide', link: '/getting-started' },
 			{ text: 'Docs', link: '/architecture/overview ' },
 			{
-				text: 'v0.1.5',
+				text: `v${VERSION}`,
 				items: [
 					{ text: 'NPM', link: 'https://www.npmjs.com/package/elics' },
 					{
