@@ -30,8 +30,6 @@ export interface EntityLike {
 	destroy(): void;
 }
 
-export const PRIVATE = Symbol('@elics/entity');
-
 export class Entity {
 	public bitmask: ComponentMask = new BitSet();
 	public active = true;
@@ -62,10 +60,11 @@ export class Entity {
 			initialData,
 		);
 		this.queryManager.updateEntity(this);
+		componentClass.onAttach(this.index);
 		return this;
 	}
 
-	removeComponent(componentClass: ComponentConstructor): void {
+	removeComponent(componentClass: ComponentConstructor): this {
 		assertCondition(this.active, ErrorMessages.ModifyDestroyedEntity, this);
 		assertCondition(
 			componentClass.bitmask !== null,
@@ -74,6 +73,8 @@ export class Entity {
 		);
 		this.bitmask = this.bitmask.andNot(componentClass.bitmask!);
 		this.queryManager.updateEntity(this);
+		componentClass.onDetach(this.index);
+		return this;
 	}
 
 	hasComponent(componentClass: ComponentConstructor): boolean {
@@ -83,6 +84,13 @@ export class Entity {
 			componentClass,
 		);
 		return !this.bitmask.and(componentClass.bitmask!).isEmpty();
+	}
+
+	getComponents(): ComponentConstructor[] {
+		const bitArray = this.bitmask.toArray();
+		return bitArray.map(
+			(typeId) => this.componentManager.getComponentByTypeId(typeId)!,
+		);
 	}
 
 	getValue(componentClass: ComponentConstructor, key: string): any {
@@ -119,8 +127,12 @@ export class Entity {
 		assertCondition(this.active, ErrorMessages.ModifyDestroyedEntity, this);
 		this.entityManager.releaseEntityInstance(this);
 		this.active = false;
+		const bitArray = this.bitmask.toArray();
+		for (const typeId of bitArray) {
+			this.componentManager.getComponentByTypeId(typeId)!.onDetach(this.index);
+		}
 		this.bitmask = new BitSet();
-		this.queryManager.updateEntity(this);
+		this.queryManager.resetEntity(this);
 	}
 }
 

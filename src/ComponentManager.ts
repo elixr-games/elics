@@ -1,10 +1,9 @@
 import BitSet from 'bitset';
 import type { ComponentConstructor } from './Component.js';
 
-export const PRIVATE = Symbol('@elics/component-manager');
-
 export class ComponentManager {
 	private nextComponentTypeId = 0;
+	private componentsByTypeId: ComponentConstructor[] = [];
 
 	constructor(private entityCapacity: number) {}
 
@@ -12,7 +11,9 @@ export class ComponentManager {
 		const typeId = this.nextComponentTypeId++;
 		componentClass.bitmask = new BitSet();
 		componentClass.bitmask.set(typeId, 1);
+		componentClass.typeId = typeId;
 		componentClass.initializeStorage(this.entityCapacity);
+		this.componentsByTypeId[typeId] = componentClass;
 	}
 
 	attachComponentToEntity(
@@ -21,5 +22,13 @@ export class ComponentManager {
 		initialData: { [key: string]: any } = {},
 	): void {
 		componentClass.assignInitialData(entityIndex, initialData);
+	}
+
+	getComponentByTypeId(typeId: number): ComponentConstructor | undefined {
+		return this.componentsByTypeId[typeId];
+	}
+
+	getMaxComponentTypeId(): number {
+		return this.nextComponentTypeId - 1;
 	}
 }

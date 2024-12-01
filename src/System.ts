@@ -19,6 +19,10 @@ export class System {
 		public priority: number = 0,
 	) {}
 
+	get globals() {
+		return this.world.globals;
+	}
+
 	getEntities(query: Query): EntityLike[] {
 		return this.queryManager.getEntities(query);
 	}

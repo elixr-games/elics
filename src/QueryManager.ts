@@ -1,7 +1,7 @@
 import { ErrorMessages, assertCondition } from './Checks.js';
 import { Query, QueryConfig } from './Query.js';
 
-import { EntityLike } from './Entity.js';
+import type { EntityLike } from './Entity.js';
 
 export class QueryManager {
 	private queries: Map<string, Query> = new Map();
@@ -41,6 +41,10 @@ export class QueryManager {
 		} else {
 			this.entitiesToUpdate.add(entity);
 		}
+	}
+
+	resetEntity(entity: EntityLike): void {
+		this.results.forEach((entities) => entities.delete(entity));
 	}
 
 	deferredUpdate(): void {

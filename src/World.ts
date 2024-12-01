@@ -8,10 +8,10 @@ import { ComponentManager } from './ComponentManager.js';
 import { EntityManager } from './EntityManager.js';
 import { QueryManager } from './QueryManager.js';
 
-interface WorldOptions {
-	entityCapacity?: number;
-	checksOn?: boolean;
-	deferredEntityUpdates?: boolean;
+export interface WorldOptions {
+	entityCapacity: number;
+	checksOn: boolean;
+	deferredEntityUpdates: boolean;
 }
 
 export class World {
@@ -20,12 +20,13 @@ export class World {
 	public componentManager!: ComponentManager;
 	private systems: System[] = [];
 	public entityPrototype: EntityConstructor = Entity;
+	readonly globals: { [key: string]: any } = {};
 
 	constructor({
 		entityCapacity = 1000,
 		checksOn = true,
 		deferredEntityUpdates = false,
-	}: WorldOptions = {}) {
+	}: Partial<WorldOptions> = {}) {
 		this.componentManager = new ComponentManager(entityCapacity);
 		this.queryManager = new QueryManager(deferredEntityUpdates);
 		this.entityManager = new EntityManager(

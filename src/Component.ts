@@ -5,12 +5,13 @@ import BitSet from 'bitset';
 
 export type ComponentMask = BitSet;
 
-export const PRIVATE = Symbol('@elics/component');
-
 export class Component {
 	static schema: { [key: string]: { type: Types; default: any } } = {};
 	static data: { [key: string]: TypedArray | Array<any> } = {};
 	static bitmask: ComponentMask | null = null;
+	static typeId: number = -1;
+	static onDetach: (index: number) => void = () => {};
+	static onAttach: (index: number) => void = () => {};
 
 	static initializeStorage(entityCapacity: number): void {
 		const schema = this.schema;
@@ -48,9 +49,12 @@ export class Component {
 }
 
 export type ComponentConstructor = {
-	bitmask: ComponentMask | null;
 	schema: { [key: string]: { type: Types; default: any } };
 	data: { [key: string]: TypedArray | Array<any> };
+	bitmask: ComponentMask | null;
+	typeId: number;
+	onDetach: (index: number) => void;
+	onAttach: (index: number) => void;
 	initializeStorage: (entityCapacity: number) => void;
 	assignInitialData: (
 		index: number,
