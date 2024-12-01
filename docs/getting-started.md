@@ -49,15 +49,21 @@ Components in EliCS are versatile classes. You do not need to specify a schema f
 
 ```typescript
 class Position extends Component {
-	static defaults = { x: 0, y: 0, z: 0 };
+	static schema = {
+		value: { type: Types.Vec3, default: [0, 0, 0] },
+	};
 }
 
 class Velocity extends Component {
-	static defaults = { x: 0, y: 0, z: 0 };
+	static schema = {
+		value: { type: Types.Vec3, default: [0, 0, 0] },
+	};
 }
 
 class Health extends Component {
-	static defaults = { value: 100 };
+	static schema = {
+		value: { type: Types.Float32, default: 100 },
+	};
 }
 ```
 
@@ -76,7 +82,7 @@ Instantiate entities and attach components:
 
 ```typescript
 const entity = world.createEntity();
-entity.addComponent(Position, { x: 10, y: 20, z: 30 });
+entity.addComponent(Position, { value: [10, 20, 30] });
 entity.addComponent(Velocity);
 entity.addComponent(Health);
 ```

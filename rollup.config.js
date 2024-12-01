@@ -3,20 +3,20 @@ import resolve from '@rollup/plugin-node-resolve';
 import terser from '@rollup/plugin-terser';
 
 export default {
-	input: 'lib/index.js',
+	input: 'lib/EliCS.js',
 	plugins: [resolve(), commonjs()],
 	output: [
 		// UMD build
 		{
 			file: 'build/elics.js',
 			format: 'umd',
-			name: 'Ratk',
+			name: 'EliCS',
 		},
 		// Minified UMD build
 		{
 			file: 'build/elics.min.js',
 			format: 'umd',
-			name: 'Ratk',
+			name: 'EliCS',
 			plugins: [terser()],
 		},
 		// ES module build

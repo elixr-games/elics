@@ -1,3 +1,5 @@
+// integration.test.ts
+
 import { Component } from '../src/Component';
 import { System } from '../src/System';
 import { Types } from '../src/Types';
@@ -10,6 +12,7 @@ class PositionComponent extends Component {
 		y: { type: Types.Float32, default: 0 },
 	};
 }
+
 class VelocityComponent extends Component {
 	static schema = {
 		velocity: { type: Types.Vec2, default: [0, 0] },
@@ -224,6 +227,43 @@ describe('EliCS Integration Tests', () => {
 			entity.setValue(CustomDataComponent, 'data', newData);
 
 			expect(entity.getValue(CustomDataComponent, 'data')).toEqual(newData);
+		});
+
+		test('onAttach and onDetach hooks', () => {
+			// Create a component class that overrides onAttach and onDetach
+			class HookComponent extends Component {
+				static schema = {
+					onAttachCalled: { type: Types.Boolean, default: false },
+					onDetachCalled: { type: Types.Boolean, default: false },
+				};
+				static onAttach(index: number) {
+					HookComponent.data.onAttachCalled[index] = true;
+				}
+				static onDetach(index: number) {
+					HookComponent.data.onDetachCalled[index] = true;
+				}
+			}
+
+			world.registerComponent(HookComponent);
+
+			const entity = world.createEntity();
+
+			// Add the component
+			entity.addComponent(HookComponent);
+			expect(HookComponent.data.onAttachCalled[entity.index]).toBeTruthy();
+			expect(HookComponent.data.onDetachCalled[entity.index]).toBeFalsy();
+
+			// Remove the component
+			entity.removeComponent(HookComponent);
+			expect(HookComponent.data.onDetachCalled[entity.index]).toBeTruthy();
+
+			// reset the hook data
+			HookComponent.data.onDetachCalled[entity.index] = false;
+			entity.addComponent(HookComponent);
+			entity.destroy();
+
+			// onDetach should have been called due to entity destruction
+			expect(HookComponent.data.onDetachCalled[entity.index]).toBeTruthy();
 		});
 	});
 

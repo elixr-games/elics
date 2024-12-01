@@ -8,46 +8,45 @@ The `Query` class in EliCS is a fundamental tool in the Entity-Component-System 
 
 ## Features
 
-- **Efficient Querying**: Utilizes component bitmasks for rapid query evaluation.
-- **Dynamic Entity Management**: Automatically updates query results as entities gain or lose components.
+- **Efficient Querying**: Uses component bitmasks for rapid query evaluation.
+- **Dynamic Updates**: Automatically updates query results as entities gain or lose components.
+- **Flexible Configuration**: Supports required and excluded components for precise control over entity selection.
 
 ## Querying Mechanism
 
-The querying mechanism in EliCS leverages bitmasking, a technique that significantly enhances performance, especially in complex or large-scale systems. Each component in EliCS is associated with a unique bitmask, and every entity maintains a composite bitmask representing the sum of its components.
+The querying mechanism in EliCS leverages bitmasking, a high-performance technique for determining entity-component relationships. Each component is associated with a unique bitmask, and entities maintain a composite bitmask representing their current components.
 
 ### Advantages of Bitmasking
 
-- **Efficient Evaluation**: By using bitwise operations on these masks, the system can quickly determine if an entity matches a query without needing to iterate over each component.
-- **Rapid Updates**: As entities gain or lose components, their composite bitmask changes, allowing for instant re-evaluation against existing queries.
-- **Optimized Performance**: This approach minimizes computational overhead, especially in scenarios with a large number of entities and frequent component changes.
+- **Fast Evaluation**: Bitwise operations allow rapid determination of whether an entity matches the query.
+- **Dynamic Adaptation**: Entity bitmask changes automatically propagate to the query results.
+- **Optimized for Scale**: Handles large numbers of entities and frequent component changes with minimal overhead.
 
-Through this efficient querying mechanism, EliCS provides a robust and performant way to manage and interact with entities based on their component makeup, making it ideal for applications requiring dynamic and flexible entity management.
+### Query Registration and Entity Management
 
-### Query Registration and Entity Creation
+In EliCS, queries start tracking entities only after being registered with the `QueryManager`. This ensures that queries reflect the current state of the `World` when registered.
 
-In EliCS, the `QueryManager` starts tracking entities for a particular query configuration only after the query has been registered with it. This behavior is crucial to understand, especially when working with systems and their associated queries.
+#### Query Lifecycle in Systems
 
-#### System Registration and Query Collection
+When systems define queries via `System.queries`, those queries are registered automatically during system initialization. If entities that match the query exist before registration, those entities are not automatically included unless the query is preemptively registered.
 
-When utilizing `System.queries` for auto-registering queries as systems are registered, it is important to avoid creating entities that match a query before the query (and thus the system) is registered. This typically isn't an issue if you register all components and systems before creating entities.
-
-::: warning
-However, if a system (with its queries) needs to be registered later in the execution cycle, it's essential to preemptively register the query configurations with the `QueryManager`. This ensures that when the system is eventually registered, the query has already been collecting the appropriate entities.
+::: tip
+To avoid issues, register all components and systems before creating entities whenever possible.
 :::
 
 #### Query Uniqueness
 
-EliCS treats different query instances with the same configuration (i.e., same required and excluded components) as equivalent. This means that the querying mechanism will function correctly regardless of the specific instance of a query, as long as the configuration matches.
+Queries with identical configurations (same required and excluded components) are treated as equivalent. EliCS ensures consistent behavior regardless of query instance, simplifying query management.
 
 ## Usage
 
 ### Creating and Using a Query in a System
 
-The `Query` class in EliCS allows systems to efficiently select entities based on their component composition. Here's an updated generic example demonstrating how to create and use such a query:
+The `Query` class enables systems to efficiently interact with entities matching specific criteria. Below is an example illustrating the process:
 
 #### Example System
 
-This example illustrates a system that processes entities with `ComponentA` but not `ComponentC`.
+This example processes entities with `ComponentA` but excludes those with `ComponentC`.
 
 ```ts
 import { System, Query, Entity } from 'elics';
@@ -55,7 +54,6 @@ import { ComponentA, ComponentB, ComponentC } from 'your-components';
 
 class GenericSystem extends System {
 	// Define a query for entities with ComponentA but excluding ComponentC
-	// Queries will be automatically constructed when the system is initialized
 	static queries = {
 		entities: { required: [ComponentA], excluded: [ComponentC] },
 	};
@@ -65,68 +63,164 @@ class GenericSystem extends System {
 		const entities = this.getEntities(GenericSystem.queries.entities);
 
 		entities.forEach((entity: Entity) => {
-			const componentA = entity.getComponent(ComponentA);
+			const componentA = entity.getValue(ComponentA, 'key');
 
 			// Example operation: creating a new entity and adding ComponentB
 			const newEntity = this.world.createEntity();
-			newEntity.addComponent(ComponentB);
-			newEntity.getComponent(ComponentB).value = componentA.value;
+			newEntity.addComponent(ComponentB, { key: componentA });
 		});
 	}
 }
 ```
 
-In this example, `GenericSystem` utilizes a query to select entities that have `ComponentA` but do not have `ComponentC`. The `update` method processes these entities directly, as the query ensures they meet the specified component criteria. This setup effectively demonstrates the power and efficiency of using queries in EliCS to manage entity interactions within systems.
+In this example:
+
+- `GenericSystem` uses a query to find entities with `ComponentA` but without `ComponentC`.
+- The `update` method processes matching entities, demonstrating how queries streamline entity management in systems.
+
+### Manual Query Registration
+
+If you need to register a query outside a system:
+
+```ts
+import { QueryManager, QueryConfig } from 'elics';
+
+const queryManager = new QueryManager();
+const myQueryConfig: QueryConfig = {
+	required: [ComponentA],
+	excluded: [ComponentC],
+};
+
+const myQuery = queryManager.registerQuery(myQueryConfig);
+```
+
+This approach is useful for scenarios where queries are needed independently of systems.
 
 ## Constructor
 
-Constructs a new query instance with specified required components and optionally excluded components.
+Constructs a new query instance with specified required and excluded components.
 
 ```ts
-constructor({ required, excluded }: {
-    required: (typeof Component)[],
-    excluded?: (typeof Component)[]
-})
+constructor({ required, excluded }: QueryConfig)
 ```
 
-- **required**: `(typeof Component)[]` - An array of component classes that entities must have to match the query.
-- **excluded**: `(typeof Component)[]` (optional) - An array of component classes that entities must not have to match the query.
+- **required**: `ComponentConstructor[]` - An array of component classes that entities must have to match the query.
+- **excluded**: `ComponentConstructor[]` (optional) - An array of component classes that entities must not have to match the query.
 
 ## Properties
 
+### `requiredMask`
+
+A bitmask representing the required components for the query.
+
+- **Type**: `ComponentMask`
+- **Readonly**
+
+### `excludedMask`
+
+A bitmask representing the excluded components for the query.
+
+- **Type**: `ComponentMask`
+- **Readonly**
+
 ### `queryId`
 
-A unique string identifier generated for each query instance, used internally to manage query results.
+A unique identifier generated for the query, used internally to manage results.
 
 - **Type**: `string`
-- **Readonly**
+- \*\*Readonly
+
+## Methods
+
+### `matches`
+
+Determines whether an entity matches the query's criteria.
+
+```ts
+matches(entity: EntityLike): boolean
+```
+
+- **entity**: `EntityLike` - The entity to evaluate.
+- **Returns**: `boolean` - `true` if the entity matches the query, otherwise `false`.
+
+This method checks if an entity satisfies the required components and does not contain any excluded components by comparing the entity's `bitmask` against the query's `requiredMask` and `excludedMask`.
+
+### `generateQueryInfo`
+
+A static method to create query masks and a unique identifier for a query configuration.
+
+```ts
+static generateQueryInfo(queryConfig: QueryConfig): {
+    requiredMask: ComponentMask;
+    excludedMask: ComponentMask;
+    queryId: string;
+}
+```
+
+- **queryConfig**: `QueryConfig` - Configuration object with `required` and optional `excluded` components.
+- **Returns**: An object containing:
+  - `requiredMask`: A `ComponentMask` representing the required components.
+  - `excludedMask`: A `ComponentMask` representing the excluded components.
+  - `queryId`: A unique string identifier for the query.
+
+This method is used internally to prepare and register queries efficiently.
 
 ## Static Methods
 
 ### `generateQueryId`
 
-Generates a unique identifier for a query based on required and excluded component bitmasks.
+Generates a unique identifier string for a query based on its required and excluded masks.
 
 ```ts
 static generateQueryId(
-    requiredComponents: Set<ComponentMask>,
-    excludedComponents: Set<ComponentMask>
+    requiredMask: ComponentMask,
+    excludedMask: ComponentMask
 ): string
 ```
 
-- **requiredComponents**: `Set<ComponentMask>` - A set of bitmasks representing the required components.
-- **excludedComponents**: `Set<ComponentMask>` (optional) - A set of bitmasks representing the excluded components.
+- **requiredMask**: `ComponentMask` - Bitmask representing the required components.
+- **excludedMask**: `ComponentMask` (optional) - Bitmask representing the excluded components.
+- **Returns**: `string` - A unique identifier for the query.
 
-### `matchesQuery`
+This method ensures that queries with identical configurations share the same identifier.
 
-Determines if an entity's component composition matches the specified query.
+## Integration with `QueryManager`
+
+The `QueryManager` class handles the lifecycle of queries, including registration, updates, and deferred processing. It ensures that all queries remain consistent with the current state of the `World`.
+
+### Registering a Query
+
+Queries can be registered through the `QueryManager`:
 
 ```ts
-static matchesQuery(
-    queryId: string,
-    mask: ComponentMask
-): boolean
+const queryConfig = {
+	required: [ComponentA, ComponentB],
+	excluded: [ComponentC],
+};
+
+const myQuery = queryManager.registerQuery(queryConfig);
 ```
 
-- **queryId**: `string` - The unique identifier of the query.
-- **mask**: `ComponentMask` - The component bitmask of an entity.
+### Updating Queries
+
+When entities gain or lose components, their bitmask changes, and the `QueryManager` ensures query results are updated dynamically. Deferred updates can be triggered manually:
+
+```ts
+queryManager.deferredUpdate();
+```
+
+### Accessing Query Results
+
+Entities matching a query can be retrieved via `QueryManager`:
+
+```ts
+const matchingEntities = queryManager.getEntities(myQuery);
+```
+
+This method returns an array of entities that satisfy the query.
+
+## Best Practices
+
+1. **Pre-Register Queries**: Register queries before creating entities to ensure they track all relevant entities from the start.
+2. **Use Deferred Updates**: For bulk operations, enable deferred entity updates to minimize performance overhead.
+3. **Avoid Redundant Queries**: Reuse existing queries with the same configuration to reduce memory and computation costs.

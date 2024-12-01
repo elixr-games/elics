@@ -4,113 +4,142 @@ outline: deep
 
 # Component Class
 
-The `Component` class in EliCS is a fundamental part of the ECS (Entity-Component-System) architecture. Components are modular and reusable data containers that attach to entities, defining their characteristics and behaviors.
+The `Component` class in EliCS is a core element of the ECS (Entity-Component-System) architecture. Components define the data structure for specific aspects of entities and are stored in highly optimized structures to maximize performance.
 
 ## Features
 
-- **Modularity**: Designed to be reusable and interchangeable, components allow for flexible entity configuration.
-- **Data Encapsulation**: Each component encapsulates data relevant to a specific aspect of an entity.
+- **Typed Data Storage**: Component data is stored in `TypedArray` or similar optimized structures for memory efficiency and performance.
+- **Schema Definition**: Developers define a schema for each component type, enforcing data structure and types.
+- **Lifecycle Hooks**: Support for `onAttach` and `onDetach` hooks enables custom logic when components are added to or removed from entities.
 
-## Component Pooling
+## Supported Types
 
-In EliCS, components are managed efficiently through a component pooling system, similar to entity pooling, ensuring optimized performance and resource utilization.
+EliCS supports various data types for component properties. These types determine how data is stored and accessed, prioritizing `TypedArray` for numerical and vector data for performance-critical applications.
 
-### How It Works
+### Type Mapping
 
-- **Component Attachment**: When a component is added to an entity, the system checks for available instances in the pool.
-- **Reusing Components**: If there are reusable components in the pool, they are reactivated and attached to the entity, bypassing the need to create a new instance.
-- **New Component Instances**: If no reusable instances are available, a new component instance is created.
-- **Component Detachment**: When a component is removed from an entity, it is not immediately discarded. Instead, it is returned to the component pool for future reuse.
+| **Type**        | **Storage**    | **Description**                                                  |
+| --------------- | -------------- | ---------------------------------------------------------------- |
+| `Types.Int8`    | `Int8Array`    | Signed 8-bit integers.                                           |
+| `Types.Int16`   | `Int16Array`   | Signed 16-bit integers.                                          |
+| `Types.Float32` | `Float32Array` | Single-precision 32-bit floating-point numbers.                  |
+| `Types.Float64` | `Float64Array` | Double-precision 64-bit floating-point numbers.                  |
+| `Types.Boolean` | `Uint8Array`   | Booleans stored as 8-bit integers (`0` for false, `1` for true). |
+| `Types.Vec2`    | `Float32Array` | Two-component vector stored as two consecutive floats.           |
+| `Types.Vec3`    | `Float32Array` | Three-component vector stored as three consecutive floats.       |
+| `Types.Vec4`    | `Float32Array` | Four-component vector stored as four consecutive floats.         |
+| `Types.String`  | `Array`        | JavaScript strings.                                              |
+| `Types.Object`  | `Array`        | Arbitrary JavaScript objects.                                    |
 
-This approach significantly reduces the overhead associated with frequently adding and removing components from entities, which is particularly beneficial in applications with dynamic entity configurations.
+### Example: `EnemyComponent`
+
+Here’s an example component, `EnemyComponent`, that uses multiple supported types to define an enemy's attributes:
+
+```ts
+import { Component, Types } from 'elics';
+
+class EnemyComponent extends Component {
+	static schema = {
+		isAlive: { type: Types.Boolean, default: true },
+		position: { type: Types.Vec3, default: [0, 0, 0] },
+		health: { type: Types.Float32, default: 100 },
+		uuid: { type: Types.String, default: '' },
+		object3D: { type: Types.Object, default: null },
+	};
+
+	static onAttach(index: number): void {
+		console.log(`EnemyComponent attached to entity at index ${index}`);
+	}
+
+	static onDetach(index: number): void {
+		console.log(`EnemyComponent detached from entity at index ${index}`);
+	}
+}
+```
+
+This example demonstrates the flexibility of EliCS to handle a variety of data types while ensuring efficient storage and access.
+
+## Component Data Storage
+
+In EliCS, component data is centralized and managed based on the schema. This ensures consistent structure, efficient memory allocation, and fast access.
+
+### Data Initialization
+
+When `EnemyComponent` is registered with the `World`, its schema allocates storage arrays:
+
+- `isAlive`: Stored in a `Uint8Array` (`1` for `true`, `0` for `false`).
+- `position`: Stored as a `Float32Array` with three consecutive values for each entity.
+- `health`: Stored in a `Float32Array` as a single floating-point number.
+- `uuid`: Stored in a regular array for flexibility.
+- `object3D`: Stored in a regular array to hold arbitrary JavaScript objects.
+
+### Accessing Data
+
+Component data is stored in arrays based on the schema, and is accessed by entity index:
+
+```ts
+const index = entity.index;
+
+// Accessing values
+const isAlive = EnemyComponent.data['isAlive'][index];
+const position = EnemyComponent.data['position'].subarray(
+	index * 3,
+	index * 3 + 3,
+);
+const health = EnemyComponent.data['health'][index];
+const uuid = EnemyComponent.data['uuid'][index];
+const object3D = EnemyComponent.data['object3D'][index];
+
+// Modifying values
+EnemyComponent.data['health'][index] = 75;
+EnemyComponent.data['position'].set([5, 10, 15], index * 3);
+EnemyComponent.data['isAlive'][index] = 0; // Mark entity as not alive
+```
+
+Accessing data directly from the component's storage arrays ensures optimal performance and memory efficiency. However, you can also use the shorthand methods (`getValue`, `setValue`, `getVectorView`) provided by the `Entity` class for convenience.
+
+## Lifecycle Hooks
+
+### `onAttach`
+
+Called when the component is added to an entity. Use this for initialization or triggering related logic.
+
+```ts
+static onAttach(index: number): void {
+	console.log(`EnemyComponent attached to entity at index ${index}`);
+}
+```
+
+### `onDetach`
+
+Called when the component is removed from an entity. Use this for cleanup or related logic.
+
+```ts
+static onDetach(index: number): void {
+	console.log(`EnemyComponent detached from entity at index ${index}`);
+}
+```
 
 ## Usage
 
-### Data Storage
+### Attaching Components
 
-In EliCS, components can be customized to store any type of data or functionality. Unlike traditional ECS implementations that enforce strict schemas, EliCS allows developers to define custom properties and methods within components. This flexibility speeds up development and allows for creative solutions.
-
-#### Defining Custom Properties and Methods
-
-Developers can add any properties or methods to their component classes. For example:
+Attach `EnemyComponent` to an entity using the `addComponent` method. Initial data can override defaults:
 
 ```ts
-class HealthComponent extends Component {
-	health: number;
-	maxHealth: number;
-
-	constructor() {
-		super();
-		this.health = 100;
-		this.maxHealth = 100;
-	}
-
-	takeDamage(amount: number) {
-		this.health -= amount;
-	}
-}
-```
-
-### Implementing the Reset Method
-
-A critical requirement for components in EliCS is the implementation of a `reset` method. This method is called when the component instance is recycled, ensuring that the component's state is cleaned up properly.
-
-```ts
-class HealthComponent extends Component {
-	// ... other properties and methods ...
-
-	reset() {
-		this.health = this.maxHealth;
-	}
-}
-```
-
-This method should reset the component to its initial state, ready for reuse without any lingering data from its previous usage.
-
-### Creating and Attaching Components
-
-Components are typically created and attached to entities using the `addComponent` method of the `Entity` class.
-
-```ts
-import { YourComponent } from 'your-components';
-
-// Attaching a component to an entity
-entity.addComponent(YourComponent, {
-	/* initial data */
+entity.addComponent(EnemyComponent, {
+	isAlive: 1,
+	position: [10, 20, 30],
+	health: 50,
+	uuid: 'abc123',
+	object3D: someObject3D,
 });
 ```
 
 ### Detaching Components
 
-Components can be removed from entities using the `removeComponent` method.
+Remove `EnemyComponent` using the `removeComponent` method:
 
 ```ts
-// Removing a component from an entity
-entity.removeComponent(YourComponent);
-```
-
-## Properties
-
-### `bitmask`
-
-A static property that acts as a unique identifier for each component type.
-
-- **Type**: `ComponentMask`
-
-### `defaults`
-
-A static property that provides default values for new instances of the `Component` class. This property is designed to be overridden in derived classes to specify custom default values for each specific component type. When a new instance of `Component` or a derived class is created, the values in `defaults` are used to initialize the instance's properties, ensuring that all instances have a consistent set of default values.
-
-- **Type**: `{ [key: string]: any }`
-
-## Methods
-
-### `reset`
-
-A method used to reset the component to its initial state, typically called when the component is returned to the pool.
-
-```ts
-public reset(): void {
-	// Implementation details
-}
+entity.removeComponent(EnemyComponent);
 ```

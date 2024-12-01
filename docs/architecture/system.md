@@ -4,79 +4,101 @@ outline: deep
 
 # System Class
 
-The `System` class in EliCS is essential for implementing the logic that operates on entities and their components in the Entity-Component-System architecture. It enables efficient execution and management of application logic.
+The `System` class in EliCS is essential for implementing application logic in the Entity-Component-System architecture. Systems define how entities and their components interact, enabling efficient and structured processing.
 
 ## Features
 
-- **Lifecycle Management**: Offers functionality to control the execution state of the system, such as playing or stopping.
-- **Execution Priority**: Systems can be prioritized for execution order, where systems with lower priority numbers are executed first.
-- **Entity Processing**: Acts as a framework where developers can define custom logic to query and process entities based on their components.
+- **Entity Querying**: Automatically processes entities that match specified component criteria through queries.
+- **Lifecycle Management**: Provides methods to control execution state, such as starting, pausing, or stopping systems.
+- **Execution Priority**: Supports prioritization of systems, ensuring proper execution order based on dependencies or criticality.
+- **Initialization and Updates**: Includes hooks for initialization and per-frame update logic.
 
-## Usage
+## Example: `EnemySystem`
 
-### Defining a System
+To demonstrate the usage of the `System` class, consider `EnemySystem`, which processes entities with an `EnemyComponent`:
 
 ```ts
-import { System, Query, Entity } from 'elics';
+import { System, Entity } from 'elics';
+import { EnemyComponent } from './EnemyComponent';
 
-class YourSystem extends System {
+class EnemySystem extends System {
 	static queries = {
-		yourQuery: {
-			required: [
-				/* required component types */
-			],
-			excluded: [
-				/* optional excluded component types */
-			],
+		enemies: {
+			required: [EnemyComponent],
 		},
 	};
 
 	init() {
-		// Initialization logic
+		console.log('EnemySystem initialized');
 	}
 
 	update(delta: number, time: number) {
-		// Update logic
-		const entities = this.getEntities(YourSystem.queries.yourQuery);
-		// Process entities
+		const enemies = this.getEntities(EnemySystem.queries.enemies);
+		enemies.forEach((enemy: Entity) => {
+			const health = EnemyComponent.data['health'][enemy.index];
+			if (health <= 0) {
+				EnemyComponent.data['isAlive'][enemy.index] = 0;
+				console.log(`Enemy at index ${enemy.index} is dead.`);
+			}
+		});
 	}
 }
-
-const world = new World();
-world.registerSystem(YourSystem);
 ```
 
-### Controlling System Lifecycle
+### Key Features Demonstrated:
+
+1. **Query Definition**: Processes entities with `EnemyComponent`.
+2. **Initialization**: Executes custom logic during system registration.
+3. **Per-Frame Updates**: Iterates through matching entities and processes their data.
+
+## System Lifecycle
+
+### System Initialization
+
+Systems are initialized when registered with the `World`. The `init` method is automatically invoked at this stage.
 
 ```ts
-const yourSystemInstance = world.getSystem(YourSystem);
-yourSystemInstance.play();
-yourSystemInstance.stop();
+const world = new World();
+world.registerSystem(EnemySystem);
+```
+
+### Controlling Execution
+
+Control the execution state of systems using `play` and `stop` methods:
+
+```ts
+const enemySystem = world.getSystem(EnemySystem);
+
+// Resume execution
+enemySystem.play();
+
+// Pause execution
+enemySystem.stop();
 ```
 
 ## Properties
 
 ### `world`
 
-(Readonly) Access to the world instance.
+(Readonly) Provides access to the `World` instance the system is registered with.
 
 - **Type**: `World`
 
 ### `isPaused`
 
-(Readonly) Indicates whether the system is currently paused.
+Indicates whether the system is currently paused.
 
 - **Type**: `boolean`
 
 ### `queries`
 
-(Readonly) Queries registered in the system.
+A mapping of query names to `Query` objects, automatically registered during initialization.
 
 - **Type**: `{ [key: string]: Query }`
 
 ### `priority`
 
-Execution priority of the system. Lower values indicate higher priority.
+The execution priority of the system. Higher values indicate higher priority, ensuring earlier execution during the update cycle.
 
 - **Type**: `number`
 
@@ -84,46 +106,110 @@ Execution priority of the system. Lower values indicate higher priority.
 
 ### `getEntities`
 
-Retrieves entities that match a given query.
+Retrieves entities that match a specified query.
 
 ```ts
 getEntities(query: Query): Entity[]
 ```
 
-- **query**: `Query` - The query to match entities against.
-- **Returns**: `Entity[]` - An array of matching entities.
+- **query**: `Query` - The query used to filter entities.
+- **Returns**: `Entity[]` - An array of entities matching the query.
 
 ### `init`
 
-Initialization method for the system, executed immediately after the system is registered.
+Called once after the system is registered with the `World`. This method is intended for setup or initialization logic.
 
 ```ts
 init(): void
 ```
 
+Example:
+
+```ts
+init() {
+	console.log('Initializing EnemySystem');
+}
+```
+
 ### `update`
 
-The update method is called each frame and is intended to be overridden with custom logic.
+Called every frame while the system is active. This method should be overridden to implement custom logic.
 
 ```ts
 update(delta: number, time: number): void
 ```
 
-- **delta**: `number` - Delta time since the last update.
-- **time**: `number` - Total time elapsed since the start of the application.
+- **delta**: `number` - Time elapsed since the last frame, useful for time-based calculations.
+- **time**: `number` - Total time since the application started.
+
+Example:
+
+```ts
+update(delta: number, time: number) {
+	const enemies = this.getEntities(EnemySystem.queries.enemies);
+	enemies.forEach((enemy: Entity) => {
+		console.log(`Updating enemy at index ${enemy.index}`);
+	});
+}
+```
 
 ### `play`
 
-Resumes the execution of the system.
+Resumes the system's execution if it is paused.
 
 ```ts
 play(): void
 ```
 
+Example:
+
+```ts
+const system = world.getSystem(EnemySystem);
+system.play();
+```
+
 ### `stop`
 
-Pauses the execution of the system.
+Pauses the system's execution.
 
 ```ts
 stop(): void
+```
+
+Example:
+
+```ts
+const system = world.getSystem(EnemySystem);
+system.stop();
+```
+
+## Usage in Complex Scenarios
+
+### Multiple Queries
+
+A system can define multiple queries to process different types of entities. For example:
+
+```ts
+class CombatSystem extends System {
+	static queries = {
+		enemies: { required: [EnemyComponent] },
+		players: { required: [PlayerComponent] },
+	};
+
+	update(delta: number, time: number) {
+		const enemies = this.getEntities(CombatSystem.queries.enemies);
+		const players = this.getEntities(CombatSystem.queries.players);
+
+		// Process combat interactions between players and enemies
+	}
+}
+```
+
+### Priority-Based Execution
+
+Assign priorities to ensure critical systems execute first. For example, a physics system might have higher priority than a rendering system:
+
+```ts
+world.registerSystem(PhysicsSystem, 10); // High priority
+world.registerSystem(RenderingSystem, 0); // Low priority
 ```

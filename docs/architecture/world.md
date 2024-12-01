@@ -4,65 +4,96 @@ outline: deep
 
 # World Class
 
-The `World` class in EliCS orchestrates the interactions of entities, components, and systems, central to managing the ECS architecture in web applications.
+The `World` class in EliCS serves as the central manager of the Entity-Component-System (ECS) architecture, orchestrating the interactions between entities, components, and systems.
 
 ## Features
 
-- **Component Registration**: Simplifies the process of registering components for entity construction.
-- **Entity Management**: Facilitates efficient creation and management of entities.
-- **System Integration**: Enables the integration and coordination of systems for implementing application logic.
+- **Component Registration**: Simplifies registering components for structured entity construction.
+- **Entity Management**: Provides efficient creation, pooling, and management of entities.
+- **System Integration**: Coordinates systems for implementing application logic in a prioritized manner.
+- **Query Handling**: Enables advanced filtering of entities based on their component composition.
+
+---
 
 ## Usage
 
 ### Registering a Component
 
-```ts
-import { World, Component } from 'elics';
+Components must be registered with the `World` before they can be used with entities:
 
-class YourComponent extends Component {
-	// Component implementation
+```ts
+import { World, Component, Types } from 'elics';
+
+class PositionComponent extends Component {
+	static schema = {
+		x: { type: Types.Float32, default: 0 },
+		y: { type: Types.Float32, default: 0 },
+		z: { type: Types.Float32, default: 0 },
+	};
 }
 
 const world = new World();
-world.registerComponent(YourComponent);
+world.registerComponent(PositionComponent);
 ```
+
+---
 
 ### Creating an Entity
 
+Entities are created dynamically and can be extended with components:
+
 ```ts
 const entity = world.createEntity();
+entity.addComponent(PositionComponent, { x: 10, y: 20, z: 30 });
 ```
 
+---
+
 ### Registering and Managing Systems
+
+Define systems to process entity logic:
 
 ```ts
 import { System } from 'elics';
 
-class YourSystem extends System {
-	// System implementation
+class MovementSystem extends System {
+	static queries = {
+		movingEntities: { required: [PositionComponent] },
+	};
+
+	update(delta: number) {
+		const entities = this.getEntities(MovementSystem.queries.movingEntities);
+		entities.forEach((entity) => {
+			const position = PositionComponent.data['x'][entity.index];
+			console.log(`Updating entity position: ${position}`);
+		});
+	}
 }
 
-world.registerSystem(YourSystem);
+world.registerSystem(MovementSystem, 1); // Assign priority
 ```
+
+---
 
 ### Chainable Registration
 
-In this example, method chaining allows for a more fluent and concise setup of the world, improving the readability and ease of configuration.
+Method chaining allows for a clean and concise configuration of the world:
 
 ```ts
 const world = new World();
 world
-	.registerComponent(YourComponent)
-	.registerSystem(YourSystem)
+	.registerComponent(PositionComponent)
+	.registerSystem(MovementSystem, 1)
 	.registerQuery({
-		required: [ComponentA],
-		excluded: [ComponentC],
+		required: [PositionComponent],
 	});
 ```
 
+---
+
 ### Updating the World
 
-To be called within your application's main loop:
+The `update` method drives the ECS loop, invoking system updates. Typically called within your application's main loop:
 
 ```ts
 function mainLoop(deltaTime: number) {
@@ -73,98 +104,125 @@ function mainLoop(deltaTime: number) {
 requestAnimationFrame(mainLoop);
 ```
 
+---
+
 ### Accessing Systems
 
+Retrieve instances of registered systems for direct interaction:
+
 ```ts
-const yourSystemInstance = world.getSystem(YourSystem);
+const movementSystem = world.getSystem(MovementSystem);
+movementSystem.play(); // Resume execution
+movementSystem.stop(); // Pause execution
 ```
+
+---
 
 ## Methods
 
 ### `registerComponent`
 
-Registers a new component type in the world and returns the world instance for method chaining.
+Registers a new component type and returns the `World` instance for chaining.
 
 ```ts
 registerComponent<T extends typeof Component>(componentClass: T): World
 ```
 
-- **componentClass** (`T` extends `typeof Component`): Class of the component to be registered.
-- **Returns**: `World` - The world instance for chaining.
+- **componentClass**: The class of the component to register.
+- **Returns**: `World` - The `World` instance for chaining.
+
+---
 
 ### `createEntity`
 
-Creates and returns a new entity in the world.
+Creates and returns a new entity instance.
 
 ```ts
-createEntity(): Entity
+createEntity(): EntityLike
 ```
 
-- **Returns** (`Entity`): The newly created entity.
+- **Returns**: `EntityLike` - The newly created entity.
+
+---
 
 ### `registerSystem`
 
-Registers a new system in the world, with an optional execution priority, and returns the world instance for method chaining.
+Registers a system with an optional execution priority and returns the `World` instance for chaining.
 
 ```ts
-registerSystem(systemClass: typeof System, priority?: number): World
+registerSystem<T extends System>(
+	systemClass: new (...args: any[]) => T,
+	priority?: number,
+): World
 ```
 
-- **systemClass** (`typeof System`): Class of the system to be registered.
-- **priority** (`number`, optional): Execution priority, where lower values indicate higher priority.
-- **Returns**: `World` - The world instance for chaining.
+- **systemClass**: The constructor of the system class to register.
+- **priority**: (Optional) Execution priority (higher values indicate earlier execution).
+- **Returns**: `World` - The `World` instance for chaining.
+
+---
 
 ### `unregisterSystem`
 
-Removes a system from the world's execution cycle.
+Removes a system from the world.
 
 ```ts
-unregisterSystem(systemClass: typeof System): void
+unregisterSystem<T extends System>(systemClass: new (...args: any[]) => T): void
 ```
 
-- **systemClass** (`typeof System`): The system class to be unregistered.
+- **systemClass**: The constructor of the system class to remove.
 - **Returns**: `void`.
+
+---
 
 ### `registerQuery`
 
-Registers a new query configuration in the world and returns the world instance for method chaining.
+Registers a query for entity filtering and returns the `World` instance for chaining.
 
 ```ts
 registerQuery(queryConfig: QueryConfig): World
 ```
 
-- **queryConfig** (`QueryConfig`): Configuration object for the query, specifying required and optional excluded components.
-- **Returns**: `World` - The world instance for chaining.
+- **queryConfig**: Object specifying `required` and optionally `excluded` components.
+- **Returns**: `World` - The `World` instance for chaining.
+
+---
 
 ### `update`
 
-Updates all registered systems in the world based on the given delta time and total elapsed time.
+Updates all registered systems in the world. Typically called each frame.
 
 ```ts
 update(delta: number, time: number): void
 ```
 
-- **delta** (`number`): The delta time since the last update.
-- **time** (`number`): The total time elapsed since the beginning of execution.
+- **delta**: Time since the last update (in milliseconds).
+- **time**: Total elapsed time since application start.
 - **Returns**: `void`.
+
+---
 
 ### `getSystem`
 
-Fetches a specific system instance by its class.
+Retrieves a specific system instance by its class.
 
 ```ts
-getSystem<T extends System>(systemClass: new (...args: any[]) => T): T | undefined
+getSystem<T extends System>(
+	systemClass: new (...args: any[]) => T,
+): T | undefined
 ```
 
-- **systemClass** (`new (...args: any[]) => T`): The constructor of the system class.
-- **Returns** (`T | undefined`): The instance of the requested system or `undefined` if not found.
+- **systemClass**: The constructor of the system class to retrieve.
+- **Returns**: The system instance, or `undefined` if not registered.
+
+---
 
 ### `getSystems`
 
-Provides a list of all currently registered systems.
+Returns a list of all registered system instances.
 
 ```ts
 getSystems(): System[]
 ```
 
-- **Returns** (`System[]`): An array of registered system instances.
+- **Returns**: `System[]` - Array of system instances.

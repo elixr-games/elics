@@ -11,10 +11,11 @@ The `Entity` class in EliCS is a core component of the ECS architecture, represe
 - **Component Management**: Facilitates adding, accessing, and removing components to and from entities.
 - **Lifecycle Handling**: Manages the entity's active state and provides functionality for its destruction.
 - **Query Integration**: Integrates seamlessly with query mechanisms for effective entity processing.
+- **Vector Views**: Provides optimized access to array-like data in components, reducing memory overhead for operations like reading vectors.
 
 ## Entity Pooling
 
-In EliCS, entities are managed efficiently through an entity pooling system handled by the `EntityManager`. This internal mechanism optimizes performance and resource utilization by reusing entity instances.
+Entities are managed efficiently through an entity pooling system handled by the `EntityManager`. This internal mechanism optimizes performance and resource utilization by reusing entity instances.
 
 ### How It Works
 
@@ -29,7 +30,7 @@ This approach significantly reduces the performance cost associated with frequen
 
 ### Creating an Entity
 
-Entities are typically created via the `World` class:
+Entities are created via the `World` class:
 
 ```ts
 import { World } from 'elics';
@@ -50,8 +51,22 @@ entity.addComponent(YourComponent, {
 	/* initial data */
 });
 
-// Accessing a component
-const component = entity.getComponent(YourComponent);
+// Accessing a component's value
+const value = entity.getValue(YourComponent, 'key');
+
+// Modifying a component's value
+entity.setValue(YourComponent, 'key', newValue);
+```
+
+Accessing a vector view:
+
+```ts
+const vectorView = entity.getVectorView(YourComponent, 'vectorKey');
+
+// Perform operations on the vector view
+vectorView[0] = 42; // Example: Updating the first element
+vectorView.set([1, 2, 3]); // Example: Setting the entire vector
+vectorView.set(vector3.toArray()); // Example: Setting from Three.js Vector3
 ```
 
 ### Destroying an Entity
@@ -62,7 +77,7 @@ entity.destroy();
 
 ## Properties
 
-### `isActive`
+### `active`
 
 Indicates whether the entity is currently active.
 
@@ -76,60 +91,73 @@ Indicates whether the entity is currently active.
 Adds a component to the entity.
 
 ```ts
-addComponent<T extends typeof Component>(
-    componentClass: T,
-    initialData?: { [key: string]: any }
-): Component
+addComponent(
+	componentClass: ComponentConstructor,
+	initialData?: { [key: string]: any }
+): this
 ```
 
-- **componentClass**: `T` extends `typeof Component` - The class of the component to be added.
+- **componentClass**: `ComponentConstructor` - The class of the component to be added.
 - **initialData**: `{ [key: string]: any }` (optional) - Initial data for the component.
-- **Returns**: `Component` - The added component instance.
+- **Returns**: `this` - The entity instance for chaining.
 
 ### `removeComponent`
 
 Removes a specified component from the entity.
 
 ```ts
-removeComponent<T extends typeof Component>(componentClass: T): void
+removeComponent(componentClass: ComponentConstructor): this
 ```
 
-- **componentClass**: `T` extends `typeof Component` - The class of the component to be removed.
+- **componentClass**: `ComponentConstructor` - The class of the component to be removed.
+- **Returns**: `this` - The entity instance for chaining.
 
 ### `hasComponent`
 
 Checks if the entity has a specified component.
 
 ```ts
-hasComponent<T extends typeof Component>(componentClass: T): boolean
+hasComponent(componentClass: ComponentConstructor): boolean
 ```
 
-- **componentClass**: `T` extends `typeof Component` - The class of the component to check.
+- **componentClass**: `ComponentConstructor` - The class of the component to check.
 - **Returns**: `boolean` - `true` if the entity has the component, otherwise `false`.
 
-### `getComponent`
+### `getValue`
 
-Retrieves a specific component from the entity.
-
-```ts
-getComponent<T extends Component>(componentClass: {
-    new (_cm: ComponentManager, _mi: number): T;
-    bitmask: ComponentMask;
-}): T | null
-```
-
-- **componentClass**: `{ new (_cm: ComponentManager, _mi: number): T; bitmask: ComponentMask }` - The constructor of the component class.
-- **Returns**: `T | null` - The instance of the component or `null` if not found.
-
-### `getComponentTypes`
-
-Lists all component types currently associated with the entity.
+Retrieves a value from a component associated with the entity.
 
 ```ts
-getComponentTypes(): (typeof Component)[]
+getValue(componentClass: ComponentConstructor, key: string): any
 ```
 
-- **Returns**: `(typeof Component)[]` - An array of component types.
+- **componentClass**: `ComponentConstructor` - The class of the component.
+- **key**: `string` - The key of the value to retrieve.
+- **Returns**: `any` - The value associated with the key.
+
+### `setValue`
+
+Updates a value in a component associated with the entity.
+
+```ts
+setValue(componentClass: ComponentConstructor, key: string, value: any): void
+```
+
+- **componentClass**: `ComponentConstructor` - The class of the component.
+- **key**: `string` - The key of the value to update.
+- **value**: `any` - The new value to set.
+
+### `getVectorView`
+
+Provides a subarray view for vector-like component data.
+
+```ts
+getVectorView(componentClass: ComponentConstructor, key: string): TypedArray
+```
+
+- **componentClass**: `ComponentConstructor` - The class of the component.
+- **key**: `string` - The key of the vector data.
+- **Returns**: `TypedArray` - A subarray view for the vector data.
 
 ### `destroy`
 
@@ -138,3 +166,13 @@ Destroys the entity, releasing all its components and removing it from the world
 ```ts
 destroy(): void
 ```
+
+### `getComponents`
+
+Lists all components currently associated with the entity.
+
+```ts
+getComponents(): ComponentConstructor[]
+```
+
+- **Returns**: `ComponentConstructor[]` - An array of component constructors.
