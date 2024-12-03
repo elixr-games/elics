@@ -19,7 +19,7 @@ export class ComponentManager {
 	attachComponentToEntity(
 		entityIndex: number,
 		componentClass: ComponentConstructor,
-		initialData: { [key: string]: any } = {},
+		initialData: { [key: string]: any },
 	): void {
 		componentClass.assignInitialData(entityIndex, initialData);
 	}

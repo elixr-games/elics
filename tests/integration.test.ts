@@ -1,6 +1,8 @@
 // integration.test.ts
 
+import BitSet from 'bitset';
 import { Component } from '../src/Component';
+import { Query } from '../src/Query';
 import { System } from '../src/System';
 import { Types } from '../src/Types';
 import { World } from '../src/World';
@@ -90,9 +92,7 @@ describe('EliCS Integration Tests', () => {
 	let world: World;
 
 	beforeEach(() => {
-		world = new World({
-			checksOn: true,
-		});
+		world = new World();
 		world.registerComponent(PositionComponent);
 		world.registerComponent(VelocityComponent);
 		world.registerComponent(HealthComponent);
@@ -154,6 +154,12 @@ describe('EliCS Integration Tests', () => {
 			expect(components).toContain(VelocityComponent);
 		});
 
+		test('Getting component value with invalid key', () => {
+			const entity = world.createEntity();
+			entity.addComponent(PositionComponent);
+			expect(entity.getValue(PositionComponent, 'invalidKey')).toBeUndefined();
+		});
+
 		test('Entity destruction and reuse', () => {
 			const entity = world.createEntity();
 			const index = entity.index;
@@ -189,16 +195,11 @@ describe('EliCS Integration Tests', () => {
 
 		test('Component data access', () => {
 			const entity = world.createEntity();
-			// entity.addComponent(PositionComponent, { x: 5, y: 15 });
-			world.componentManager.attachComponentToEntity(
-				entity.index,
-				PositionComponent,
-				{ x: 5, y: 15 },
-			);
+			entity.addComponent(PositionComponent);
 
-			// Use getValue and setValue
-			expect(entity.getValue(PositionComponent, 'x')).toBe(5);
-			expect(entity.getValue(PositionComponent, 'y')).toBe(15);
+			// values should be default
+			expect(entity.getValue(PositionComponent, 'x')).toBe(0);
+			expect(entity.getValue(PositionComponent, 'y')).toBe(0);
 
 			// Update component data
 			entity.setValue(PositionComponent, 'x', 25);
@@ -453,6 +454,19 @@ describe('EliCS Integration Tests', () => {
 
 			expect(query1).toBe(query2);
 		});
+
+		test('Query results from unregistered query', () => {
+			const world = new World({ checksOn: false });
+			world.registerComponent(PositionComponent);
+			const entity = world.createEntity();
+			entity.addComponent(PositionComponent);
+
+			const entities = world.queryManager.getEntities(
+				new Query(PositionComponent.bitmask!, new BitSet(), ''),
+			);
+
+			expect(entities).toEqual([]);
+		});
 	});
 
 	// System Tests
@@ -575,8 +589,16 @@ describe('EliCS Integration Tests', () => {
 	});
 
 	// Overall Tests
-	describe('Overall ECS Functionality', () => {
+	describe('Overall ECS functionality in production mode', () => {
 		test('Integration test with multiple systems and components', () => {
+			world = new World({
+				checksOn: false,
+			});
+			world.registerComponent(PositionComponent);
+			world.registerComponent(VelocityComponent);
+			world.registerComponent(HealthComponent);
+			world.registerComponent(VectorComponent);
+
 			world.registerSystem(MovementSystem);
 			world.registerSystem(HealthSystem);
 
