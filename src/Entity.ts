@@ -21,6 +21,8 @@ export interface EntityLike {
 
 	hasComponent(componentClass: ComponentConstructor): boolean;
 
+	getComponents(): ComponentConstructor[];
+
 	getValue(componentClass: ComponentConstructor, key: string): any;
 
 	setValue(componentClass: ComponentConstructor, key: string, value: any): void;

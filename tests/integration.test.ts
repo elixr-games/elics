@@ -90,13 +90,17 @@ describe('EliCS Integration Tests', () => {
 	let world: World;
 
 	beforeEach(() => {
-		world = new World();
+		world = new World({
+			checksOn: true,
+		});
 		world.registerComponent(PositionComponent);
 		world.registerComponent(VelocityComponent);
 		world.registerComponent(HealthComponent);
 		world.registerComponent(VectorComponent);
 		world.registerComponent(NameComponent);
 		world.registerComponent(CustomDataComponent);
+
+		world.globals['gravity'] = 9.81;
 	});
 
 	// Entity Tests
@@ -134,6 +138,22 @@ describe('EliCS Integration Tests', () => {
 			expect(entity.hasComponent(PositionComponent)).toBe(false);
 		});
 
+		test('Getting component by typeId', () => {
+			expect(
+				world.componentManager.getComponentByTypeId(PositionComponent.typeId),
+			).toBe(PositionComponent);
+		});
+
+		test('Getting component list', () => {
+			const entity = world.createEntity();
+			entity.addComponent(PositionComponent);
+			entity.addComponent(VelocityComponent);
+
+			const components = entity.getComponents();
+			expect(components).toContain(PositionComponent);
+			expect(components).toContain(VelocityComponent);
+		});
+
 		test('Entity destruction and reuse', () => {
 			const entity = world.createEntity();
 			const index = entity.index;
@@ -145,6 +165,13 @@ describe('EliCS Integration Tests', () => {
 			const newEntity = world.createEntity();
 			expect(newEntity.index).toBe(index);
 			expect(newEntity.active).toBe(true);
+		});
+
+		test('Modifying destroyed entity throws error', () => {
+			const entity = world.createEntity();
+			entity.destroy();
+
+			expect(() => entity.addComponent(PositionComponent)).toThrow();
 		});
 	});
 
@@ -162,7 +189,12 @@ describe('EliCS Integration Tests', () => {
 
 		test('Component data access', () => {
 			const entity = world.createEntity();
-			entity.addComponent(PositionComponent, { x: 5, y: 15 });
+			// entity.addComponent(PositionComponent, { x: 5, y: 15 });
+			world.componentManager.attachComponentToEntity(
+				entity.index,
+				PositionComponent,
+				{ x: 5, y: 15 },
+			);
 
 			// Use getValue and setValue
 			expect(entity.getValue(PositionComponent, 'x')).toBe(5);
@@ -379,10 +411,82 @@ describe('EliCS Integration Tests', () => {
 
 			expect(entities).not.toContain(entity);
 		});
+
+		test('Deferred entity updates', () => {
+			const world = new World({
+				checksOn: true,
+				deferredEntityUpdates: true,
+			});
+
+			world.registerComponent(PositionComponent);
+			world.registerComponent(VelocityComponent);
+
+			const queryConfig = {
+				required: [PositionComponent, VelocityComponent],
+			};
+
+			const query = world.queryManager.registerQuery(queryConfig);
+
+			const entity = world.createEntity();
+			entity.addComponent(PositionComponent);
+			entity.addComponent(VelocityComponent);
+
+			// query should not contain the entity before deferred update
+			let entities = world.queryManager.getEntities(query);
+			expect(entities).not.toContain(entity);
+
+			world.queryManager.deferredUpdate();
+
+			// query should contain the entity after deferred update
+			entities = world.queryManager.getEntities(query);
+			expect(entities).toContain(entity);
+		});
+
+		test('Registering the same query multiple times', () => {
+			const queryConfig = {
+				required: [PositionComponent],
+			};
+
+			world.registerQuery(queryConfig);
+			const query1 = world.queryManager.registerQuery(queryConfig);
+			const query2 = world.queryManager.registerQuery(queryConfig);
+
+			expect(query1).toBe(query2);
+		});
 	});
 
 	// System Tests
 	describe('System Tests', () => {
+		test('Globals accessable in systems', () => {
+			class TestSystem extends System {
+				static queries = {};
+				update(): void {
+					const gravity = this.globals['gravity'];
+					expect(gravity).toBe(9.81);
+				}
+			}
+
+			world.registerSystem(TestSystem);
+			world.update(0, 1);
+		});
+
+		test('Registering and unregistering systems', () => {
+			class TestSystem extends System {
+				static queries = {};
+				update(): void {
+					// Do nothing
+				}
+			}
+
+			world.registerSystem(TestSystem);
+			const system = world.getSystem(TestSystem);
+			expect(system).toBeDefined();
+			expect(world.getSystems()).toContain(system);
+
+			world.unregisterSystem(TestSystem);
+			expect(world.getSystem(TestSystem)).toBeUndefined();
+		});
+
 		test('System execution ordering', () => {
 			class FirstSystem extends System {
 				static queries = {};

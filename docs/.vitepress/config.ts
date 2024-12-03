@@ -19,7 +19,7 @@ export default defineConfig({
 					{ text: 'NPM', link: 'https://www.npmjs.com/package/elics' },
 					{
 						text: 'License',
-						link: 'https://github.com/elixr-games/elics/blob/main/LICENSE.md',
+						link: 'https://github.com/elixr-games/elics/blob/main/LICENSE',
 					},
 				],
 			},

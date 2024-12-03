@@ -10,7 +10,7 @@ For detailed information about using EliCS, including concepts, guides, and API 
 
 ## License
 
-EliCS is created by [Felix Z](https://github.com/felixtrz). This project is licensed under the MIT License. For more details, see the [LICENSE](LICENSE.md) file in this repository.
+EliCS is created by [Felix Z](https://github.com/felixtrz). This project is licensed under the MIT License. For more details, see the [LICENSE](LICENSE) file in this repository.
 
 ## Contributing
 

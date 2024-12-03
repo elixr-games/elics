@@ -27,8 +27,4 @@ export class ComponentManager {
 	getComponentByTypeId(typeId: number): ComponentConstructor | undefined {
 		return this.componentsByTypeId[typeId];
 	}
-
-	getMaxComponentTypeId(): number {
-		return this.nextComponentTypeId - 1;
-	}
 }
