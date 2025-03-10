@@ -4,22 +4,33 @@ outline: deep
 
 # World Class
 
-The `World` class in EliCS serves as the central manager of the Entity-Component-System (ECS) architecture, orchestrating the interactions between entities, components, and systems.
+The **World** class is the central hub of the EliCS ECS architecture. It orchestrates entities, components, queries, and systems to provide a robust, high-performance foundation for your application or game.
 
 ## Features
 
-- **Component Registration**: Simplifies registering components for structured entity construction.
-- **Entity Management**: Provides efficient creation, pooling, and management of entities.
-- **System Integration**: Coordinates systems for implementing application logic in a prioritized manner.
-- **Query Handling**: Enables advanced filtering of entities based on their component composition.
+- **Component Registration**: Registers components with unique type IDs and BitSet masks, and initializes optimized storage using typed arrays.
+- **Entity Management**: Efficiently creates, pools, and recycles entities to minimize memory overhead.
+- **System Integration**: Registers systems with customizable configuration and execution priority, automatically wiring up system queries.
+- **Query Handling**: Uses BitSet masks for fast entity filtering and supports deferred updates to batch processing.
+- **Global State Access**: Provides a shared global object for cross-system communication and configuration.
 
----
+## Implementation Overview
+
+Under the hood, the **World** class initializes and connects three core managers:
+
+- **ComponentManager**: Handles registration and storage of component data with performance in mind by leveraging typed arrays for cache-friendly access.
+- **EntityManager**: Uses an efficient pooling mechanism to create and recycle entities, reducing garbage collection overhead.
+- **QueryManager**: Maintains entity queries using BitSet masks for rapid matching and supports deferred entity updates, which are processed after each system update to optimize bulk modifications.
+
+Systems are sorted based on priority during registration, ensuring that lower-priority systems are executed first. This design, along with the use of BitSet operations, contributes to a highly performant ECS implementation ideal for performance-critical applications.
 
 ## Usage
 
+Below are some examples of how to set up and use the **World** class in your ECS-powered application.
+
 ### Registering a Component
 
-Components must be registered with the `World` before they can be used with entities:
+Before a component can be used with entities, it must be registered with the world. The component’s schema defines the data structure, types, and default values.
 
 ```ts
 import { World, Component, Types } from 'elics';
@@ -36,22 +47,18 @@ const world = new World();
 world.registerComponent(PositionComponent);
 ```
 
----
-
 ### Creating an Entity
 
-Entities are created dynamically and can be extended with components:
+Entities are created dynamically using the `createEntity()` method. Once created, entities can be extended with registered components.
 
 ```ts
 const entity = world.createEntity();
 entity.addComponent(PositionComponent, { x: 10, y: 20, z: 30 });
 ```
 
----
-
 ### Registering and Managing Systems
 
-Define systems to process entity logic:
+Systems encapsulate application logic and declare their required queries. They are registered with optional configuration data and a priority setting that determines execution order.
 
 ```ts
 import { System } from 'elics';
@@ -61,39 +68,53 @@ class MovementSystem extends System {
 		movingEntities: { required: [PositionComponent] },
 	};
 
-	update(delta: number) {
+	static schema = {
+		speed: { type: Types.Float32, default: 1 },
+	};
+
+	init(configData: { [key: string]: any }) {
+		// Initialize system-specific data, e.g., read configData.speed
+		this.config = configData;
+	}
+
+	update(delta: number, time: number) {
 		const entities = this.getEntities(MovementSystem.queries.movingEntities);
 		entities.forEach((entity) => {
-			const position = PositionComponent.data['x'][entity.index];
-			console.log(`Updating entity position: ${position}`);
+			const posX = PositionComponent.data['x'][entity.index];
+			console.log(`Updating entity ${entity.index} at position x: ${posX}`);
 		});
 	}
 }
 
-world.registerSystem(MovementSystem, 1); // Assign priority
+// Register with configuration options:
+world.registerSystem(MovementSystem, { configData: { speed: 2 }, priority: 1 });
 ```
 
----
+### Registering a Query Separately
+
+While systems automatically register their queries, you can also register standalone queries for custom entity filtering.
+
+```ts
+world.registerQuery({
+	required: [PositionComponent],
+});
+```
 
 ### Chainable Registration
 
-Method chaining allows for a clean and concise configuration of the world:
+The registration methods return the **World** instance, allowing for a fluent and concise configuration.
 
 ```ts
 const world = new World();
 world
 	.registerComponent(PositionComponent)
-	.registerSystem(MovementSystem, 1)
-	.registerQuery({
-		required: [PositionComponent],
-	});
+	.registerSystem(MovementSystem, { configData: { speed: 2 }, priority: 1 })
+	.registerQuery({ required: [PositionComponent] });
 ```
-
----
 
 ### Updating the World
 
-The `update` method drives the ECS loop, invoking system updates. Typically called within your application's main loop:
+The `update()` method processes all active systems and applies deferred entity updates. It should be called once per frame in your main loop.
 
 ```ts
 function mainLoop(deltaTime: number) {
@@ -104,125 +125,82 @@ function mainLoop(deltaTime: number) {
 requestAnimationFrame(mainLoop);
 ```
 
----
+### Accessing and Controlling Systems
 
-### Accessing Systems
-
-Retrieve instances of registered systems for direct interaction:
+You can retrieve registered systems to control their behavior directly, such as pausing or resuming their execution.
 
 ```ts
 const movementSystem = world.getSystem(MovementSystem);
-movementSystem.play(); // Resume execution
-movementSystem.stop(); // Pause execution
+if (movementSystem) {
+	movementSystem.play(); // Resume system updates
+	movementSystem.stop(); // Pause system updates
+}
 ```
 
----
+## API Documentation
 
-## Methods
+This section details the API of the **World** class, including its constructor, properties, and methods.
 
-### `registerComponent`
+### Constructor
 
-Registers a new component type and returns the `World` instance for chaining.
+**Signature:**
 
-```ts
-registerComponent<T extends typeof Component>(componentClass: T): World
-```
+`new World(options?: Partial<WorldOptions>)`
 
-- **componentClass**: The class of the component to register.
-- **Returns**: `World` - The `World` instance for chaining.
+- **Parameters:**
+  - `options`: An optional object containing:
+    - `entityCapacity` (`number`): Maximum number of entities (default is 1000).
+    - `checksOn` (`boolean`): Enables runtime validations (default is true).
+    - `deferredEntityUpdates` (`boolean`): If true, defers entity-query updates until after system processing.
+- **Description:**  
+  Constructs a new instance of the **World** class, initializing the ComponentManager, QueryManager, and EntityManager with the provided configuration options.
 
----
+### Properties
 
-### `createEntity`
+- `entityManager` (`EntityManager`):  
+  Manages the creation, pooling, and recycling of entities.
 
-Creates and returns a new entity instance.
+- `queryManager` (`QueryManager`):  
+  Maintains and updates entity queries using BitSet masks.
 
-```ts
-createEntity(): EntityLike
-```
+- `componentManager` (`ComponentManager`):  
+  Registers components and initializes their data storage using optimized typed arrays.
 
-- **Returns**: `EntityLike` - The newly created entity.
+- `globals` (`{ [key: string]: any }`):  
+  A shared global object accessible to systems for cross-system communication.
 
----
+### Methods
 
-### `registerSystem`
+- `registerComponent(componentClass: ComponentConstructor): World`  
+  Registers a new component type with the world.  
+  _Returns:_ The **World** instance for method chaining.
 
-Registers a system with an optional execution priority and returns the `World` instance for chaining.
+- `createEntity(): EntityLike`  
+  Creates and returns a new entity instance.  
+  _Returns:_ The newly created entity.
 
-```ts
-registerSystem<T extends System>(
-	systemClass: new (...args: any[]) => T,
-	priority?: number,
-): World
-```
+- `registerSystem<T extends System>(systemClass: SystemConstructor<T>, options?: Partial<SystemOptions>): World`  
+  Registers a system along with its queries. Accepts optional configuration data and a priority value.  
+  _Returns:_ The **World** instance for chaining.
 
-- **systemClass**: The constructor of the system class to register.
-- **priority**: (Optional) Execution priority (higher values indicate earlier execution).
-- **Returns**: `World` - The `World` instance for chaining.
+- `unregisterSystem<T extends System>(systemClass: SystemConstructor<T>): void`  
+  Unregisters and removes a system from the world.
 
----
+- `registerQuery(queryConfig: QueryConfig): World`  
+  Registers a custom query for filtering entities.  
+  _Returns:_ The **World** instance for chaining.
 
-### `unregisterSystem`
+- `update(delta: number, time: number): void`  
+  Processes the ECS loop by updating each active system and processing any deferred entity updates.  
+  _Parameters:_
 
-Removes a system from the world.
+  - `delta`: Time elapsed since the last update (in milliseconds).
+  - `time`: Total elapsed time since application start.
 
-```ts
-unregisterSystem<T extends System>(systemClass: new (...args: any[]) => T): void
-```
+- `getSystem<T extends System>(systemClass: SystemConstructor<T>): T | undefined`  
+  Retrieves a registered system instance by its constructor.  
+  _Returns:_ The system instance if found; otherwise, `undefined`.
 
-- **systemClass**: The constructor of the system class to remove.
-- **Returns**: `void`.
-
----
-
-### `registerQuery`
-
-Registers a query for entity filtering and returns the `World` instance for chaining.
-
-```ts
-registerQuery(queryConfig: QueryConfig): World
-```
-
-- **queryConfig**: Object specifying `required` and optionally `excluded` components.
-- **Returns**: `World` - The `World` instance for chaining.
-
----
-
-### `update`
-
-Updates all registered systems in the world. Typically called each frame.
-
-```ts
-update(delta: number, time: number): void
-```
-
-- **delta**: Time since the last update (in milliseconds).
-- **time**: Total elapsed time since application start.
-- **Returns**: `void`.
-
----
-
-### `getSystem`
-
-Retrieves a specific system instance by its class.
-
-```ts
-getSystem<T extends System>(
-	systemClass: new (...args: any[]) => T,
-): T | undefined
-```
-
-- **systemClass**: The constructor of the system class to retrieve.
-- **Returns**: The system instance, or `undefined` if not registered.
-
----
-
-### `getSystems`
-
-Returns a list of all registered system instances.
-
-```ts
-getSystems(): System[]
-```
-
-- **Returns**: `System[]` - Array of system instances.
+- `getSystems(): System[]`  
+  Returns an array of all registered system instances.  
+  _Returns:_ An array of system instances.

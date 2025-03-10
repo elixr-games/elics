@@ -53,6 +53,8 @@ class MovementSystem extends System {
 		},
 	};
 
+	init(): void {}
+
 	update(delta: number): void {
 		const entities = this.getEntities(this.queries.movingEntities);
 
@@ -76,13 +78,25 @@ class HealthSystem extends System {
 			required: [HealthComponent],
 		},
 	};
+	static schema = {
+		healthDecreaseRate: { type: Types.Int16, default: 10 },
+	};
+
+	private healthDecreaseRate!: number;
+	init(config: { [key: string]: any }): void {
+		this.healthDecreaseRate = config.healthDecreaseRate;
+	}
 
 	update(delta: number): void {
 		const entities = this.getEntities(this.queries.entitiesWithHealth);
 
 		for (const entity of entities) {
 			const healthValue = entity.getValue(HealthComponent, 'value') as number;
-			entity.setValue(HealthComponent, 'value', healthValue - 10 * delta);
+			entity.setValue(
+				HealthComponent,
+				'value',
+				healthValue - this.healthDecreaseRate * delta,
+			);
 		}
 	}
 }
@@ -474,6 +488,7 @@ describe('EliCS Integration Tests', () => {
 		test('Globals accessable in systems', () => {
 			class TestSystem extends System {
 				static queries = {};
+				init(): void {}
 				update(): void {
 					const gravity = this.globals['gravity'];
 					expect(gravity).toBe(9.81);
@@ -487,6 +502,7 @@ describe('EliCS Integration Tests', () => {
 		test('Registering and unregistering systems', () => {
 			class TestSystem extends System {
 				static queries = {};
+				init(): void {}
 				update(): void {
 					// Do nothing
 				}
@@ -504,6 +520,7 @@ describe('EliCS Integration Tests', () => {
 		test('System execution ordering', () => {
 			class FirstSystem extends System {
 				static queries = {};
+				init(): void {}
 				update(): void {
 					executionOrder.push('FirstSystem');
 				}
@@ -511,6 +528,7 @@ describe('EliCS Integration Tests', () => {
 
 			class SecondSystem extends System {
 				static queries = {};
+				init(): void {}
 				update(): void {
 					executionOrder.push('SecondSystem');
 				}
@@ -518,8 +536,8 @@ describe('EliCS Integration Tests', () => {
 
 			const executionOrder: string[] = [];
 
-			world.registerSystem(SecondSystem, 1); // Higher priority
-			world.registerSystem(FirstSystem, 0); // Lower priority
+			world.registerSystem(SecondSystem, { priority: 1 }); // Higher priority
+			world.registerSystem(FirstSystem, { priority: 0 }); // Lower priority
 
 			world.update(0, 1);
 
@@ -542,6 +560,7 @@ describe('EliCS Integration Tests', () => {
 			class TestSystem extends System {
 				static queries = {};
 				public executed = false;
+				init(): void {}
 
 				update(): void {
 					this.executed = true;
@@ -585,6 +604,22 @@ describe('EliCS Integration Tests', () => {
 
 			world.update(2, 1); // delta = 2
 			expect(entity.getValue(HealthComponent, 'value')).toBe(70);
+		});
+
+		test('HealthSystem decreases health at correct rate', () => {
+			world.registerSystem(HealthSystem, {
+				configData: { healthDecreaseRate: 20 },
+			});
+			const entity = world.createEntity();
+			entity.addComponent(HealthComponent);
+
+			expect(entity.getValue(HealthComponent, 'value')).toBe(100); // Initial health
+
+			world.update(1, 1); // delta = 1
+			expect(entity.getValue(HealthComponent, 'value')).toBe(80);
+
+			world.update(2, 1); // delta = 2
+			expect(entity.getValue(HealthComponent, 'value')).toBe(40);
 		});
 	});
 

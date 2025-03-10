@@ -32,17 +32,16 @@ export class Component {
 	}
 
 	static assignInitialData(index: number, initialData: { [key: string]: any }) {
-		for (const [key, { type, default: defaultValue }] of Object.entries(
-			this.schema,
-		)) {
-			const { length } = TypedArrayMap[type];
-			if (length === 1) {
-				this.data[key][index] = initialData[key] ?? defaultValue;
+		for (const [key, entry] of Object.entries(this.schema)) {
+			const { type, default: defaultValue } = entry;
+			const length = TypedArrayMap[type].length;
+			const dataRef = this.data[key];
+			const input = initialData[key] ?? defaultValue;
+
+			if (length === 1 || type === Types.String || type === Types.Object) {
+				dataRef[index] = input;
 			} else {
-				for (let i = 0; i < length; i++) {
-					this.data[key][index * length + i] =
-						initialData[key]?.[i] ?? defaultValue[i];
-				}
+				(dataRef as TypedArray).set(input, index * length);
 			}
 		}
 	}

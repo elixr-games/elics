@@ -4,29 +4,22 @@ outline: deep
 
 # Entity Class
 
-The `Entity` class in EliCS is a core component of the ECS architecture, representing individual objects or actors within your application. It serves as a container for multiple components, enabling dynamic interactions and behaviors.
+The **Entity** class in EliCS is a core component of the ECS architecture, representing individual objects or actors within your application. It serves as a container for multiple components, enabling dynamic interactions and behaviors.
 
 ## Features
 
 - **Component Management**: Facilitates adding, accessing, and removing components to and from entities.
 - **Lifecycle Handling**: Manages the entity's active state and provides functionality for its destruction.
-- **Query Integration**: Integrates seamlessly with query mechanisms for effective entity processing.
-- **Vector Views**: Provides optimized access to array-like data in components, reducing memory overhead for operations like reading vectors.
+- **Query Integration**: Seamlessly integrates with query mechanisms for effective entity filtering and processing.
+- **Vector Views**: Offers optimized access to array-like component data, enhancing performance when working with vector information.
 
-## Entity Pooling
+## Implementation Overview
 
-Entities are managed efficiently through an entity pooling system handled by the `EntityManager`. This internal mechanism optimizes performance and resource utilization by reusing entity instances.
-
-### How It Works
-
-- **Entity Creation**: When a new entity is requested, the `EntityManager` first checks its pool of available entities.
-- **Reusing Entities**: If the pool has available entities, it reactivates one and returns it, avoiding the overhead of creating a new instance.
-- **New Entities**: If no entities are available in the pool, a new entity is created and provided.
-- **Entity Destruction**: When an entity is destroyed, it's not immediately discarded. Instead, it's returned to the entity pool for future reuse.
-
-This approach significantly reduces the performance cost associated with frequently creating and destroying entities, especially in applications with a high turnover of entities.
+Under the hood, entities are managed through an efficient pooling mechanism implemented by the **EntityManager**. When a new entity is requested via the `World.createEntity()` method, the system first checks an internal pool to reuse an existing inactive entity, reducing the performance cost associated with frequent creation and destruction. When an entity is destroyed using the `destroy()` method, it is not immediately discarded but instead returned to the pool, ensuring minimal garbage collection overhead and improved runtime performance. Additionally, the use of BitSet masks for component management and cached vector views for component data access further optimizes entity operations.
 
 ## Usage
+
+The following examples illustrate how to create, manage, and destroy entities within your ECS-powered application.
 
 ### Creating an Entity
 
@@ -41,7 +34,7 @@ const entity = world.createEntity();
 
 ### Managing Components
 
-Adding and accessing components:
+Adding and accessing components is straightforward:
 
 ```ts
 import { YourComponent } from 'your-components';
@@ -58,121 +51,99 @@ const value = entity.getValue(YourComponent, 'key');
 entity.setValue(YourComponent, 'key', newValue);
 ```
 
-Accessing a vector view:
+### Accessing a Vector View
+
+Retrieve a subarray view for vector-like component data for optimized operations:
 
 ```ts
 const vectorView = entity.getVectorView(YourComponent, 'vectorKey');
 
-// Perform operations on the vector view
-vectorView[0] = 42; // Example: Updating the first element
-vectorView.set([1, 2, 3]); // Example: Setting the entire vector
-vectorView.set(vector3.toArray()); // Example: Setting from Three.js Vector3
+// Update the first element of the vector
+vectorView[0] = 42;
+
+// Set the entire vector from an array
+vectorView.set([1, 2, 3]);
+
+// Set the vector using data from a Three.js Vector3 (after converting to an array)
+vectorView.set(vector3.toArray());
 ```
 
 ### Destroying an Entity
+
+When an entity is no longer needed, destroy it to free up resources:
 
 ```ts
 entity.destroy();
 ```
 
-## Properties
+## API Documentation
 
-### `active`
+This section documents the API of the **Entity** class, including its properties and methods.
 
-Indicates whether the entity is currently active.
+### Constructor
 
-- **Type**: `boolean`
-- **Readonly**
+**Note:**  
+Entities should be created using the `World.createEntity()` method. The constructor is invoked internally by the **EntityManager**.
 
-## Methods
+### Properties
 
-### `addComponent`
+- `active` (`boolean`):  
+  Indicates whether the entity is currently active. This property is read-only and reflects the entity's lifecycle state.
 
-Adds a component to the entity.
+### Methods
 
-```ts
-addComponent(
-	componentClass: ComponentConstructor,
-	initialData?: { [key: string]: any }
-): this
-```
+- `addComponent(componentClass: ComponentConstructor, initialData?: { [key: string]: any }): this`  
+  Adds a component to the entity.
 
-- **componentClass**: `ComponentConstructor` - The class of the component to be added.
-- **initialData**: `{ [key: string]: any }` (optional) - Initial data for the component.
-- **Returns**: `this` - The entity instance for chaining.
+  - **Parameters:**
+    - `componentClass`: The class of the component to be added.
+    - `initialData` (optional): An object containing initial data for the component.
+  - **Returns:** The entity instance for method chaining.
 
-### `removeComponent`
+- `removeComponent(componentClass: ComponentConstructor): this`  
+  Removes the specified component from the entity.
 
-Removes a specified component from the entity.
+  - **Parameters:**
+    - `componentClass`: The class of the component to remove.
+  - **Returns:** The entity instance for method chaining.
 
-```ts
-removeComponent(componentClass: ComponentConstructor): this
-```
+- `hasComponent(componentClass: ComponentConstructor): boolean`  
+  Checks if the entity has a specified component.
 
-- **componentClass**: `ComponentConstructor` - The class of the component to be removed.
-- **Returns**: `this` - The entity instance for chaining.
+  - **Parameters:**
+    - `componentClass`: The class of the component to check.
+  - **Returns:** `true` if the component is present; otherwise, `false`.
 
-### `hasComponent`
+- `getValue(componentClass: ComponentConstructor, key: string): any`  
+  Retrieves a value from a component associated with the entity.
 
-Checks if the entity has a specified component.
+  - **Parameters:**
+    - `componentClass`: The class of the component.
+    - `key`: The key for the value to retrieve.
+  - **Returns:** The value associated with the specified key.
 
-```ts
-hasComponent(componentClass: ComponentConstructor): boolean
-```
+- `setValue(componentClass: ComponentConstructor, key: string, value: any): void`  
+  Updates a value in a component associated with the entity.
 
-- **componentClass**: `ComponentConstructor` - The class of the component to check.
-- **Returns**: `boolean` - `true` if the entity has the component, otherwise `false`.
+  - **Parameters:**
+    - `componentClass`: The class of the component.
+    - `key`: The key of the value to update.
+    - `value`: The new value to set.
+  - **Returns:** `void`.
 
-### `getValue`
+- `getVectorView(componentClass: ComponentConstructor, key: string): TypedArray`  
+  Provides a subarray view for vector-like component data.
 
-Retrieves a value from a component associated with the entity.
+  - **Parameters:**
+    - `componentClass`: The class of the component.
+    - `key`: The key associated with the vector data.
+  - **Returns:** A `TypedArray` representing the subarray view.
 
-```ts
-getValue(componentClass: ComponentConstructor, key: string): any
-```
+- `destroy(): void`  
+  Destroys the entity by releasing all its components and returning it to the pool.
 
-- **componentClass**: `ComponentConstructor` - The class of the component.
-- **key**: `string` - The key of the value to retrieve.
-- **Returns**: `any` - The value associated with the key.
+  - **Returns:** `void`.
 
-### `setValue`
-
-Updates a value in a component associated with the entity.
-
-```ts
-setValue(componentClass: ComponentConstructor, key: string, value: any): void
-```
-
-- **componentClass**: `ComponentConstructor` - The class of the component.
-- **key**: `string` - The key of the value to update.
-- **value**: `any` - The new value to set.
-
-### `getVectorView`
-
-Provides a subarray view for vector-like component data.
-
-```ts
-getVectorView(componentClass: ComponentConstructor, key: string): TypedArray
-```
-
-- **componentClass**: `ComponentConstructor` - The class of the component.
-- **key**: `string` - The key of the vector data.
-- **Returns**: `TypedArray` - A subarray view for the vector data.
-
-### `destroy`
-
-Destroys the entity, releasing all its components and removing it from the world.
-
-```ts
-destroy(): void
-```
-
-### `getComponents`
-
-Lists all components currently associated with the entity.
-
-```ts
-getComponents(): ComponentConstructor[]
-```
-
-- **Returns**: `ComponentConstructor[]` - An array of component constructors.
+- `getComponents(): ComponentConstructor[]`  
+  Retrieves a list of all component constructors currently associated with the entity.
+  - **Returns:** An array of component constructors.

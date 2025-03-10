@@ -2,9 +2,11 @@ import { Query, QueryConfig } from './Query.js';
 
 import { EntityLike } from './Entity.js';
 import { QueryManager } from './QueryManager.js';
+import { Types } from './Types.js';
 import { World } from './World.js';
 
-export class System {
+export abstract class System {
+	static schema: { [key: string]: { type: Types; default: any } } = {};
 	static isSystem: true = true;
 	static queries: {
 		[key: string]: QueryConfig;
@@ -16,7 +18,7 @@ export class System {
 	constructor(
 		public readonly world: World,
 		private queryManager: QueryManager,
-		public priority: number = 0,
+		public priority: number,
 	) {}
 
 	get globals() {
@@ -27,13 +29,9 @@ export class System {
 		return this.queryManager.getEntities(query);
 	}
 
-	init(): void {
-		// Override in derived systems
-	}
+	abstract init(configData: { [key: string]: any }): void;
 
-	update(_delta: number, _time: number): void {
-		// Override in derived systems
-	}
+	abstract update(_delta: number, _time: number): void;
 
 	play(): void {
 		this.isPaused = false;
@@ -45,7 +43,8 @@ export class System {
 }
 
 export type SystemConstructor<T extends System> = {
-	new (_w: World, _qm: QueryManager, _p?: number): T;
+	schema: { [key: string]: { type: Types; default: any } };
+	new (_w: World, _qm: QueryManager, _p: number): T;
 	readonly isSystem: true;
 	queries: {
 		[key: string]: QueryConfig;

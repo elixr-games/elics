@@ -14,6 +14,11 @@ export interface WorldOptions {
 	deferredEntityUpdates: boolean;
 }
 
+export interface SystemOptions {
+	configData: { [key: string]: any };
+	priority: number;
+}
+
 export class World {
 	public entityManager!: EntityManager;
 	public queryManager!: QueryManager;
@@ -48,13 +53,15 @@ export class World {
 
 	registerSystem<T extends System>(
 		systemClass: SystemConstructor<T>,
-		priority?: number,
+		options: Partial<SystemOptions> = {},
 	): World {
 		assertCondition(
 			!this.systems.some((system) => system instanceof systemClass),
 			ErrorMessages.SystemAlreadyRegistered,
 			systemClass,
 		);
+
+		const { configData = {}, priority = 0 } = options;
 
 		const queries: { [key: string]: Query } = {};
 
@@ -65,7 +72,14 @@ export class World {
 		const systemInstance = new systemClass(this, this.queryManager, priority);
 
 		systemInstance.queries = queries;
-		systemInstance.init();
+		const config = Object.entries(systemClass.schema).reduce(
+			(acc, [key, { default: defaultValue }]) => {
+				acc[key] = key in configData ? configData[key] : defaultValue;
+				return acc;
+			},
+			{} as Record<string, any>,
+		);
+		systemInstance.init(config);
 
 		// Determine the correct position for the new system based on priority
 		const insertIndex = this.systems.findIndex(

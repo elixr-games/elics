@@ -28,26 +28,36 @@ Queries are used by systems to efficiently select entities based on their compon
 
 The World is the central orchestrator in EliCS. It manages the lifecycle and interaction of entities, components, systems, and queries.
 
-## Workflow
+## Example: Building a Game
 
-1. **Component Creation**: Define the various component types that represent the data needed in your application.
+Imagine we are building a game where players fight against robots and drones. The following example demonstrates the complete workflow—from defining components and creating entities, to developing systems and integrating everything within the World.
 
-   - Example: Position, Velocity, Health, etc.
+![EliCS in Action](/elics.png)
 
-2. **Entity Construction**: Create entities and attach components to them, thereby defining their characteristics and capabilities.
+1. **Defining Components**:  
+   Components store data that describes specific characteristics of an entity. For our game, we might define:
 
-3. **System Development**: Implement systems that process entities. These systems use queries to select entities based on their component composition.
+   - **GroundMover**: Indicates the entity can move on the ground.
+   - **AirMover**: Indicates the entity can move through the air.
+   - **Enemy**: Identifies the entity as an enemy.
+   - **Object3D**: Contains the Object3D data for rendering.
 
-4. **World Integration**: Register components, entities, and systems with the World. The World coordinates the execution and interaction of all these elements.
+2. **Creating Entities**:  
+   Entities are objects in the game world, defined by the components they possess. For our game:
 
-5. **Execution Cycle**: The World updates all systems in each frame or tick of your application's main loop. Systems then process their relevant entities.
+   - **Robot**: Has the `GroundMover`, `Enemy`, and `Object3D` components.
+   - **Drone**: Has the `AirMover`, `Enemy`, and `Object3D` components.
+   - **Player**: Has the `GroundMover` and `Object3D` components.
 
-## Key Advantages
+3. **Defining Systems**:  
+   Systems implement the logic that acts on entities with specific components. In our example:
 
-- **Decoupling**: Separation of data (components) from logic (systems) facilitates a modular and scalable architecture.
-- **Efficiency**: Bitmasking in queries and the pooling mechanism in entities and components ensure high performance, especially in scenarios with numerous entities and frequent changes.
-- **Flexibility**: The dynamic nature of entities and components allows for runtime changes, suitable for complex and evolving application states.
+   - **GroundMovement System**: Moves all entities with a `GroundMover` component (e.g., Player, Robot).
+   - **AirMovement System**: Moves all entities with an `AirMover` component (e.g., Drone).
+   - **Chase System**: Makes entities that are both `Enemy` and `GroundMover` (e.g., Robot) chase the player.
+   - **Attack System**: Manages interactions between `Enemy` and `Player` entities.
 
-## Conclusion
-
-EliCS's approach to the ECS pattern streamlines the development of complex applications, providing a robust framework for efficiently managing entities, components, systems, and their interactions. This architecture not only enhances performance but also offers the flexibility needed in dynamic application environments.
+4. **World Integration and Execution Cycle**:  
+   Register components and systems with the World. This step initiates the execution cycle:
+   - The World creates entities, attaches components, and registers systems.
+   - The execution cycle begins as the World updates all systems in each frame or tick, processing entity interactions and game logic.
