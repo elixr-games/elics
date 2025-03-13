@@ -1,49 +1,37 @@
 // integration.test.ts
 
 import BitSet from 'bitset';
-import { Component } from '../src/Component';
 import { Query } from '../src/Query';
 import { System } from '../src/System';
 import { Types } from '../src/Types';
 import { World } from '../src/World';
+import { createComponent } from '../src/Component';
 
 // Define components for testing
-class PositionComponent extends Component {
-	static schema = {
-		x: { type: Types.Float32, default: 0 },
-		y: { type: Types.Float32, default: 0 },
-	};
-}
+const PositionComponent = createComponent({
+	x: { type: Types.Float32, default: 0 },
+	y: { type: Types.Float32, default: 0 },
+});
 
-class VelocityComponent extends Component {
-	static schema = {
-		velocity: { type: Types.Vec2, default: [0, 0] },
-	};
-}
+const VelocityComponent = createComponent({
+	velocity: { type: Types.Vec2, default: [0, 0] },
+});
 
-class HealthComponent extends Component {
-	static schema = {
-		value: { type: Types.Int16, default: 100 },
-	};
-}
+const HealthComponent = createComponent({
+	value: { type: Types.Int16, default: 100 },
+});
 
-class VectorComponent extends Component {
-	static schema = {
-		position: { type: Types.Vec3, default: [0, 0, 0] },
-	};
-}
+const VectorComponent = createComponent({
+	position: { type: Types.Vec3, default: [0, 0, 0] },
+});
 
-class NameComponent extends Component {
-	static schema = {
-		name: { type: Types.String, default: '' },
-	};
-}
+const NameComponent = createComponent({
+	name: { type: Types.String, default: '' },
+});
 
-class CustomDataComponent extends Component {
-	static schema = {
-		data: { type: Types.Object, default: null },
-	};
-}
+const CustomDataComponent = createComponent({
+	data: { type: Types.Object, default: null },
+});
 
 // Define systems for testing
 class MovementSystem extends System {
@@ -60,8 +48,8 @@ class MovementSystem extends System {
 
 		for (const entity of entities) {
 			// Use getValue and getVectorView methods
-			const posX = entity.getValue(PositionComponent, 'x') as number;
-			const posY = entity.getValue(PositionComponent, 'y') as number;
+			const posX = entity.getValue(PositionComponent, 'x');
+			const posY = entity.getValue(PositionComponent, 'y');
 
 			const velocity = entity.getVectorView(VelocityComponent, 'velocity');
 
@@ -83,15 +71,16 @@ class HealthSystem extends System {
 	};
 
 	private healthDecreaseRate!: number;
-	init(config: { [key: string]: any }): void {
-		this.healthDecreaseRate = config.healthDecreaseRate;
+
+	init(configData: { healthDecreaseRate: number }): void {
+		this.healthDecreaseRate = configData.healthDecreaseRate;
 	}
 
 	update(delta: number): void {
 		const entities = this.getEntities(this.queries.entitiesWithHealth);
 
 		for (const entity of entities) {
-			const healthValue = entity.getValue(HealthComponent, 'value') as number;
+			const healthValue = entity.getValue(HealthComponent, 'value');
 			entity.setValue(
 				HealthComponent,
 				'value',
@@ -171,7 +160,9 @@ describe('EliCS Integration Tests', () => {
 		test('Getting component value with invalid key', () => {
 			const entity = world.createEntity();
 			entity.addComponent(PositionComponent);
-			expect(entity.getValue(PositionComponent, 'invalidKey')).toBeUndefined();
+			expect(
+				entity.getValue(PositionComponent, 'invalidKey' as any),
+			).toBeUndefined();
 		});
 
 		test('Entity destruction and reuse', () => {
@@ -278,19 +269,18 @@ describe('EliCS Integration Tests', () => {
 
 		test('onAttach and onDetach hooks', () => {
 			// Create a component class that overrides onAttach and onDetach
-			class HookComponent extends Component {
-				static schema = {
-					onAttachCalled: { type: Types.Boolean, default: false },
-					onDetachCalled: { type: Types.Boolean, default: false },
-				};
-				static onAttach(index: number) {
-					HookComponent.data.onAttachCalled[index] = true;
-				}
-				static onDetach(index: number) {
-					HookComponent.data.onDetachCalled[index] = true;
-				}
-			}
+			const HookComponent = createComponent({
+				onAttachCalled: { type: Types.Boolean, default: false },
+				onDetachCalled: { type: Types.Boolean, default: false },
+			});
 
+			HookComponent.onAttach = (index: number) => {
+				HookComponent.data.onAttachCalled[index] = 1;
+			};
+
+			HookComponent.onDetach = (index: number) => {
+				HookComponent.data.onDetachCalled[index] = 1;
+			};
 			world.registerComponent(HookComponent);
 
 			const entity = world.createEntity();
@@ -305,7 +295,7 @@ describe('EliCS Integration Tests', () => {
 			expect(HookComponent.data.onDetachCalled[entity.index]).toBeTruthy();
 
 			// reset the hook data
-			HookComponent.data.onDetachCalled[entity.index] = false;
+			HookComponent.data.onDetachCalled[entity.index] = 0;
 			entity.addComponent(HookComponent);
 			entity.destroy();
 

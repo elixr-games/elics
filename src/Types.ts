@@ -18,8 +18,18 @@ export type TypedArray =
 	| Float64Array
 	| Uint8Array;
 
+export type TypedArrayConstructor =
+	| Int8ArrayConstructor
+	| Int16ArrayConstructor
+	| Float32ArrayConstructor
+	| Float64ArrayConstructor
+	| Uint8ArrayConstructor;
+
 export const TypedArrayMap: {
-	[key in Types]: { arrayConstructor: any; length: number };
+	[key in Types]: {
+		arrayConstructor: TypedArrayConstructor | ArrayConstructor;
+		length: number;
+	};
 } = {
 	[Types.Int8]: { arrayConstructor: Int8Array, length: 1 },
 	[Types.Int16]: { arrayConstructor: Int16Array, length: 1 },

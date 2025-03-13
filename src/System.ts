@@ -1,12 +1,20 @@
 import { Query, QueryConfig } from './Query.js';
 
+import { ComponentValue } from './Component.js';
 import { EntityLike } from './Entity.js';
 import { QueryManager } from './QueryManager.js';
 import { Types } from './Types.js';
 import { World } from './World.js';
 
+export type SystemSchema<T extends Types> = Record<
+	string,
+	{
+		type: T;
+		default: ComponentValue<T>;
+	}
+>;
 export abstract class System {
-	static schema: { [key: string]: { type: Types; default: any } } = {};
+	static schema: SystemSchema<any> = {};
 	static isSystem: true = true;
 	static queries: {
 		[key: string]: QueryConfig;

@@ -3,11 +3,11 @@ import type { ComponentConstructor } from './Component.js';
 
 export class ComponentManager {
 	private nextComponentTypeId = 0;
-	private componentsByTypeId: ComponentConstructor[] = [];
+	private componentsByTypeId: ComponentConstructor<any>[] = [];
 
 	constructor(private entityCapacity: number) {}
 
-	registerComponent(componentClass: ComponentConstructor): void {
+	registerComponent(componentClass: ComponentConstructor<any>): void {
 		const typeId = this.nextComponentTypeId++;
 		componentClass.bitmask = new BitSet();
 		componentClass.bitmask.set(typeId, 1);
@@ -18,13 +18,13 @@ export class ComponentManager {
 
 	attachComponentToEntity(
 		entityIndex: number,
-		componentClass: ComponentConstructor,
+		componentClass: ComponentConstructor<any>,
 		initialData: { [key: string]: any },
 	): void {
 		componentClass.assignInitialData(entityIndex, initialData);
 	}
 
-	getComponentByTypeId(typeId: number): ComponentConstructor | undefined {
+	getComponentByTypeId(typeId: number): ComponentConstructor<any> | undefined {
 		return this.componentsByTypeId[typeId];
 	}
 }

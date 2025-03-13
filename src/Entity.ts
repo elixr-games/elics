@@ -1,10 +1,15 @@
-import type { ComponentConstructor, ComponentMask } from './Component.js';
+import type {
+	ComponentConstructor,
+	ComponentMask,
+	ComponentValue,
+	ComponentSchema,
+} from './Component.js';
 
 import BitSet from 'bitset';
 import type { ComponentManager } from './ComponentManager.js';
 import type { EntityManager } from './EntityManager.js';
 import type { QueryManager } from './QueryManager.js';
-import { TypedArrayMap, type TypedArray } from './Types.js';
+import { TypedArrayMap, Types, type TypedArray } from './Types.js';
 import { assertCondition, ErrorMessages } from './Checks.js';
 
 export interface EntityLike {
@@ -12,31 +17,48 @@ export interface EntityLike {
 	active: boolean;
 	readonly index: number;
 
-	addComponent(
-		componentClass: ComponentConstructor,
-		initialData?: { [key: string]: any },
+	addComponent<C extends ComponentConstructor<any>>(
+		componentClass: C,
+		initialData?: Partial<{
+			[K in keyof C['schema']]: ComponentValue<C['schema'][K]['type']>;
+		}>,
 	): this;
 
-	removeComponent(componentClass: ComponentConstructor): void;
+	removeComponent(componentClass: ComponentConstructor<any>): this;
 
-	hasComponent(componentClass: ComponentConstructor): boolean;
+	hasComponent(componentClass: ComponentConstructor<any>): boolean;
 
-	getComponents(): ComponentConstructor[];
+	getComponents(): ComponentConstructor<any>[];
 
-	getValue(componentClass: ComponentConstructor, key: string): any;
+	getValue<C extends ComponentConstructor<any>, K extends keyof C['schema']>(
+		componentClass: C,
+		key: K,
+	): ComponentValue<C['schema'][K]['type']>;
 
-	setValue(componentClass: ComponentConstructor, key: string, value: any): void;
+	setValue<C extends ComponentConstructor<any>, K extends keyof C['schema']>(
+		componentClass: C,
+		key: K,
+		value: ComponentValue<C['schema'][K]['type']>,
+	): void;
 
-	getVectorView(componentClass: ComponentConstructor, key: string): TypedArray;
+	getVectorView<
+		S extends ComponentSchema<Types>,
+		C extends ComponentConstructor<S>,
+	>(
+		componentClass: C,
+		key: keyof C['schema'],
+	): TypedArray;
 
 	destroy(): void;
 }
 
-export class Entity {
+export class Entity implements EntityLike {
 	public bitmask: ComponentMask = new BitSet();
 	public active = true;
-	private vectorViews: Map<ComponentConstructor, Map<string, TypedArray>> =
-		new Map();
+	private vectorViews: Map<
+		ComponentConstructor<ComponentSchema<Types>>,
+		Map<string, TypedArray>
+	> = new Map();
 
 	constructor(
 		protected entityManager: EntityManager,
@@ -45,9 +67,11 @@ export class Entity {
 		public readonly index: number,
 	) {}
 
-	addComponent(
-		componentClass: ComponentConstructor,
-		initialData: { [key: string]: any } = {},
+	addComponent<C extends ComponentConstructor<any>>(
+		componentClass: C,
+		initialData: Partial<{
+			[K in keyof C['schema']]: ComponentValue<C['schema'][K]['type']>;
+		}> = {},
 	): this {
 		assertCondition(this.active, ErrorMessages.ModifyDestroyedEntity, this);
 		assertCondition(
@@ -66,7 +90,7 @@ export class Entity {
 		return this;
 	}
 
-	removeComponent(componentClass: ComponentConstructor): this {
+	removeComponent(componentClass: ComponentConstructor<any>): this {
 		assertCondition(this.active, ErrorMessages.ModifyDestroyedEntity, this);
 		assertCondition(
 			componentClass.bitmask !== null,
@@ -79,7 +103,7 @@ export class Entity {
 		return this;
 	}
 
-	hasComponent(componentClass: ComponentConstructor): boolean {
+	hasComponent(componentClass: ComponentConstructor<any>): boolean {
 		assertCondition(
 			componentClass.bitmask !== null,
 			ErrorMessages.ComponentNotRegistered,
@@ -88,33 +112,43 @@ export class Entity {
 		return !this.bitmask.and(componentClass.bitmask!).isEmpty();
 	}
 
-	getComponents(): ComponentConstructor[] {
+	getComponents(): ComponentConstructor<any>[] {
 		const bitArray = this.bitmask.toArray();
 		return bitArray.map(
 			(typeId) => this.componentManager.getComponentByTypeId(typeId)!,
 		);
 	}
 
-	getValue(componentClass: ComponentConstructor, key: string): any {
-		return componentClass.data[key]?.[this.index];
+	getValue<C extends ComponentConstructor<any>, K extends keyof C['schema']>(
+		componentClass: C,
+		key: K,
+	): ComponentValue<C['schema'][K]['type']> {
+		return componentClass.data[key]?.[this.index] as ComponentValue<
+			C['schema'][K]['type']
+		>;
 	}
 
-	setValue(
-		componentClass: ComponentConstructor,
-		key: string,
-		value: any,
+	setValue<C extends ComponentConstructor<any>, K extends keyof C['schema']>(
+		componentClass: C,
+		key: K,
+		value: ComponentValue<C['schema'][K]['type']>,
 	): void {
 		const componentData = componentClass.data[key];
 		componentData[this.index] = value;
 	}
 
-	getVectorView(componentClass: ComponentConstructor, key: string) {
+	getVectorView<
+		S extends ComponentSchema<Types>,
+		C extends ComponentConstructor<S>,
+	>(componentClass: C, key: keyof C['schema']) {
+		key = key as string;
 		const cachedVectorView = this.vectorViews.get(componentClass)?.get(key);
 		if (cachedVectorView) {
 			return cachedVectorView;
 		} else {
 			const componentData = componentClass.data[key] as TypedArray;
-			const length = TypedArrayMap[componentClass.schema[key].type].length;
+			const type = componentClass.schema[key].type;
+			const length = TypedArrayMap[type].length;
 			const offset = this.index * length;
 			const vectorView = componentData.subarray(offset, offset + length);
 			if (!this.vectorViews.has(componentClass)) {

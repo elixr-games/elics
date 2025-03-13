@@ -41,7 +41,32 @@ EliCS is more than just an ECS framework; it's a tool crafted from real-world ex
 
 ## About EliXR Games
 
-I am [Felix Z](https://twitter.com/felix_trz), a software engineer at Reality Labs, Meta, specializing in WebXR projects. My work includes the creation of the [Immersive Web Emulator](https://github.com/meta-quest/immersive-web-emulator), a WebXR development tool with over 6,000 active users. I also played a key role in developing [Project Flowerbed](https://github.com/meta-quest/ProjectFlowerbed), an award-winning WebXR experience.
+<script setup>
+import {
+  VPTeamPage,
+  VPTeamPageTitle,
+  VPTeamMembers
+} from 'vitepress/theme'
+
+const members = [
+  {
+    avatar: 'https://github.com/felixtrz.png',
+    name: 'Felix Z',
+    title: 'Founder & Lead Developer',
+    links: [
+      { icon: 'github', link: 'https://github.com/felixtrz' },
+      { icon: 'linkedin', link: 'https://www.linkedin.com/in/felixtrz' },
+      { icon: 'twitter', link: 'https://x.com/felix_trz' }
+    ]
+  },
+]
+</script>
+
+<VPTeamMembers size="small" :members="members" />
+
+Hi, I am Felix Z, founder and lead developer at EliXR Games, where we focus on developing innovative web-based immersive experiences.
+
+I am [Felix Z](https://twitter.com/felix_trz), a software engineer at Reality Labs, Meta, specializing in WebXR projects. My work includes the creation of the [Immersive Web Emulator](https://github.com/meta-quest/immersive-web-emulator), a WebXR development tool with over 12,000 active users. I also played a key role in developing [Project Flowerbed](https://github.com/meta-quest/ProjectFlowerbed), an award-winning WebXR experience.
 
 In my personal endeavors, I am an active indie game developer. In 2022, I founded EliXR Games, focusing on developing innovative web-based gaming experiences. A major project under EliXR Games is the [EliXR Engine](https://github.com/felixtrz/elixr), a fully open-source WebXR game engine that I am actively developing.
 

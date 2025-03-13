@@ -4,8 +4,8 @@ import BitSet from 'bitset';
 import type { EntityLike } from './Entity.js';
 
 export type QueryConfig = {
-	required: ComponentConstructor[];
-	excluded?: ComponentConstructor[];
+	required: ComponentConstructor<any>[];
+	excluded?: ComponentConstructor<any>[];
 };
 
 export class Query {

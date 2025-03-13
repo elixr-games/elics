@@ -1,12 +1,13 @@
+import { ComponentConstructor, ComponentSchema } from './Component.js';
 import { Entity, EntityConstructor, EntityLike } from './Entity.js';
 import { ErrorMessages, assertCondition, toggleChecks } from './Checks.js';
 import { Query, QueryConfig } from './Query.js';
 import { System, SystemConstructor } from './System.js';
 
-import { ComponentConstructor } from './Component.js';
 import { ComponentManager } from './ComponentManager.js';
 import { EntityManager } from './EntityManager.js';
 import { QueryManager } from './QueryManager.js';
+import { Types } from './Types.js';
 
 export interface WorldOptions {
 	entityCapacity: number;
@@ -42,7 +43,9 @@ export class World {
 		toggleChecks(checksOn);
 	}
 
-	registerComponent(componentClass: ComponentConstructor): World {
+	registerComponent<C extends ComponentConstructor<ComponentSchema<Types>>>(
+		componentClass: C,
+	): this {
 		this.componentManager.registerComponent(componentClass);
 		return this;
 	}
@@ -54,7 +57,7 @@ export class World {
 	registerSystem<T extends System>(
 		systemClass: SystemConstructor<T>,
 		options: Partial<SystemOptions> = {},
-	): World {
+	): this {
 		assertCondition(
 			!this.systems.some((system) => system instanceof systemClass),
 			ErrorMessages.SystemAlreadyRegistered,
@@ -101,7 +104,7 @@ export class World {
 		);
 	}
 
-	registerQuery(queryConfig: QueryConfig): World {
+	registerQuery(queryConfig: QueryConfig): this {
 		this.queryManager.registerQuery(queryConfig);
 		return this;
 	}
