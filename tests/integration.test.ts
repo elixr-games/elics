@@ -2,10 +2,10 @@
 
 import BitSet from 'bitset';
 import { Query } from '../src/Query';
-import { System } from '../src/System';
 import { Types } from '../src/Types';
 import { World } from '../src/World';
 import { createComponent } from '../src/Component';
+import { createSystem } from '../src/System';
 
 // Define components for testing
 const PositionComponent = createComponent({
@@ -14,8 +14,10 @@ const PositionComponent = createComponent({
 });
 
 const VelocityComponent = createComponent({
-	velocity: { type: Types.Vec2, default: [0, 0] },
+	velocity: { type: Types.Object, default: [0, 0] },
 });
+
+VelocityComponent.data.velocity;
 
 const HealthComponent = createComponent({
 	value: { type: Types.Int16, default: 100 },
@@ -34,13 +36,11 @@ const CustomDataComponent = createComponent({
 });
 
 // Define systems for testing
-class MovementSystem extends System {
-	static queries = {
-		movingEntities: {
-			required: [PositionComponent, VelocityComponent],
-		},
-	};
-
+class MovementSystem extends createSystem({
+	movingEntities: {
+		required: [PositionComponent, VelocityComponent],
+	},
+}) {
 	init(): void {}
 
 	update(delta: number): void {
@@ -60,16 +60,16 @@ class MovementSystem extends System {
 	}
 }
 
-class HealthSystem extends System {
-	static queries = {
+class HealthSystem extends createSystem(
+	{
 		entitiesWithHealth: {
 			required: [HealthComponent],
 		},
-	};
-	static schema = {
+	},
+	{
 		healthDecreaseRate: { type: Types.Int16, default: 10 },
-	};
-
+	},
+) {
 	private healthDecreaseRate!: number;
 
 	init(configData: { healthDecreaseRate: number }): void {
@@ -476,8 +476,7 @@ describe('EliCS Integration Tests', () => {
 	// System Tests
 	describe('System Tests', () => {
 		test('Globals accessable in systems', () => {
-			class TestSystem extends System {
-				static queries = {};
+			class TestSystem extends createSystem() {
 				init(): void {}
 				update(): void {
 					const gravity = this.globals['gravity'];
@@ -490,13 +489,7 @@ describe('EliCS Integration Tests', () => {
 		});
 
 		test('Registering and unregistering systems', () => {
-			class TestSystem extends System {
-				static queries = {};
-				init(): void {}
-				update(): void {
-					// Do nothing
-				}
-			}
+			const TestSystem = createSystem();
 
 			world.registerSystem(TestSystem);
 			const system = world.getSystem(TestSystem);
@@ -508,17 +501,13 @@ describe('EliCS Integration Tests', () => {
 		});
 
 		test('System execution ordering', () => {
-			class FirstSystem extends System {
-				static queries = {};
-				init(): void {}
+			class FirstSystem extends createSystem() {
 				update(): void {
 					executionOrder.push('FirstSystem');
 				}
 			}
 
-			class SecondSystem extends System {
-				static queries = {};
-				init(): void {}
+			class SecondSystem extends createSystem() {
 				update(): void {
 					executionOrder.push('SecondSystem');
 				}
@@ -547,10 +536,8 @@ describe('EliCS Integration Tests', () => {
 		});
 
 		test('System pausing and resuming', () => {
-			class TestSystem extends System {
-				static queries = {};
+			class TestSystem extends createSystem() {
 				public executed = false;
-				init(): void {}
 
 				update(): void {
 					this.executed = true;
@@ -558,7 +545,7 @@ describe('EliCS Integration Tests', () => {
 			}
 
 			world.registerSystem(TestSystem);
-			const system = world.getSystem(TestSystem);
+			const system = world.getSystem(TestSystem) as TestSystem;
 
 			// Initially, the system should execute
 			system!.executed = false;

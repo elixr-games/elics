@@ -1,13 +1,18 @@
 import { ComponentConstructor, ComponentSchema } from './Component.js';
-import { Entity, EntityConstructor, EntityLike } from './Entity.js';
 import { ErrorMessages, assertCondition, toggleChecks } from './Checks.js';
 import { Query, QueryConfig } from './Query.js';
-import { System, SystemConstructor } from './System.js';
+import {
+	System,
+	SystemConstructor,
+	SystemQueries,
+	SystemSchema,
+} from './System.js';
 
 import { ComponentManager } from './ComponentManager.js';
+import { DataType } from './Types.js';
+import { Entity } from './Entity.js';
 import { EntityManager } from './EntityManager.js';
 import { QueryManager } from './QueryManager.js';
-import { Types } from './Types.js';
 
 export interface WorldOptions {
 	entityCapacity: number;
@@ -24,8 +29,7 @@ export class World {
 	public entityManager!: EntityManager;
 	public queryManager!: QueryManager;
 	public componentManager!: ComponentManager;
-	private systems: System[] = [];
-	public entityPrototype: EntityConstructor = Entity;
+	private systems: System<any, any, any>[] = [];
 	readonly globals: { [key: string]: any } = {};
 
 	constructor({
@@ -36,26 +40,29 @@ export class World {
 		this.componentManager = new ComponentManager(entityCapacity);
 		this.queryManager = new QueryManager(deferredEntityUpdates);
 		this.entityManager = new EntityManager(
-			this.entityPrototype,
 			this.queryManager,
 			this.componentManager,
 		);
 		toggleChecks(checksOn);
 	}
 
-	registerComponent<C extends ComponentConstructor<ComponentSchema<Types>>>(
+	registerComponent<C extends ComponentConstructor<ComponentSchema<DataType>>>(
 		componentClass: C,
 	): this {
 		this.componentManager.registerComponent(componentClass);
 		return this;
 	}
 
-	createEntity(): EntityLike {
+	createEntity(): Entity {
 		return this.entityManager.requestEntityInstance();
 	}
 
-	registerSystem<T extends System>(
-		systemClass: SystemConstructor<T>,
+	registerSystem<
+		T extends DataType,
+		S extends SystemSchema<T>,
+		Q extends SystemQueries,
+	>(
+		systemClass: SystemConstructor<T, S, Q>,
 		options: Partial<SystemOptions> = {},
 	): this {
 		assertCondition(
@@ -66,10 +73,11 @@ export class World {
 
 		const { configData = {}, priority = 0 } = options;
 
-		const queries: { [key: string]: Query } = {};
+		const queries = {} as Record<keyof Q, Query>;
 
 		Object.entries(systemClass.queries).forEach(([queryName, queryConfig]) => {
-			queries[queryName] = this.queryManager.registerQuery(queryConfig);
+			queries[queryName as keyof Q] =
+				this.queryManager.registerQuery(queryConfig);
 		});
 
 		const systemInstance = new systemClass(this, this.queryManager, priority);
@@ -98,7 +106,7 @@ export class World {
 		return this;
 	}
 
-	unregisterSystem<T extends System>(systemClass: SystemConstructor<T>): void {
+	unregisterSystem(systemClass: SystemConstructor<any, any, any>): void {
 		this.systems = this.systems.filter(
 			(system) => !(system instanceof systemClass),
 		);
@@ -118,18 +126,20 @@ export class World {
 		this.queryManager.deferredUpdate();
 	}
 
-	getSystem<T extends System>(
-		systemClass: SystemConstructor<T>,
-	): T | undefined {
+	getSystem<
+		T extends DataType,
+		S extends SystemSchema<T>,
+		Q extends SystemQueries,
+	>(systemClass: SystemConstructor<T, S, Q>): System<T, S, Q> | undefined {
 		for (const system of this.systems) {
 			if (system instanceof systemClass) {
-				return system as T;
+				return system as System<T, S, Q>;
 			}
 		}
 		return undefined;
 	}
 
-	getSystems(): System[] {
+	getSystems(): System<any, any, any>[] {
 		return [...this.systems];
 	}
 }

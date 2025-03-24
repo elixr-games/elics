@@ -1,25 +1,23 @@
-import type { EntityConstructor, EntityLike } from './Entity.js';
-
 import type { ComponentManager } from './ComponentManager.js';
+import { Entity } from './Entity.js';
 import type { QueryManager } from './QueryManager.js';
 
 export class EntityManager {
-	pool: EntityLike[] = [];
+	pool: Entity[] = [];
 	private entityIndex = 0;
 
 	constructor(
-		public entityPrototype: EntityConstructor,
 		private queryManager: QueryManager,
 		private componentManager: ComponentManager,
 	) {}
 
-	requestEntityInstance(): EntityLike {
+	requestEntityInstance(): Entity {
 		let entity;
 		if (this.pool.length > 0) {
 			entity = this.pool.pop()!;
 			entity.active = true;
 		} else {
-			entity = new this.entityPrototype(
+			entity = new Entity(
 				this,
 				this.queryManager,
 				this.componentManager,
@@ -30,7 +28,7 @@ export class EntityManager {
 		return entity;
 	}
 
-	releaseEntityInstance(entity: EntityLike): void {
+	releaseEntityInstance(entity: Entity): void {
 		this.pool.push(entity);
 	}
 }

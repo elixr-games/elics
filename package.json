@@ -5,7 +5,7 @@
 	"type": "module",
 	"main": "build/elics.js",
 	"module": "build/elics.module.js",
-	"types": "lib/EliCS.d.ts",
+	"types": "lib/index.d.ts",
 	"exports": {
 		".": {
 			"import": "./build/elics.module.js",

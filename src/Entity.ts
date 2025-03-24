@@ -9,54 +9,14 @@ import BitSet from 'bitset';
 import type { ComponentManager } from './ComponentManager.js';
 import type { EntityManager } from './EntityManager.js';
 import type { QueryManager } from './QueryManager.js';
-import { TypedArrayMap, Types, type TypedArray } from './Types.js';
+import { DataType, TypedArrayMap, type TypedArray } from './Types.js';
 import { assertCondition, ErrorMessages } from './Checks.js';
 
-export interface EntityLike {
-	bitmask: ComponentMask;
-	active: boolean;
-	readonly index: number;
-
-	addComponent<C extends ComponentConstructor<any>>(
-		componentClass: C,
-		initialData?: Partial<{
-			[K in keyof C['schema']]: ComponentValue<C['schema'][K]['type']>;
-		}>,
-	): this;
-
-	removeComponent(componentClass: ComponentConstructor<any>): this;
-
-	hasComponent(componentClass: ComponentConstructor<any>): boolean;
-
-	getComponents(): ComponentConstructor<any>[];
-
-	getValue<C extends ComponentConstructor<any>, K extends keyof C['schema']>(
-		componentClass: C,
-		key: K,
-	): ComponentValue<C['schema'][K]['type']>;
-
-	setValue<C extends ComponentConstructor<any>, K extends keyof C['schema']>(
-		componentClass: C,
-		key: K,
-		value: ComponentValue<C['schema'][K]['type']>,
-	): void;
-
-	getVectorView<
-		S extends ComponentSchema<Types>,
-		C extends ComponentConstructor<S>,
-	>(
-		componentClass: C,
-		key: keyof C['schema'],
-	): TypedArray;
-
-	destroy(): void;
-}
-
-export class Entity implements EntityLike {
+export class Entity {
 	public bitmask: ComponentMask = new BitSet();
 	public active = true;
 	private vectorViews: Map<
-		ComponentConstructor<ComponentSchema<Types>>,
+		ComponentConstructor<ComponentSchema<DataType>>,
 		Map<string, TypedArray>
 	> = new Map();
 
@@ -138,7 +98,7 @@ export class Entity implements EntityLike {
 	}
 
 	getVectorView<
-		S extends ComponentSchema<Types>,
+		S extends ComponentSchema<DataType>,
 		C extends ComponentConstructor<S>,
 	>(componentClass: C, key: keyof C['schema']) {
 		key = key as string;
@@ -178,5 +138,5 @@ export type EntityConstructor = {
 		_qm: QueryManager,
 		_cm: ComponentManager,
 		_idx: number,
-	): EntityLike;
+	): Entity;
 };

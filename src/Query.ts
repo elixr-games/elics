@@ -1,7 +1,7 @@
 import type { ComponentConstructor, ComponentMask } from './Component.js';
 
 import BitSet from 'bitset';
-import type { EntityLike } from './Entity.js';
+import { Entity } from './Entity.js';
 
 export type QueryConfig = {
 	required: ComponentConstructor<any>[];
@@ -15,7 +15,7 @@ export class Query {
 		public queryId: string,
 	) {}
 
-	matches(entity: EntityLike) {
+	matches(entity: Entity) {
 		const hasRequired = entity.bitmask
 			.and(this.requiredMask)
 			.equals(this.requiredMask);

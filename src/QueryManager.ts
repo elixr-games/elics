@@ -1,12 +1,12 @@
 import { ErrorMessages, assertCondition } from './Checks.js';
 import { Query, QueryConfig } from './Query.js';
 
-import type { EntityLike } from './Entity.js';
+import { Entity } from './Entity.js';
 
 export class QueryManager {
 	private queries: Map<string, Query> = new Map();
-	private results: Map<Query, Set<EntityLike>> = new Map();
-	private entitiesToUpdate: Set<EntityLike> = new Set();
+	private results: Map<Query, Set<Entity>> = new Map();
+	private entitiesToUpdate: Set<Entity> = new Set();
 
 	constructor(private deferredEntityUpdates: boolean) {}
 
@@ -20,7 +20,7 @@ export class QueryManager {
 		return this.queries.get(queryId)!;
 	}
 
-	updateEntity(entity: EntityLike, force = false): void {
+	updateEntity(entity: Entity, force = false): void {
 		if (force || !this.deferredEntityUpdates) {
 			if (entity.bitmask.isEmpty()) {
 				// Remove entity from all query results if it has no components
@@ -43,7 +43,7 @@ export class QueryManager {
 		}
 	}
 
-	resetEntity(entity: EntityLike): void {
+	resetEntity(entity: Entity): void {
 		this.results.forEach((entities) => entities.delete(entity));
 	}
 
@@ -56,7 +56,7 @@ export class QueryManager {
 		}
 	}
 
-	getEntities(query: Query): EntityLike[] {
+	getEntities(query: Query): Entity[] {
 		assertCondition(
 			this.queries.has(query.queryId),
 			ErrorMessages.QueryNotRegistered,

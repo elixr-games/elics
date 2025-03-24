@@ -1,45 +1,45 @@
+import { DataType, TypedArray, TypedArrayMap, Types } from './Types.js';
 import { ErrorMessages, assertCondition } from './Checks.js';
-import { TypedArray, TypedArrayMap, Types } from './Types.js';
 
 import BitSet from 'bitset';
 
 export type ComponentMask = BitSet;
 
-export type ComponentValue<T extends Types> = T extends
-	| Types.Int8
-	| Types.Int16
-	| Types.Float32
-	| Types.Float64
+export type ComponentValue<T extends DataType> = T extends
+	| 'Int8'
+	| 'Int16'
+	| 'Float32'
+	| 'Float64'
 	? number
-	: T extends Types.Boolean
+	: T extends 'Boolean'
 		? boolean
-		: T extends Types.String
+		: T extends 'String'
 			? string
-			: T extends Types.Vec2
+			: T extends 'Vec2'
 				? [number, number]
-				: T extends Types.Vec3
+				: T extends 'Vec3'
 					? [number, number, number]
-					: T extends Types.Vec4
+					: T extends 'Vec4'
 						? [number, number, number, number]
 						: any;
 
-export type ComponentDataType<T extends Types> = T extends
-	| Types.Int8
-	| Types.Int16
-	| Types.Float32
-	| Types.Float64
-	| Types.Boolean
-	| Types.Vec2
-	| Types.Vec3
-	| Types.Vec4
+export type ComponentDataType<T extends DataType> = T extends
+	| 'Int8'
+	| 'Int16'
+	| 'Float32'
+	| 'Float64'
+	| 'Boolean'
+	| 'Vec2'
+	| 'Vec3'
+	| 'Vec4'
 	? TypedArray
-	: T extends Types.String
+	: T extends 'String'
 		? Array<string>
-		: T extends Types.Object
+		: T extends 'Object'
 			? any[]
 			: never;
 
-export type ComponentSchema<T extends Types> = Record<
+export type ComponentSchema<T extends DataType> = Record<
 	string,
 	{
 		type: T;
@@ -47,7 +47,7 @@ export type ComponentSchema<T extends Types> = Record<
 	}
 >;
 
-export type ComponentConstructor<S extends ComponentSchema<Types>> = {
+export type ComponentConstructor<S extends ComponentSchema<DataType>> = {
 	schema: S;
 	data: { [K in keyof S]: ComponentDataType<S[K]['type']> };
 	bitmask: ComponentMask | null;
@@ -61,9 +61,10 @@ export type ComponentConstructor<S extends ComponentSchema<Types>> = {
 	) => void;
 };
 
-export function createComponent<S extends ComponentSchema<Types>>(
-	schema: S,
-): ComponentConstructor<S> {
+export function createComponent<
+	T extends DataType,
+	S extends ComponentSchema<T>,
+>(schema: S): ComponentConstructor<S> {
 	// Return a new class (an anonymous class expression) that implements the ComponentConstructor.
 	return class {
 		// The provided schema.
