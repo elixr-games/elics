@@ -9,6 +9,12 @@ export type QueryConfig = {
 };
 
 export class Query {
+	public subscribers = {
+		qualify: new Set<(entity: Entity) => void>(),
+		disqualify: new Set<(entity: Entity) => void>(),
+	};
+	public entities = new Set<Entity>();
+
 	constructor(
 		private requiredMask: ComponentMask,
 		private excludedMask: ComponentMask,
@@ -22,6 +28,16 @@ export class Query {
 		const hasExcluded = !entity.bitmask.and(this.excludedMask).isEmpty();
 
 		return hasRequired && !hasExcluded;
+	}
+
+	subscribe(
+		event: 'qualify' | 'disqualify',
+		callback: (entity: Entity) => void,
+	) {
+		this.subscribers[event].add(callback);
+		return () => {
+			this.subscribers[event].delete(callback);
+		};
 	}
 
 	static generateQueryInfo(queryConfig: QueryConfig) {

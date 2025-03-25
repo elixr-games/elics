@@ -2,7 +2,6 @@ import { Query, QueryConfig } from './Query.js';
 
 import { ComponentValue } from './Component.js';
 import { DataType } from './Types.js';
-import { Entity } from './Entity.js';
 import { QueryManager } from './QueryManager.js';
 import { World } from './World.js';
 
@@ -28,7 +27,6 @@ export interface System<
 	queryManager: QueryManager;
 	priority: number;
 	globals: Record<string, any>;
-	getEntities(query: Query): Entity[];
 	init(_configData: { [key: string]: any }): void;
 	update(delta: number, time: number): void;
 	play(): void;
@@ -68,10 +66,6 @@ export function createSystem<
 
 		get globals() {
 			return this.world.globals;
-		}
-
-		getEntities(query: Query): Entity[] {
-			return this.queryManager.getEntities(query);
 		}
 
 		init(_configData: { [key: string]: any }): void {}

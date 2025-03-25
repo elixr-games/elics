@@ -14,7 +14,7 @@ const PositionComponent = createComponent({
 });
 
 const VelocityComponent = createComponent({
-	velocity: { type: Types.Object, default: [0, 0] },
+	velocity: { type: Types.Vec2, default: [0, 0] },
 });
 
 VelocityComponent.data.velocity;
@@ -44,9 +44,7 @@ class MovementSystem extends createSystem({
 	init(): void {}
 
 	update(delta: number): void {
-		const entities = this.getEntities(this.queries.movingEntities);
-
-		for (const entity of entities) {
+		for (const entity of this.queries.movingEntities.entities) {
 			// Use getValue and getVectorView methods
 			const posX = entity.getValue(PositionComponent, 'x');
 			const posY = entity.getValue(PositionComponent, 'y');
@@ -77,9 +75,7 @@ class HealthSystem extends createSystem(
 	}
 
 	update(delta: number): void {
-		const entities = this.getEntities(this.queries.entitiesWithHealth);
-
-		for (const entity of entities) {
+		for (const entity of this.queries.entitiesWithHealth.entities) {
 			const healthValue = entity.getValue(HealthComponent, 'value');
 			entity.setValue(
 				HealthComponent,
@@ -319,10 +315,8 @@ describe('EliCS Integration Tests', () => {
 			const entity2 = world.createEntity();
 			entity2.addComponent(PositionComponent);
 
-			const entities = world.queryManager.getEntities(query);
-
-			expect(entities).toContain(entity1);
-			expect(entities).not.toContain(entity2);
+			expect(query.entities).toContain(entity1);
+			expect(query.entities).not.toContain(entity2);
 		});
 
 		test('Querying entities with excluded components', () => {
@@ -339,10 +333,8 @@ describe('EliCS Integration Tests', () => {
 			entity2.addComponent(PositionComponent);
 			entity2.addComponent(HealthComponent);
 
-			const entities = world.queryManager.getEntities(query);
-
-			expect(entities).toContain(entity1);
-			expect(entities).not.toContain(entity2);
+			expect(query.entities).toContain(entity1);
+			expect(query.entities).not.toContain(entity2);
 		});
 
 		test('Querying entities with both required and excluded components', () => {
@@ -360,10 +352,8 @@ describe('EliCS Integration Tests', () => {
 			entity2.addComponent(PositionComponent);
 			entity2.addComponent(HealthComponent);
 
-			const entities = world.queryManager.getEntities(query);
-
-			expect(entities).toContain(entity2);
-			expect(entities).not.toContain(entity1);
+			expect(query.entities).toContain(entity2);
+			expect(query.entities).not.toContain(entity1);
 		});
 
 		test('Multiple queries with overlapping components', () => {
@@ -386,14 +376,11 @@ describe('EliCS Integration Tests', () => {
 			entity2.addComponent(VelocityComponent);
 			entity2.addComponent(HealthComponent);
 
-			const entities1 = world.queryManager.getEntities(query1);
-			const entities2 = world.queryManager.getEntities(query2);
+			expect(query1.entities).toContain(entity1);
+			expect(query1.entities).not.toContain(entity2);
 
-			expect(entities1).toContain(entity1);
-			expect(entities1).not.toContain(entity2);
-
-			expect(entities2).toContain(entity2);
-			expect(entities2).not.toContain(entity1);
+			expect(query2.entities).toContain(entity2);
+			expect(query2.entities).not.toContain(entity1);
 		});
 
 		test('Removing components affects query results', () => {
@@ -406,15 +393,37 @@ describe('EliCS Integration Tests', () => {
 			entity.addComponent(PositionComponent);
 			entity.addComponent(VelocityComponent);
 
-			let entities = world.queryManager.getEntities(query);
-
-			expect(entities).toContain(entity);
+			expect(query.entities).toContain(entity);
 
 			// Remove a component
 			entity.removeComponent(VelocityComponent);
-			entities = world.queryManager.getEntities(query);
 
-			expect(entities).not.toContain(entity);
+			expect(query.entities).not.toContain(entity);
+		});
+
+		test('Query subscribers run as expected', () => {
+			const queryConfig = {
+				required: [PositionComponent, VelocityComponent],
+			};
+			const query = world.queryManager.registerQuery(queryConfig);
+			const qualifyCallback = jest.fn();
+			const unsubQualify = query.subscribe('qualify', qualifyCallback);
+			const disqualifyCallback = jest.fn();
+			query.subscribe('disqualify', disqualifyCallback);
+
+			const entity = world.createEntity();
+			entity.addComponent(PositionComponent);
+			entity.addComponent(VelocityComponent);
+			expect(qualifyCallback).toHaveBeenCalledTimes(1);
+
+			// Remove a component which disqualifies entity from query
+			entity.removeComponent(VelocityComponent);
+			expect(disqualifyCallback).toHaveBeenCalledTimes(1);
+
+			// unsubscribe from qualify, callback no longer called when entity qualifies
+			unsubQualify();
+			entity.addComponent(VelocityComponent);
+			expect(qualifyCallback).toHaveBeenCalledTimes(1);
 		});
 
 		test('Deferred entity updates', () => {
@@ -437,14 +446,12 @@ describe('EliCS Integration Tests', () => {
 			entity.addComponent(VelocityComponent);
 
 			// query should not contain the entity before deferred update
-			let entities = world.queryManager.getEntities(query);
-			expect(entities).not.toContain(entity);
+			expect(query.entities).not.toContain(entity);
 
 			world.queryManager.deferredUpdate();
 
 			// query should contain the entity after deferred update
-			entities = world.queryManager.getEntities(query);
-			expect(entities).toContain(entity);
+			expect(query.entities).toContain(entity);
 		});
 
 		test('Registering the same query multiple times', () => {
@@ -465,11 +472,9 @@ describe('EliCS Integration Tests', () => {
 			const entity = world.createEntity();
 			entity.addComponent(PositionComponent);
 
-			const entities = world.queryManager.getEntities(
-				new Query(PositionComponent.bitmask!, new BitSet(), ''),
-			);
-
-			expect(entities).toEqual([]);
+			expect(
+				new Query(PositionComponent.bitmask!, new BitSet(), '').entities,
+			).toEqual(new Set());
 		});
 	});
 
