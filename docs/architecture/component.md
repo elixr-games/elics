@@ -2,9 +2,9 @@
 outline: deep
 ---
 
-# Component Class
+# Component
 
-The **Component** class in EliCS is a core element of the ECS (Entity-Component-System) architecture. It defines the data structure for specific aspects of entities and is designed for optimal performance by centralizing data storage in highly optimized structures. Components are not instantiated as individual objects attached to entities; instead, their data is stored in contiguous arrays (such as `TypedArray`s) to maximize memory efficiency and processing speed.
+The **Component** in EliCS is a core element of the ECS (Entity-Component-System) architecture. It defines the data structure for specific aspects of entities and is designed for optimal performance by centralizing data storage in highly optimized structures. Components are not instantiated as individual objects attached to entities; instead, their data is stored in contiguous arrays (such as `TypedArray`s) to maximize memory efficiency and processing speed.
 
 ## Features
 
@@ -25,33 +25,66 @@ Under the hood, the **Component** class is optimized for performance by storing 
 
 ## Usage
 
-The following examples demonstrate how to define a component, attach it to an entity, and access or modify its data. Notice that component data is accessed via arrays, ensuring minimal overhead and maximum performance.
+The following examples demonstrate how to define a component, attach it to an entity, and access or modify its data.
 
 ### Defining a Component
 
-Define a component by extending the `Component` class and providing a schema that specifies the data type and default values for each property.
+Define a component with the `createComponent` function by providing a schema that defines the data structure and default values, as well as optional lifecycle hooks.
 
 ```ts
-import { Component, Types } from 'elics';
+import { createComponent, Types } from 'elics';
 
-class EnemyComponent extends Component {
-	static schema = {
-		isAlive: { type: Types.Boolean, default: true },
-		position: { type: Types.Vec3, default: [0, 0, 0] },
-		health: { type: Types.Float32, default: 100 },
-		uuid: { type: Types.String, default: '' },
-		object3D: { type: Types.Object, default: null },
-	};
+const schema = {
+	isAlive: { type: Types.Boolean, default: true },
+	position: { type: Types.Vec3, default: [0, 0, 0] },
+	health: { type: Types.Float32, default: 100 },
+	uuid: { type: Types.String, default: '' },
+	object3D: { type: Types.Object, default: null },
+};
+const onAttach = (index: number) => {
+	console.log(`EnemyComponent attached to entity at index ${index}`);
+};
+const onDetach = (index: number) => {
+	EnemyComponent.data.object3D[index].removeFromParent();
+};
 
-	static onAttach(index: number): void {
-		console.log(`EnemyComponent attached to entity at index ${index}`);
-	}
-
-	static onDetach(index: number): void {
-		console.log(`EnemyComponent detached from entity at index ${index}`);
-	}
-}
+const EnemyComponent = createComponent(schema, onAttach, onDetach);
 ```
+
+#### Component Schema
+
+The schema defines the data structure and default values for the component as a [TypedSchema](./types.md#typedschema-interface). Each key in the schema corresponds to a property, for example:
+
+```ts
+const schema = {
+	isAlive: { type: Types.Boolean, default: true },
+	// ... more properties
+};
+```
+
+This example schema tells EliCS that the `EnemyComponent` has a property `isAlive` of type `Boolean` with a default value of `true`.
+
+#### Lifecycle Hooks
+
+The `onAttach` and `onDetach` hooks are optional functions that are invoked when the component is attached to or detached from an entity, respectively. These hooks take the entity's index as an argument and can be used to perform custom logic or setup tasks related to the component's lifecycle, for example:
+
+```ts
+const onDetach = (index: number) => {
+	EnemyComponent.data.object3D[index].removeFromParent();
+};
+```
+
+When the component is detached from an entity, we can directly access the `object3D` property from the component's data and perform cleanup operations.
+
+### Registering a Component
+
+Before using a component with entities or queries, it must be registered with the `World` instance.
+
+```ts
+world.registerComponent(EnemyComponent);
+```
+
+The registration process initializes the component's data storage based on the defined schema. If the component has not been registered, attaching it to an entity or using it to form queries will result in an error.
 
 ### Attaching Components to an Entity
 
@@ -90,45 +123,60 @@ EnemyComponent.data['isAlive'][index] = 0; // Mark as not alive
 
 ## API Documentation
 
-This section details the API of the **Component** class, including its properties and methods.
+This section provides detailed information about the **Component** API in EliCS.
 
-### Constructor
+::: info
+Components are not instantiated per entity. Instead, the component object's properties manage a centralized data store that is shared across all entities. Components are registered with the `World`, which initializes their storage based on the defined schema.
+:::
 
-**Note:**  
-Components are not instantiated per entity. Instead, the component class’s static methods and properties manage a centralized data store that is shared across all entities. Components are registered with the `World`, which initializes their storage based on the defined schema.
+### createComponent Function
 
-### Properties
+Creates a new component with the specified schema and optional lifecycle hooks.
 
-- `schema` (`{ [key: string]: { type: Types; default: any } }`):  
-  Defines the structure and default values for the component’s data. This schema is used during registration to allocate storage.
+```ts
+function createComponent<T extends Types>(
+	schema: TypedSchema<T>,
+	onAttach?: (index: number) => void,
+	onDetach?: (index: number) => void,
+): Component<T>;
+```
 
-- `data` (`{ [key: string]: TypedArray | Array<any> }`):  
-  Stores the component's data in optimized arrays. Numerical and vector data are typically stored in a `TypedArray`, while strings and objects are stored in regular JavaScript arrays.
+- **Parameters:**
+  - `schema`: The schema defining the data structure and default values for the component.
+  - `onAttach` (optional): A lifecycle hook invoked when the component is attached to an entity.
+  - `onDetach` (optional): A lifecycle hook invoked when the component is detached from an entity.
+- **Returns:** A new `Component` instance based on the provided schema.
 
-- `bitmask` (`ComponentMask | null`):  
-  A unique bitmask assigned to the component upon registration. It is used for fast entity filtering in queries.
+### Component.schema
 
-- `typeId` (`number`):  
-  A unique identifier for the component type, assigned during registration.
+Defines the structure and default values for the component's data:
 
-- `onAttach` (`(index: number) => void`):  
-  A lifecycle hook invoked when the component is attached to an entity.
+```ts
+readonly schema: TypedSchema<Types>;
+```
 
-- `onDetach` (`(index: number) => void`):  
-  A lifecycle hook invoked when the component is detached from an entity.
+### Component.data
 
-### Methods
+Defines the component's data in optimized arrays:
 
-- `initializeStorage(entityCapacity: number): void`  
-  Initializes storage arrays for the component based on its schema.
+```ts
+readonly data: { [key: keyof schema]: TypedArray | Array<any> };
+```
 
-  - **Parameters:**
-    - `entityCapacity`: A `number` representing the maximum number of entities.
-  - **Returns:** `void`.
+the `data` property stores the component's data in optimized arrays (one for each property in the schema). Numerical and vector data are typically stored in a `TypedArray`, while strings and objects are stored in regular JavaScript arrays.
 
-- `assignInitialData(index: number, initialData: { [key: string]: any }): void`  
-  Assigns initial data to the component's storage for a specific entity index.
-  - **Parameters:**
-    - `index`: A `number` indicating the entity index.
-    - `initialData`: An object containing key-value pairs to initialize the component’s data.
-  - **Returns:** `void`.
+### Component.onAttach
+
+A lifecycle hook invoked when the component is attached to an entity:
+
+```ts
+onAttach: (index: number) => void;
+```
+
+### Component.onDetach
+
+A lifecycle hook invoked when the component is detached from an entity:
+
+```ts
+onDetach: (index: number) => void;
+```

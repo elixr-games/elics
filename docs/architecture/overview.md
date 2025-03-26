@@ -12,6 +12,10 @@ ECS (Entity Component System) is a design pattern widely used in game developmen
 
 Entities are fundamental objects or actors within your application. They are essentially containers for components and do not possess any direct functionality or data.
 
+### [Types](types.md)
+
+EliCS provides a set of built-in types for defining component schemas, system configurations, and other data structures. These types ensure consistency, type safety, and efficient data storage.
+
 ### [Components](component.md)
 
 Components are pure data containers that define the properties or behaviors of entities. They are modular and can be dynamically attached to or detached from entities.

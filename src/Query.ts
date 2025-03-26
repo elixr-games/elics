@@ -1,11 +1,11 @@
-import type { ComponentConstructor, ComponentMask } from './Component.js';
+import type { Component, ComponentMask } from './Component.js';
 
 import BitSet from 'bitset';
 import { Entity } from './Entity.js';
 
 export type QueryConfig = {
-	required: ComponentConstructor<any>[];
-	excluded?: ComponentConstructor<any>[];
+	required: Component<any>[];
+	excluded?: Component<any>[];
 };
 
 export class Query {

@@ -54,3 +54,45 @@ export const TypedArrayMap: {
 	Vec3: { arrayConstructor: Float32Array, length: 3 },
 	Vec4: { arrayConstructor: Float32Array, length: 4 },
 };
+
+export type TypeValueToType<T extends DataType> = T extends
+	| 'Int8'
+	| 'Int16'
+	| 'Float32'
+	| 'Float64'
+	? number
+	: T extends 'Boolean'
+		? boolean
+		: T extends 'String'
+			? string
+			: T extends 'Vec2'
+				? [number, number]
+				: T extends 'Vec3'
+					? [number, number, number]
+					: T extends 'Vec4'
+						? [number, number, number, number]
+						: any;
+
+export type DataArrayToType<T extends DataType> = T extends
+	| 'Int8'
+	| 'Int16'
+	| 'Float32'
+	| 'Float64'
+	| 'Boolean'
+	| 'Vec2'
+	| 'Vec3'
+	| 'Vec4'
+	? TypedArray
+	: T extends 'String'
+		? Array<string>
+		: T extends 'Object'
+			? any[]
+			: never;
+
+export type TypedSchema<T extends DataType> = Record<
+	string,
+	{
+		type: T;
+		default: TypeValueToType<T>;
+	}
+>;

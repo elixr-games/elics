@@ -45,26 +45,20 @@ const world = new World();
 
 ## Defining Components
 
-Components in EliCS are versatile classes. You do not need to specify a schema for Components, but you can define default values for their properties.
+Components are data containers that define entity properties.
 
 ```typescript
-class Position extends Component {
-	static schema = {
-		value: { type: Types.Vec3, default: [0, 0, 0] },
-	};
-}
+const Position = createComponent({
+	value: { type: Types.Vec3, default: [0, 0, 0] },
+});
 
-class Velocity extends Component {
-	static schema = {
-		value: { type: Types.Vec3, default: [0, 0, 0] },
-	};
-}
+const Velocity = createComponent({
+	value: { type: Types.Vec3, default: [0, 0, 0] },
+});
 
-class Health extends Component {
-	static schema = {
-		value: { type: Types.Float32, default: 100 },
-	};
-}
+const Health = createComponent({
+	value: { type: Types.Float32, default: 100 },
+});
 ```
 
 Register these components:
@@ -92,17 +86,23 @@ entity.addComponent(Health);
 Systems contain the core logic.
 
 ```typescript
-import { System } from 'elics';
+import { createSystem } from 'elics';
 
-class MovementSystem extends System {
-	update(delta, time) {
-		const movables = this.getEntities(this.queries.movables);
-	}
-}
-
-MovementSystem.queries = {
+const queryConfig = {
 	movables: { required: [Position, Velocity] },
 };
+
+class MovementSystem extends createSystem(queryConfig) {
+	update(delta, time) {
+		this.queries.movables.entities.forEach((entity) => {
+			const position = entity.getVectorView(Position, 'value');
+			const velocity = entity.getVectorView(Velocity, 'value');
+			position[0] += velocity[0] * delta;
+			position[1] += velocity[1] * delta;
+			position[2] += velocity[2] * delta;
+		});
+	}
+}
 
 world.registerSystem(MovementSystem);
 ```

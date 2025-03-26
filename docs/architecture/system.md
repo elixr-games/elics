@@ -2,7 +2,7 @@
 outline: deep
 ---
 
-# System Class
+# System
 
 The **System** class in EliCS is a blueprint for implementing application logic within the Entity-Component-System architecture. It defines the lifecycle and behavior of systems, enabling them to process entities based on defined queries, manage their execution state, and maintain a defined order through prioritization.
 
@@ -19,48 +19,93 @@ Under the hood, the **System** class is designed to integrate seamlessly with th
 
 ## Usage
 
-Below are some examples demonstrating how to extend and use the **System** class within an ECS-powered application. These examples illustrate defining queries, implementing initialization and update logic, and controlling the system's lifecycle.
-
-### Example: `EnemySystem`
-
-The following example shows how to create an `EnemySystem` that processes entities with an `EnemyComponent`:
+Below are some examples demonstrating how to extend and use the **System** class within an ECS-powered application. These examples illustrate defining queries, implementing initialization and update logic, and controlling the system's lifecycle. The following example shows how to create an `EnemySystem` that processes entities with an `EnemyComponent`:
 
 ```ts
-import { System, Entity } from 'elics';
+import { createSystem, Entity } from 'elics';
 import { EnemyComponent } from './EnemyComponent';
 
-class EnemySystem extends System {
-	static queries = {
-		enemies: {
-			required: [EnemyComponent],
-		},
-	};
+const queries = {
+	enemies: { required: [EnemyComponent] },
+};
 
+const schema = {
+	healthRegen: { type: Types.Float32, default: 0.5 },
+};
+
+class EnemySystem extends createSystem(queries, schema) {
 	init(): void {
-		console.log('EnemySystem initialized');
+		this.queries.enemies.subscribe('qualify', (entity: Entity) => {
+			console.log('new enemy entity:', entity);
+		});
 	}
 
 	update(delta: number, time: number): void {
-		const enemies = this.getEntities(EnemySystem.queries.enemies);
-		enemies.forEach((enemy: Entity) => {
-			const health = EnemyComponent.data['health'][enemy.index];
-			if (health <= 0) {
-				EnemyComponent.data['isAlive'][enemy.index] = 0;
-				console.log(`Enemy at index ${enemy.index} is dead.`);
-			}
+		this.queries.enemies.entities.forEach((enemy: Entity) => {
+			EnemyComponent.data['health'][enemy.index] +=
+				this.config.healthRegen * delta;
 		});
 	}
 }
 ```
 
-Systems are initialized automatically when registered with the **World**:
+### System Schema
+
+The system schema defines configuration data that can be passed to the system during initialization as a [TypedSchema](./types.md#typedschema-interface). This data can be used to customize system behavior based on specific requirements, for example:
+
+```ts
+const schema = {
+	healthRegen: { type: Types.Float32, default: 0.5 },
+};
+```
+
+When registering the system with the **World**, you can provide (partial) configuration data to override the default values:
+
+```ts
+world.registerSystem(EnemySystem, { configData: { healthRegen: 1.0 } });
+```
+
+Once the system is registered with the **World**, the configuration data can be accessed via the `config` property:
+
+```ts
+update() {
+	const healthRegen = this.config.healthRegen;
+	// Use healthRegen value in system logic
+}
+```
+
+### Defining a System
+
+You can define a system by generating a new base system class using the `createSystem` function, which takes query configuration (see [Query Creation](./query.md#query-creation) for more details) and an optional configuration schema as arguments. The resulting class can be extended to implement the `init` and `update` methods:
+
+```ts
+class EnemySystem extends createSystem(queries, schema) {
+	init(): void {
+		// Initialization logic
+	}
+
+	update(delta: number, time: number): void {
+		// Per-frame logic
+	}
+}
+```
+
+- **`init()`**: Called once immediately after the system is registered with the **World**. Use this method to perform any setup or initialization logic required by the system.
+- **`update(delta: number, time: number)`**: Called every frame while the system is active. Implement this method to define the system's per-frame logic. The `delta` parameter represents the time elapsed since the last frame in **seconds**, while `time` represents the total elapsed time since the application started.
+
+### System Lifecycle
+
+Systems are initialized automatically when registered with the **World**. In addition to the `configData`, you can specify a `priority` value to control the system's execution order, with higher values indicating higher priority:
 
 ```ts
 const world = new World();
-world.registerSystem(EnemySystem);
+world.registerComponent(EnemyComponent).registerSystem(EnemySystem, {
+	configData: { healthRegen: 0.5 },
+	priority: 10,
+});
 ```
 
-You can control a system's execution state using the `play()` and `stop()` methods:
+After registration, the `update` method of the systems is called every time the **World** is updated, in the order defined by their priorities. You can alo control a system's local execution state using the `play()` and `stop()` methods:
 
 ```ts
 const enemySystem = world.getSystem(EnemySystem);
@@ -68,87 +113,90 @@ enemySystem.play(); // Resume system updates
 enemySystem.stop(); // Pause system updates
 ```
 
-For more complex scenarios, a system may define multiple queries or be registered with a specific priority to control execution order:
-
-```ts
-class CombatSystem extends System {
-	static queries = {
-		enemies: { required: [EnemyComponent] },
-		players: { required: [PlayerComponent] },
-	};
-
-	update(delta: number, time: number): void {
-		const enemies = this.getEntities(CombatSystem.queries.enemies);
-		const players = this.getEntities(CombatSystem.queries.players);
-		// Process combat interactions between players and enemies
-	}
-}
-
-// Priority-based registration
-world.registerSystem(PhysicsSystem, { priority: 10 }); // High priority
-world.registerSystem(RenderingSystem, { priority: 0 }); // Low priority
-```
-
 ## API Documentation
 
-This section provides detailed information on the **System** class API, including its constructor, properties, and methods.
+This section provides detailed information about the **System** API in EliCS.
 
-### Constructor
+::: info
+You should not instantiate a `System` directly using the constructor. Instead, register a system with the `World` instance using the `registerSystem` method.
+:::
 
-**Signature:**
+### createSystem Function
 
-```
-new System(world: World, queryManager: QueryManager, priority: number)
+creates a new base system class with the specified query configuration and optional configuration schema.
+
+```ts
+function createSystem(
+	queries: Record<string, { required: Component[]; excluded?: Component[] }>,
+	schema?: TypedSchema,
+): SystemConstructor;
 ```
 
 - **Parameters:**
-  - `world`: An instance of `World` that the system is registered with.
-  - `queryManager`: The `QueryManager` instance responsible for handling queries.
-  - `priority`: A `number` representing the system's execution order (lower numbers are executed earlier).
-- **Description:**  
-  Constructs a new instance of the **System** class. Note that the class is abstract and should be extended to implement the `init()` and `update()` methods.
+  - `queries`: A query configuration object specifying the required and excluded components for each query.
+  - `schema` (optional): A schema object defining configuration data for the system.
+- **Returns:** A new base system class that can be extended to implement custom system logic.
 
-### Properties
+### System.world
 
-- `world` (`World`):  
-  Provides access to the `World` instance the system is registered with. (Read-only)
+Provides access to the `World` instance the system is registered with. This property is read-only.
 
-- `isPaused` (`boolean`):  
-  Indicates whether the system is currently paused.
+```ts
+readonly world: World;
+```
 
-- `queries` (`{ [key: string]: Query }`):  
-  A mapping of query names to `Query` objects, automatically registered during system initialization.
+### System.isPaused
 
-- `priority` (`number`):  
-  Determines the system's execution order. Higher values indicate higher priority, ensuring the system is processed earlier in the update cycle.
+Indicates whether the system is currently paused.
 
-### Methods
+```ts
+readonly isPaused: boolean;
+```
 
-- `getEntities(query: Query): Entity[]`  
-  Retrieves an array of entities that match the specified `query`.
+### System.queries
 
-  - **Parameters:**
-    - `query`: An instance of `Query` used to filter entities.
-  - **Returns:** An array of entities matching the query.
+A mapping of query names to `Query` objects, automatically assigned during system initialization.
 
-- `init(configData: { [key: string]: any }): void`  
-  Called once immediately after the system is registered with the `World`. This method should be overridden to include any initialization logic.
+```ts
+readonly queries: { [key: keyof System.schema]: Query };
+```
 
-  - **Returns:** `void`.
+### System.priority
 
-- `update(delta: number, time: number): void`  
-  Called every frame while the system is active. Override this method to implement per-frame logic.
+Determines the system's execution order. Higher values indicate higher priority, ensuring the system is processed earlier in the update cycle.
 
-  - **Parameters:**
-    - `delta`: A `number` representing the time elapsed since the last frame.
-    - `time`: A `number` representing the total elapsed time since the application started.
-  - **Returns:** `void`.
+```ts
+priority: number;
+```
 
-- `play(): void`  
-  Resumes the system's execution if it is paused.
+### System.init
 
-  - **Returns:** `void`.
+Called once immediately after the system is registered with the `World`. Override this method to include any initialization logic.
 
-- `stop(): void`  
-  Pauses the system's execution.
-  - **Returns:** `void`.
+```ts
+init(): void;
+```
+
+### System.update
+
+Called every frame while the system is active. Override this method to implement per-frame logic.
+
+```ts
+update(delta: number, time: number): void;
+```
+
+### System.play
+
+Resumes the system's execution if it is paused.
+
+```ts
+play(): void;
+```
+
+### System.stop
+
+Pauses the system's execution.
+
+```ts
+stop(): void;
+```

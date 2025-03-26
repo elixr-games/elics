@@ -1,7 +1,6 @@
+import { DataType, TypeValueToType } from './Types.js';
 import { Query, QueryConfig } from './Query.js';
 
-import { ComponentValue } from './Component.js';
-import { DataType } from './Types.js';
 import { QueryManager } from './QueryManager.js';
 import { World } from './World.js';
 
@@ -9,7 +8,7 @@ export type SystemSchema<T extends DataType> = Record<
 	string,
 	{
 		type: T;
-		default: ComponentValue<T>;
+		default: TypeValueToType<T>;
 	}
 >;
 
@@ -21,13 +20,13 @@ export interface System<
 	Q extends SystemQueries,
 > {
 	isPaused: boolean;
-	config: Record<keyof S, ComponentValue<T>>;
+	config: Record<keyof S, TypeValueToType<T>>;
 	queries: Record<keyof Q, Query>;
 	world: World;
 	queryManager: QueryManager;
 	priority: number;
 	globals: Record<string, any>;
-	init(_configData: { [key: string]: any }): void;
+	init(): void;
 	update(delta: number, time: number): void;
 	play(): void;
 	stop(): void;
@@ -56,19 +55,23 @@ export function createSystem<
 
 		public isPaused: boolean = false;
 		public queries!: Record<keyof Q, Query>;
-		public config!: Record<keyof S, ComponentValue<T>>;
+		public config = {} as Record<keyof S, TypeValueToType<T>>;
 
 		constructor(
 			public readonly world: World,
 			public queryManager: QueryManager,
 			public priority: number,
-		) {}
+		) {
+			for (const key in schema) {
+				this.config[key] = schema[key].default;
+			}
+		}
 
 		get globals() {
 			return this.world.globals;
 		}
 
-		init(_configData: { [key: string]: any }): void {}
+		init(): void {}
 
 		update(_delta: number, _time: number): void {}
 

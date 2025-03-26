@@ -1,4 +1,4 @@
-import { ComponentConstructor, ComponentSchema } from './Component.js';
+import { DataType, TypeValueToType, TypedSchema } from './Types.js';
 import { ErrorMessages, assertCondition, toggleChecks } from './Checks.js';
 import { Query, QueryConfig } from './Query.js';
 import {
@@ -8,8 +8,8 @@ import {
 	SystemSchema,
 } from './System.js';
 
+import { Component } from './Component.js';
 import { ComponentManager } from './ComponentManager.js';
-import { DataType } from './Types.js';
 import { Entity } from './Entity.js';
 import { EntityManager } from './EntityManager.js';
 import { QueryManager } from './QueryManager.js';
@@ -20,8 +20,8 @@ export interface WorldOptions {
 	deferredEntityUpdates: boolean;
 }
 
-export interface SystemOptions {
-	configData: { [key: string]: any };
+export interface SystemOptions<T extends DataType, S extends SystemSchema<T>> {
+	configData: Record<keyof S, TypeValueToType<T>>;
 	priority: number;
 }
 
@@ -46,10 +46,10 @@ export class World {
 		toggleChecks(checksOn);
 	}
 
-	registerComponent<C extends ComponentConstructor<ComponentSchema<DataType>>>(
-		componentClass: C,
+	registerComponent<C extends Component<TypedSchema<DataType>>>(
+		component: C,
 	): this {
-		this.componentManager.registerComponent(componentClass);
+		this.componentManager.registerComponent(component);
 		return this;
 	}
 
@@ -63,7 +63,7 @@ export class World {
 		Q extends SystemQueries,
 	>(
 		systemClass: SystemConstructor<T, S, Q>,
-		options: Partial<SystemOptions> = {},
+		options: Partial<SystemOptions<T, S>> = {},
 	): this {
 		assertCondition(
 			!this.systems.some((system) => system instanceof systemClass),
@@ -71,7 +71,10 @@ export class World {
 			systemClass,
 		);
 
-		const { configData = {}, priority = 0 } = options;
+		const {
+			configData = {} as Record<keyof S, TypeValueToType<T>>,
+			priority = 0,
+		} = options;
 
 		const queries = {} as Record<keyof Q, Query>;
 
@@ -83,14 +86,14 @@ export class World {
 		const systemInstance = new systemClass(this, this.queryManager, priority);
 
 		systemInstance.queries = queries;
-		const config = Object.entries(systemClass.schema).reduce(
-			(acc, [key, { default: defaultValue }]) => {
-				acc[key] = key in configData ? configData[key] : defaultValue;
-				return acc;
-			},
-			{} as Record<string, any>,
-		);
-		systemInstance.init(config);
+
+		(Object.keys(configData) as (keyof S)[]).forEach((key) => {
+			if (key in systemInstance.config) {
+				systemInstance.config[key] = configData[key];
+			}
+		});
+
+		systemInstance.init();
 
 		// Determine the correct position for the new system based on priority
 		const insertIndex = this.systems.findIndex(

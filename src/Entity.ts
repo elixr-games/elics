@@ -1,22 +1,23 @@
-import type {
-	ComponentConstructor,
-	ComponentMask,
-	ComponentValue,
-	ComponentSchema,
-} from './Component.js';
+import type { Component, ComponentMask } from './Component.js';
 
 import BitSet from 'bitset';
 import type { ComponentManager } from './ComponentManager.js';
 import type { EntityManager } from './EntityManager.js';
 import type { QueryManager } from './QueryManager.js';
-import { DataType, TypedArrayMap, type TypedArray } from './Types.js';
+import {
+	DataType,
+	TypedArrayMap,
+	TypedSchema,
+	TypeValueToType,
+	type TypedArray,
+} from './Types.js';
 import { assertCondition, ErrorMessages } from './Checks.js';
 
 export class Entity {
 	public bitmask: ComponentMask = new BitSet();
 	public active = true;
 	private vectorViews: Map<
-		ComponentConstructor<ComponentSchema<DataType>>,
+		Component<TypedSchema<DataType>>,
 		Map<string, TypedArray>
 	> = new Map();
 
@@ -27,94 +28,94 @@ export class Entity {
 		public readonly index: number,
 	) {}
 
-	addComponent<C extends ComponentConstructor<any>>(
-		componentClass: C,
+	addComponent<C extends Component<any>>(
+		component: C,
 		initialData: Partial<{
-			[K in keyof C['schema']]: ComponentValue<C['schema'][K]['type']>;
+			[K in keyof C['schema']]: TypeValueToType<C['schema'][K]['type']>;
 		}> = {},
 	): this {
 		assertCondition(this.active, ErrorMessages.ModifyDestroyedEntity, this);
 		assertCondition(
-			componentClass.bitmask !== null,
+			component.bitmask !== null,
 			ErrorMessages.ComponentNotRegistered,
-			componentClass,
+			component,
 		);
-		this.bitmask = this.bitmask.or(componentClass.bitmask!);
+		this.bitmask = this.bitmask.or(component.bitmask!);
 		this.componentManager.attachComponentToEntity(
 			this.index,
-			componentClass,
+			component,
 			initialData,
 		);
 		this.queryManager.updateEntity(this);
-		componentClass.onAttach(this.index);
+		component.onAttach(this.index);
 		return this;
 	}
 
-	removeComponent(componentClass: ComponentConstructor<any>): this {
+	removeComponent(component: Component<any>): this {
 		assertCondition(this.active, ErrorMessages.ModifyDestroyedEntity, this);
 		assertCondition(
-			componentClass.bitmask !== null,
+			component.bitmask !== null,
 			ErrorMessages.ComponentNotRegistered,
-			componentClass,
+			component,
 		);
-		this.bitmask = this.bitmask.andNot(componentClass.bitmask!);
+		this.bitmask = this.bitmask.andNot(component.bitmask!);
 		this.queryManager.updateEntity(this);
-		componentClass.onDetach(this.index);
+		component.onDetach(this.index);
 		return this;
 	}
 
-	hasComponent(componentClass: ComponentConstructor<any>): boolean {
+	hasComponent(component: Component<any>): boolean {
 		assertCondition(
-			componentClass.bitmask !== null,
+			component.bitmask !== null,
 			ErrorMessages.ComponentNotRegistered,
-			componentClass,
+			component,
 		);
-		return !this.bitmask.and(componentClass.bitmask!).isEmpty();
+		return !this.bitmask.and(component.bitmask!).isEmpty();
 	}
 
-	getComponents(): ComponentConstructor<any>[] {
+	getComponents(): Component<any>[] {
 		const bitArray = this.bitmask.toArray();
 		return bitArray.map(
 			(typeId) => this.componentManager.getComponentByTypeId(typeId)!,
 		);
 	}
 
-	getValue<C extends ComponentConstructor<any>, K extends keyof C['schema']>(
-		componentClass: C,
+	getValue<C extends Component<any>, K extends keyof C['schema']>(
+		component: C,
 		key: K,
-	): ComponentValue<C['schema'][K]['type']> {
-		return componentClass.data[key]?.[this.index] as ComponentValue<
+	): TypeValueToType<C['schema'][K]['type']> {
+		return component.data[key]?.[this.index] as TypeValueToType<
 			C['schema'][K]['type']
 		>;
 	}
 
-	setValue<C extends ComponentConstructor<any>, K extends keyof C['schema']>(
-		componentClass: C,
+	setValue<C extends Component<any>, K extends keyof C['schema']>(
+		component: C,
 		key: K,
-		value: ComponentValue<C['schema'][K]['type']>,
+		value: TypeValueToType<C['schema'][K]['type']>,
 	): void {
-		const componentData = componentClass.data[key];
+		const componentData = component.data[key];
 		componentData[this.index] = value;
 	}
 
-	getVectorView<
-		S extends ComponentSchema<DataType>,
-		C extends ComponentConstructor<S>,
-	>(componentClass: C, key: keyof C['schema']) {
+	getVectorView<S extends TypedSchema<DataType>, C extends Component<S>>(
+		component: C,
+		key: keyof C['schema'],
+	) {
 		key = key as string;
-		const cachedVectorView = this.vectorViews.get(componentClass)?.get(key);
+		const cachedVectorView = this.vectorViews.get(component)?.get(key);
 		if (cachedVectorView) {
 			return cachedVectorView;
 		} else {
-			const componentData = componentClass.data[key] as TypedArray;
-			const type = componentClass.schema[key].type;
+			const componentData = component.data[key] as TypedArray;
+			const type = component.schema[key].type;
 			const length = TypedArrayMap[type].length;
 			const offset = this.index * length;
 			const vectorView = componentData.subarray(offset, offset + length);
-			if (!this.vectorViews.has(componentClass)) {
-				this.vectorViews.set(componentClass, new Map());
+			if (!this.vectorViews.has(component)) {
+				this.vectorViews.set(component, new Map());
 			}
-			this.vectorViews.get(componentClass)!.set(key, vectorView);
+			this.vectorViews.get(component)!.set(key, vectorView);
 			return vectorView;
 		}
 	}

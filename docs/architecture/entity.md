@@ -2,7 +2,7 @@
 outline: deep
 ---
 
-# Entity Class
+# Entity
 
 The **Entity** class in EliCS is a core component of the ECS architecture, representing individual objects or actors within your application. It serves as a container for multiple components, enabling dynamic interactions and behaviors.
 
@@ -80,70 +80,119 @@ entity.destroy();
 
 This section documents the API of the **Entity** class, including its properties and methods.
 
-### Constructor
-
-**Note:**  
+::: info
 Entities should be created using the `World.createEntity()` method. The constructor is invoked internally by the **EntityManager**.
+:::
 
-### Properties
+### Entity.active
 
-- `active` (`boolean`):  
-  Indicates whether the entity is currently active. This property is read-only and reflects the entity's lifecycle state.
+Indicates whether the entity is currently active. This property is read-only and reflects the entity's lifecycle state.
 
-### Methods
+```ts
+readonly active: boolean;
+```
 
-- `addComponent(componentClass: ComponentConstructor, initialData?: { [key: string]: any }): this`  
-  Adds a component to the entity.
+### Entity.index
 
-  - **Parameters:**
-    - `componentClass`: The class of the component to be added.
-    - `initialData` (optional): An object containing initial data for the component.
-  - **Returns:** The entity instance for method chaining.
+The unique index assigned to the entity by the **EntityManager**. This index is used for efficient component data access and management.
 
-- `removeComponent(componentClass: ComponentConstructor): this`  
-  Removes the specified component from the entity.
+```ts
+readonly index: number;
+```
 
-  - **Parameters:**
-    - `componentClass`: The class of the component to remove.
-  - **Returns:** The entity instance for method chaining.
+### Entity.addComponent
 
-- `hasComponent(componentClass: ComponentConstructor): boolean`  
-  Checks if the entity has a specified component.
+Adds a component to the entity, optionally providing initial data for the component.
 
-  - **Parameters:**
-    - `componentClass`: The class of the component to check.
-  - **Returns:** `true` if the component is present; otherwise, `false`.
+```ts
+addComponent(component: Component, initialData?: { [key: string]: any }): this;
+```
 
-- `getValue(componentClass: ComponentConstructor, key: string): any`  
-  Retrieves a value from a component associated with the entity.
+- **Parameters:**
+  - `component`: The component instance to add.
+  - `initialData` (optional): An object containing initial data for the component.
+- **Returns:** The entity instance for method chaining.
 
-  - **Parameters:**
-    - `componentClass`: The class of the component.
-    - `key`: The key for the value to retrieve.
-  - **Returns:** The value associated with the specified key.
+### Entity.removeComponent
 
-- `setValue(componentClass: ComponentConstructor, key: string, value: any): void`  
-  Updates a value in a component associated with the entity.
+Removes the specified component from the entity.
 
-  - **Parameters:**
-    - `componentClass`: The class of the component.
-    - `key`: The key of the value to update.
-    - `value`: The new value to set.
-  - **Returns:** `void`.
+```ts
+removeComponent(component: Component): this;
+```
 
-- `getVectorView(componentClass: ComponentConstructor, key: string): TypedArray`  
-  Provides a subarray view for vector-like component data.
+- **Parameters:**
+  - `component`: The component instance to remove.
+- **Returns:** The entity instance for method chaining.
 
-  - **Parameters:**
-    - `componentClass`: The class of the component.
-    - `key`: The key associated with the vector data.
-  - **Returns:** A `TypedArray` representing the subarray view.
+### Entity.hasComponent
 
-- `destroy(): void`  
-  Destroys the entity by releasing all its components and returning it to the pool.
+Checks if the entity has a specified component.
 
-  - **Returns:** `void`.
+```ts
+hasComponent(component: Component): boolean;
+```
 
-- `getComponents(): ComponentConstructor[]`  
-  Retrieves a list of all component constructors currently associated with the entity.
-  - **Returns:** An array of component constructors.
+- **Parameters:**
+  - `component`: The component instance to check.
+- **Returns:** `true` if the component is present; otherwise, `false`.
+
+### Entity.getComponents
+
+Retrieves a list of all component instances currently associated with the entity.
+
+```ts
+getComponents(): Component[];
+```
+
+- **Returns:** An array of component instances.
+
+### Entity.getValue
+
+Retrieves a value from a component associated with the entity.
+
+```ts
+getValue(component: Component, key: string): any;
+```
+
+- **Parameters:**
+  - `component`: The component instance.
+  - `key`: The key for the value to retrieve.
+- **Returns:** The value associated with the specified key.
+
+### Entity.setValue
+
+Updates a value in a component associated with the entity.
+
+```ts
+setValue(component: Component, key: string, value: any): void;
+```
+
+- **Parameters:**
+  - `component`: The component instance.
+  - `key`: The key of the value to update.
+  - `value`: The new value to set.
+- **Returns:** `void`.
+
+### Entity.getVectorView
+
+Provides a subarray view for vector-like component data.
+
+```ts
+getVectorView(component: Component, key: string): TypedArray;
+```
+
+- **Parameters:**
+  - `component`: The component instance.
+  - `key`: The key associated with the vector data.
+- **Returns:** A `TypedArray` representing the subarray view.
+
+### Entity.destroy
+
+Destroys the entity by releasing all its components and returning it to the pool.
+
+```ts
+destroy(): void;
+```
+
+- **Returns:** `void`.

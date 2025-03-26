@@ -1,30 +1,34 @@
 import BitSet from 'bitset';
-import type { ComponentConstructor } from './Component.js';
+import {
+	assignInitialComponentData,
+	initializeComponentStorage,
+	type Component,
+} from './Component.js';
 
 export class ComponentManager {
 	private nextComponentTypeId = 0;
-	private componentsByTypeId: ComponentConstructor<any>[] = [];
+	private componentsByTypeId: Component<any>[] = [];
 
 	constructor(private entityCapacity: number) {}
 
-	registerComponent(componentClass: ComponentConstructor<any>): void {
+	registerComponent(component: Component<any>): void {
 		const typeId = this.nextComponentTypeId++;
-		componentClass.bitmask = new BitSet();
-		componentClass.bitmask.set(typeId, 1);
-		componentClass.typeId = typeId;
-		componentClass.initializeStorage(this.entityCapacity);
-		this.componentsByTypeId[typeId] = componentClass;
+		component.bitmask = new BitSet();
+		component.bitmask.set(typeId, 1);
+		component.typeId = typeId;
+		initializeComponentStorage(component, this.entityCapacity);
+		this.componentsByTypeId[typeId] = component;
 	}
 
 	attachComponentToEntity(
 		entityIndex: number,
-		componentClass: ComponentConstructor<any>,
+		component: Component<any>,
 		initialData: { [key: string]: any },
 	): void {
-		componentClass.assignInitialData(entityIndex, initialData);
+		assignInitialComponentData(component, entityIndex, initialData);
 	}
 
-	getComponentByTypeId(typeId: number): ComponentConstructor<any> | undefined {
+	getComponentByTypeId(typeId: number): Component<any> | undefined {
 		return this.componentsByTypeId[typeId];
 	}
 }

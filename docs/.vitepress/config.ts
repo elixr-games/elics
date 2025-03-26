@@ -79,6 +79,7 @@ export default defineConfig({
 						text: 'Overview',
 						link: '/architecture/overview',
 					},
+					{ text: 'Types', link: '/architecture/types' },
 					{ text: 'Entity', link: '/architecture/entity' },
 					{ text: 'Component', link: '/architecture/component' },
 					{ text: 'Query', link: '/architecture/query' },

@@ -68,19 +68,13 @@ class HealthSystem extends createSystem(
 		healthDecreaseRate: { type: Types.Int16, default: 10 },
 	},
 ) {
-	private healthDecreaseRate!: number;
-
-	init(configData: { healthDecreaseRate: number }): void {
-		this.healthDecreaseRate = configData.healthDecreaseRate;
-	}
-
 	update(delta: number): void {
 		for (const entity of this.queries.entitiesWithHealth.entities) {
 			const healthValue = entity.getValue(HealthComponent, 'value');
 			entity.setValue(
 				HealthComponent,
 				'value',
-				healthValue - this.healthDecreaseRate * delta,
+				healthValue - this.config.healthDecreaseRate * delta,
 			);
 		}
 	}
@@ -265,18 +259,19 @@ describe('EliCS Integration Tests', () => {
 
 		test('onAttach and onDetach hooks', () => {
 			// Create a component class that overrides onAttach and onDetach
-			const HookComponent = createComponent({
-				onAttachCalled: { type: Types.Boolean, default: false },
-				onDetachCalled: { type: Types.Boolean, default: false },
-			});
+			const HookComponent = createComponent(
+				{
+					onAttachCalled: { type: Types.Boolean, default: false },
+					onDetachCalled: { type: Types.Boolean, default: false },
+				},
+				(index: number) => {
+					HookComponent.data.onAttachCalled[index] = 1;
+				},
+				(index: number) => {
+					HookComponent.data.onDetachCalled[index] = 1;
+				},
+			);
 
-			HookComponent.onAttach = (index: number) => {
-				HookComponent.data.onAttachCalled[index] = 1;
-			};
-
-			HookComponent.onDetach = (index: number) => {
-				HookComponent.data.onDetachCalled[index] = 1;
-			};
 			world.registerComponent(HookComponent);
 
 			const entity = world.createEntity();
