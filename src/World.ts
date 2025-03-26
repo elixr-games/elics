@@ -1,4 +1,4 @@
-import { DataType, TypeValueToType, TypedSchema } from './Types.js';
+import { DataType, TypeValueToType } from './Types.js';
 import { ErrorMessages, assertCondition, toggleChecks } from './Checks.js';
 import { Query, QueryConfig } from './Query.js';
 import {
@@ -46,9 +46,7 @@ export class World {
 		toggleChecks(checksOn);
 	}
 
-	registerComponent<C extends Component<TypedSchema<DataType>>>(
-		component: C,
-	): this {
+	registerComponent(component: Component<any>): this {
 		this.componentManager.registerComponent(component);
 		return this;
 	}

@@ -3,17 +3,13 @@
 	"version": "1.0.0",
 	"description": "lightweight, flexible ECS for web games",
 	"type": "module",
-	"main": "build/elics.js",
-	"module": "build/elics.module.js",
+	"main": "lib/index.js",
+	"module": "lib/index.js",
 	"types": "lib/index.d.ts",
 	"exports": {
 		".": {
-			"import": "./build/elics.module.js",
-			"require": "./build/elics.js"
-		},
-		"./umd": {
-			"import": "./build/elics.js",
-			"require": "./build/elics.js"
+			"import": "./lib/index.js",
+			"require": "./lib/index.js"
 		}
 	},
 	"files": [

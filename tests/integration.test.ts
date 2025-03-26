@@ -264,11 +264,11 @@ describe('EliCS Integration Tests', () => {
 					onAttachCalled: { type: Types.Boolean, default: false },
 					onDetachCalled: { type: Types.Boolean, default: false },
 				},
-				(index: number) => {
-					HookComponent.data.onAttachCalled[index] = 1;
+				(data, index) => {
+					data.onAttachCalled[index] = 1;
 				},
-				(index: number) => {
-					HookComponent.data.onDetachCalled[index] = 1;
+				(data, index) => {
+					data.onDetachCalled[index] = 1;
 				},
 			);
 

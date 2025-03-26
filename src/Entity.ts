@@ -7,7 +7,6 @@ import type { QueryManager } from './QueryManager.js';
 import {
 	DataType,
 	TypedArrayMap,
-	TypedSchema,
 	TypeValueToType,
 	type TypedArray,
 } from './Types.js';
@@ -16,10 +15,7 @@ import { assertCondition, ErrorMessages } from './Checks.js';
 export class Entity {
 	public bitmask: ComponentMask = new BitSet();
 	public active = true;
-	private vectorViews: Map<
-		Component<TypedSchema<DataType>>,
-		Map<string, TypedArray>
-	> = new Map();
+	private vectorViews: Map<Component<any>, Map<string, TypedArray>> = new Map();
 
 	constructor(
 		protected entityManager: EntityManager,
@@ -47,7 +43,7 @@ export class Entity {
 			initialData,
 		);
 		this.queryManager.updateEntity(this);
-		component.onAttach(this.index);
+		component.onAttach(component.data, this.index);
 		return this;
 	}
 
@@ -60,7 +56,7 @@ export class Entity {
 		);
 		this.bitmask = this.bitmask.andNot(component.bitmask!);
 		this.queryManager.updateEntity(this);
-		component.onDetach(this.index);
+		component.onDetach(component.data, this.index);
 		return this;
 	}
 
@@ -98,7 +94,7 @@ export class Entity {
 		componentData[this.index] = value;
 	}
 
-	getVectorView<S extends TypedSchema<DataType>, C extends Component<S>>(
+	getVectorView<C extends Component<any>>(
 		component: C,
 		key: keyof C['schema'],
 	) {
@@ -108,7 +104,7 @@ export class Entity {
 			return cachedVectorView;
 		} else {
 			const componentData = component.data[key] as TypedArray;
-			const type = component.schema[key].type;
+			const type = component.schema[key].type as DataType;
 			const length = TypedArrayMap[type].length;
 			const offset = this.index * length;
 			const vectorView = componentData.subarray(offset, offset + length);
@@ -126,7 +122,8 @@ export class Entity {
 		this.active = false;
 		const bitArray = this.bitmask.toArray();
 		for (const typeId of bitArray) {
-			this.componentManager.getComponentByTypeId(typeId)!.onDetach(this.index);
+			const component = this.componentManager.getComponentByTypeId(typeId)!;
+			component.onDetach(component.data, this.index);
 		}
 		this.bitmask = new BitSet();
 		this.queryManager.resetEntity(this);
