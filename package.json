@@ -52,9 +52,9 @@
 	},
 	"license": "MIT",
 	"bugs": {
-		"url": "https://github.com/felixtrz/elics/issues"
+		"url": "https://github.com/elixr-games/elics/issues"
 	},
-	"homepage": "https://felixtrz.github.io/elics/",
+	"homepage": "https://elixr-games.github.io/elics/",
 	"engines": {
 		"node": ">=16.0.0"
 	},
