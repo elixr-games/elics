@@ -36,11 +36,12 @@ export interface SystemConstructor<
 	T extends DataType,
 	S extends SystemSchema<T>,
 	Q extends SystemQueries,
+	W extends World = World,
 > {
 	schema: S;
 	isSystem: boolean;
 	queries: Q;
-	new (_w: World, _qm: QueryManager, _p: number): System<T, S, Q>;
+	new (_w: W, _qm: QueryManager, _p: number): System<T, S, Q>;
 }
 
 export function createSystem<
