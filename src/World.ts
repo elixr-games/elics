@@ -59,8 +59,9 @@ export class World {
 		T extends DataType,
 		S extends SystemSchema<T>,
 		Q extends SystemQueries,
+		Sys extends System<T, S, Q> = System<T, S, Q>,
 	>(
-		systemClass: SystemConstructor<T, S, Q>,
+		systemClass: SystemConstructor<T, S, Q, typeof this, Sys>,
 		options: Partial<SystemOptions<T, S>> = {},
 	): this {
 		assertCondition(
@@ -107,7 +108,12 @@ export class World {
 		return this;
 	}
 
-	unregisterSystem(systemClass: SystemConstructor<any, any, any>): void {
+	unregisterSystem<
+		T extends DataType,
+		S extends SystemSchema<T>,
+		Q extends SystemQueries,
+		Sys extends System<T, S, Q>,
+	>(systemClass: SystemConstructor<T, S, Q, typeof this, Sys>): void {
 		this.systems = this.systems.filter(
 			(system) => !(system instanceof systemClass),
 		);
@@ -131,16 +137,19 @@ export class World {
 		T extends DataType,
 		S extends SystemSchema<T>,
 		Q extends SystemQueries,
-	>(systemClass: SystemConstructor<T, S, Q>): System<T, S, Q> | undefined {
+		Sys extends System<T, S, Q>,
+	>(
+		systemClass: SystemConstructor<T, S, Q, typeof this, Sys>,
+	): Sys | undefined {
 		for (const system of this.systems) {
 			if (system instanceof systemClass) {
-				return system as System<T, S, Q>;
+				return system as Sys;
 			}
 		}
 		return undefined;
 	}
 
-	getSystems(): System<any, any, any>[] {
-		return [...this.systems];
+	getSystems<T extends System<any, any, any> = System<any, any, any>>(): T[] {
+		return this.systems as T[];
 	}
 }

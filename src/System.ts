@@ -32,16 +32,25 @@ export interface System<
 	stop(): void;
 }
 
+export interface SpecialSystem<
+	T extends DataType,
+	S extends SystemSchema<T>,
+	Q extends SystemQueries,
+> extends System<T, S, Q> {
+	specialProp: boolean;
+}
+
 export interface SystemConstructor<
 	T extends DataType,
 	S extends SystemSchema<T>,
 	Q extends SystemQueries,
 	W extends World = World,
+	Sys extends System<T, S, Q> = System<T, S, Q>,
 > {
 	schema: S;
 	isSystem: boolean;
 	queries: Q;
-	new (_w: W, _qm: QueryManager, _p: number): System<T, S, Q>;
+	new (_w: W, _qm: QueryManager, _p: number): Sys;
 }
 
 export function createSystem<
