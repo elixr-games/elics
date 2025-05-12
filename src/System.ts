@@ -28,6 +28,7 @@ export interface System<
 	globals: Record<string, any>;
 	init(): void;
 	update(delta: number, time: number): void;
+	destroy(): void;
 	play(): void;
 	stop(): void;
 }
@@ -92,5 +93,7 @@ export function createSystem<
 		stop(): void {
 			this.isPaused = true;
 		}
+
+		destroy(): void {}
 	};
 }

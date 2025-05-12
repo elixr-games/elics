@@ -489,15 +489,27 @@ describe('EliCS Integration Tests', () => {
 		});
 
 		test('Registering and unregistering systems', () => {
-			const TestSystem = createSystem();
+			const initCallback = jest.fn();
+			const destroyCallback = jest.fn();
+			class TestSystem extends createSystem() {
+				init(): void {
+					initCallback();
+				}
+				destroy(): void {
+					destroyCallback();
+				}
+			}
 
 			world.registerSystem(TestSystem);
 			const system = world.getSystem(TestSystem);
 			expect(system).toBeDefined();
 			expect(world.getSystems()).toContain(system);
+			expect(initCallback).toHaveBeenCalledTimes(1);
+			expect(destroyCallback).toHaveBeenCalledTimes(0);
 
 			world.unregisterSystem(TestSystem);
 			expect(world.getSystem(TestSystem)).toBeUndefined();
+			expect(destroyCallback).toHaveBeenCalledTimes(1);
 		});
 
 		test('System execution ordering', () => {

@@ -114,9 +114,13 @@ export class World {
 		Q extends SystemQueries,
 		Sys extends System<T, S, Q>,
 	>(systemClass: SystemConstructor<T, S, Q, typeof this, Sys>): void {
-		this.systems = this.systems.filter(
-			(system) => !(system instanceof systemClass),
-		);
+		const systemInstance = this.getSystem(systemClass);
+		if (systemInstance) {
+			systemInstance.destroy();
+			this.systems = this.systems.filter(
+				(system) => !(system instanceof systemClass),
+			);
+		}
 	}
 
 	registerQuery(queryConfig: QueryConfig): this {
