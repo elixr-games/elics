@@ -3,7 +3,7 @@ import { Query, QueryConfig } from './Query.js';
 
 import { QueryManager } from './QueryManager.js';
 import { World } from './World.js';
-import { Signal, signal } from '@preact/signals';
+import { Signal, signal } from '@preact/signals-core';
 
 export type SystemSchema<T extends DataType> = Record<
 	string,
