@@ -88,7 +88,7 @@ export class World {
 
 		(Object.keys(configData) as (keyof S)[]).forEach((key) => {
 			if (key in systemInstance.config) {
-				systemInstance.config[key] = configData[key];
+				systemInstance.config[key].value = configData[key];
 			}
 		});
 

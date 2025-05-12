@@ -74,7 +74,7 @@ class HealthSystem extends createSystem(
 			entity.setValue(
 				HealthComponent,
 				'value',
-				healthValue - this.config.healthDecreaseRate * delta,
+				healthValue - this.config.healthDecreaseRate.value * delta,
 			);
 		}
 	}
@@ -609,6 +609,18 @@ describe('EliCS Integration Tests', () => {
 
 			world.update(2, 1); // delta = 2
 			expect(entity.getValue(HealthComponent, 'value')).toBe(40);
+		});
+
+		test('System config signals funcion correctly', () => {
+			world.registerSystem(HealthSystem, {
+				configData: { healthDecreaseRate: 20 },
+			});
+			const valueChangeCallback = jest.fn();
+			const systemInstance = world.getSystem(HealthSystem);
+			expect(systemInstance).toBeDefined();
+			systemInstance!.config.healthDecreaseRate.subscribe(valueChangeCallback);
+			systemInstance!.config.healthDecreaseRate.value = 40;
+			expect(valueChangeCallback).toHaveBeenCalledWith(40);
 		});
 	});
 

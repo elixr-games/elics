@@ -3,6 +3,7 @@ import { Query, QueryConfig } from './Query.js';
 
 import { QueryManager } from './QueryManager.js';
 import { World } from './World.js';
+import { Signal, signal } from '@preact/signals';
 
 export type SystemSchema<T extends DataType> = Record<
 	string,
@@ -20,7 +21,7 @@ export interface System<
 	Q extends SystemQueries,
 > {
 	isPaused: boolean;
-	config: Record<keyof S, TypeValueToType<T>>;
+	config: Record<keyof S, Signal<TypeValueToType<T>>>;
 	queries: Record<keyof Q, Query>;
 	world: World;
 	queryManager: QueryManager;
@@ -66,7 +67,7 @@ export function createSystem<
 
 		public isPaused: boolean = false;
 		public queries!: Record<keyof Q, Query>;
-		public config = {} as Record<keyof S, TypeValueToType<T>>;
+		public config = {} as Record<keyof S, Signal<TypeValueToType<T>>>;
 
 		constructor(
 			public readonly world: World,
@@ -74,7 +75,7 @@ export function createSystem<
 			public priority: number,
 		) {
 			for (const key in schema) {
-				this.config[key] = schema[key].default;
+				this.config[key] = signal(schema[key].default);
 			}
 		}
 

@@ -82,6 +82,7 @@
 		"vitepress": "^1.6.3"
 	},
 	"dependencies": {
+		"@preact/signals": "^2.0.4",
 		"bitset": "^5.2.3"
 	}
 }
