@@ -69,7 +69,9 @@ export function assignInitialComponentData<
 		const length = TypedArrayMap[type].length;
 		const dataRef = component.data[key];
 		const input = initialData[key] ?? defaultValue;
-		if (length === 1 || type === Types.String || type === Types.Object) {
+		if (type === Types.Entity) {
+			dataRef[index] = input ? input.index : -1;
+		} else if (length === 1 || type === Types.String || type === Types.Object) {
 			dataRef[index] = input;
 		} else {
 			(dataRef as TypedArray).set(input, index * length);

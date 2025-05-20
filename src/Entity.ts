@@ -5,19 +5,21 @@ import type { ComponentManager } from './ComponentManager.js';
 import type { EntityManager } from './EntityManager.js';
 import type { QueryManager } from './QueryManager.js';
 import {
-        DataArrayToType,
-        DataType,
-        TypedArrayMap,
-        TypeValueToType,
-        type TypedArray,
-        Types,
+	DataArrayToType,
+	DataType,
+	TypedArrayMap,
+	TypeValueToType,
+	type TypedArray,
+	Types,
 } from './Types.js';
 import { assertCondition, ErrorMessages } from './Checks.js';
 
 export type VectorKeys<C extends Component<any>> = {
-        [K in keyof C['schema']]: DataArrayToType<C['schema'][K]['type']> extends TypedArray
-                ? K
-                : never;
+	[K in keyof C['schema']]: DataArrayToType<
+		C['schema'][K]['type']
+	> extends TypedArray
+		? K
+		: never;
 }[keyof C['schema']];
 
 export class Entity {
@@ -103,6 +105,12 @@ export class Entity {
 			return Boolean(data) as TypeValueToType<C['schema'][K]['type']>;
 		}
 
+		if (type === Types.Entity) {
+			return this.entityManager.getEntityByIndex(data) as TypeValueToType<
+				C['schema'][K]['type']
+			>;
+		}
+
 		return data as TypeValueToType<C['schema'][K]['type']>;
 	}
 
@@ -112,30 +120,35 @@ export class Entity {
 		value: TypeValueToType<C['schema'][K]['type']>,
 	): void {
 		const componentData = component.data[key];
-		componentData[this.index] = value;
+		const type = component.schema[key].type as DataType;
+		if (type === Types.Entity) {
+			componentData[this.index] = (value as any as Entity).index;
+		} else {
+			componentData[this.index] = value as any;
+		}
 	}
 
-        getVectorView<C extends Component<any>, K extends VectorKeys<C>>(
-                component: C,
-                key: K,
-        ): DataArrayToType<C['schema'][K]['type']> {
-                const keyStr = key as string;
-                const cachedVectorView = this.vectorViews.get(component)?.get(keyStr);
-                if (cachedVectorView) {
-                        return cachedVectorView as DataArrayToType<C['schema'][K]['type']>;
-                } else {
-                        const componentData = component.data[key] as TypedArray;
-                        const type = component.schema[key].type as DataType;
-                        const length = TypedArrayMap[type].length;
-                        const offset = this.index * length;
-                        const vectorView = componentData.subarray(offset, offset + length);
-                        if (!this.vectorViews.has(component)) {
-                                this.vectorViews.set(component, new Map());
-                        }
-                        this.vectorViews.get(component)!.set(keyStr, vectorView as TypedArray);
-                        return vectorView as DataArrayToType<C['schema'][K]['type']>;
-                }
-        }
+	getVectorView<C extends Component<any>, K extends VectorKeys<C>>(
+		component: C,
+		key: K,
+	): DataArrayToType<C['schema'][K]['type']> {
+		const keyStr = key as string;
+		const cachedVectorView = this.vectorViews.get(component)?.get(keyStr);
+		if (cachedVectorView) {
+			return cachedVectorView as DataArrayToType<C['schema'][K]['type']>;
+		} else {
+			const componentData = component.data[key] as TypedArray;
+			const type = component.schema[key].type as DataType;
+			const length = TypedArrayMap[type].length;
+			const offset = this.index * length;
+			const vectorView = componentData.subarray(offset, offset + length);
+			if (!this.vectorViews.has(component)) {
+				this.vectorViews.set(component, new Map());
+			}
+			this.vectorViews.get(component)!.set(keyStr, vectorView as TypedArray);
+			return vectorView as DataArrayToType<C['schema'][K]['type']>;
+		}
+	}
 
 	destroy(): void {
 		assertCondition(this.active, ErrorMessages.ModifyDestroyedEntity, this);

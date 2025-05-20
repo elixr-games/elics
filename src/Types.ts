@@ -1,6 +1,7 @@
 export type DataType =
 	| 'Int8'
 	| 'Int16'
+	| 'Entity'
 	| 'Float32'
 	| 'Float64'
 	| 'Boolean'
@@ -13,6 +14,7 @@ export type DataType =
 export enum Types {
 	Int8 = 'Int8',
 	Int16 = 'Int16',
+	Entity = 'Entity',
 	Float32 = 'Float32',
 	Float64 = 'Float64',
 	Boolean = 'Boolean',
@@ -45,6 +47,7 @@ export const TypedArrayMap: {
 } = {
 	Int8: { arrayConstructor: Int8Array, length: 1 },
 	Int16: { arrayConstructor: Int16Array, length: 1 },
+	Entity: { arrayConstructor: Int16Array, length: 1 },
 	Float32: { arrayConstructor: Float32Array, length: 1 },
 	Float64: { arrayConstructor: Float64Array, length: 1 },
 	Boolean: { arrayConstructor: Uint8Array, length: 1 },
@@ -71,11 +74,14 @@ export type TypeValueToType<T extends DataType> = T extends
 					? [number, number, number]
 					: T extends 'Vec4'
 						? [number, number, number, number]
-						: any;
+						: T extends 'Entity'
+							? import('./Entity.js').Entity
+							: any;
 
 export type DataArrayToType<T extends DataType> = T extends
 	| 'Int8'
 	| 'Int16'
+	| 'Entity'
 	| 'Float32'
 	| 'Float64'
 	| 'Boolean'
