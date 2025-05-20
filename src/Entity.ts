@@ -5,11 +5,11 @@ import type { ComponentManager } from './ComponentManager.js';
 import type { EntityManager } from './EntityManager.js';
 import type { QueryManager } from './QueryManager.js';
 import {
-        DataType,
-        TypedArrayMap,
-        TypeValueToType,
-        type TypedArray,
-        Types,
+	DataType,
+	TypedArrayMap,
+	TypeValueToType,
+	type TypedArray,
+	Types,
 } from './Types.js';
 import { assertCondition, ErrorMessages } from './Checks.js';
 
@@ -77,25 +77,25 @@ export class Entity {
 		);
 	}
 
-        getValue<C extends Component<any>, K extends keyof C['schema']>(
-                component: C,
-                key: K,
-        ): TypeValueToType<C['schema'][K]['type']> {
-                // allow runtime access with invalid keys, return undefined
-                const schemaEntry = (component.schema as any)[key as string];
-                if (!schemaEntry) {
-                        return undefined as TypeValueToType<C['schema'][K]['type']>;
-                }
+	getValue<C extends Component<any>, K extends keyof C['schema']>(
+		component: C,
+		key: K,
+	): TypeValueToType<C['schema'][K]['type']> {
+		// allow runtime access with invalid keys, return undefined
+		const schemaEntry = (component.schema as any)[key as string];
+		if (!schemaEntry) {
+			return undefined as TypeValueToType<C['schema'][K]['type']>;
+		}
 
-                const data = (component.data as any)[key]?.[this.index];
-                const type = schemaEntry.type as DataType;
+		const data = (component.data as any)[key]?.[this.index];
+		const type = schemaEntry.type as DataType;
 
-                if (type === Types.Boolean) {
-                        return Boolean(data) as TypeValueToType<C['schema'][K]['type']>;
-                }
+		if (type === Types.Boolean) {
+			return Boolean(data) as TypeValueToType<C['schema'][K]['type']>;
+		}
 
-                return data as TypeValueToType<C['schema'][K]['type']>;
-        }
+		return data as TypeValueToType<C['schema'][K]['type']>;
+	}
 
 	setValue<C extends Component<any>, K extends keyof C['schema']>(
 		component: C,

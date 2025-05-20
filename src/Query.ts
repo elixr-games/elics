@@ -41,29 +41,29 @@ export class Query {
 		};
 	}
 
-        static generateQueryInfo(queryConfig: QueryConfig) {
-                let requiredMask = new BitSet();
-                let excludedMask = new BitSet();
-                queryConfig.required.forEach((c) => {
-                        assertCondition(
-                                c.bitmask !== null,
-                                ErrorMessages.ComponentNotRegistered,
-                                c,
-                        );
-                        requiredMask = requiredMask.or(c.bitmask!);
-                });
-                queryConfig.excluded?.forEach((c) => {
-                        assertCondition(
-                                c.bitmask !== null,
-                                ErrorMessages.ComponentNotRegistered,
-                                c,
-                        );
-                        excludedMask = excludedMask.or(c.bitmask!);
-                });
-                return {
-                        requiredMask,
-                        excludedMask,
-                        queryId: `required:${requiredMask.toString()}|excluded:${excludedMask.toString()}`,
-                };
-        }
+	static generateQueryInfo(queryConfig: QueryConfig) {
+		let requiredMask = new BitSet();
+		let excludedMask = new BitSet();
+		queryConfig.required.forEach((c) => {
+			assertCondition(
+				c.bitmask !== null,
+				ErrorMessages.ComponentNotRegistered,
+				c,
+			);
+			requiredMask = requiredMask.or(c.bitmask!);
+		});
+		queryConfig.excluded?.forEach((c) => {
+			assertCondition(
+				c.bitmask !== null,
+				ErrorMessages.ComponentNotRegistered,
+				c,
+			);
+			excludedMask = excludedMask.or(c.bitmask!);
+		});
+		return {
+			requiredMask,
+			excludedMask,
+			queryId: `required:${requiredMask.toString()}|excluded:${excludedMask.toString()}`,
+		};
+	}
 }

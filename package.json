@@ -79,8 +79,9 @@
 		"rollup": "^4.35.0",
 		"ts-jest": "^29.2.5",
 		"typescript": "^5.8.2",
-		"vitepress": "^1.6.3"
-	},
+                "vitepress": "^1.6.3",
+                "ecsy": "^0.4.3"
+        },
 	"dependencies": {
 		"@preact/signals-core": "^1.8.0",
 		"bitset": "^5.2.3"
