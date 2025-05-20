@@ -1,4 +1,7 @@
 import { performance } from 'node:perf_hooks';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
 	World as EliWorld,
 	createComponent,
@@ -11,6 +14,9 @@ import {
 	Component as EcsyComponent,
 	Types as EcsyTypes,
 } from 'ecsy';
+
+// Silence ecsy warnings in console
+console.warn = () => {};
 
 const ITERATIONS = 100;
 
@@ -496,14 +502,45 @@ const suites = [
 	['Add / Remove', addRemoveElics, addRemoveEcsy],
 ];
 
+const results = [];
+
 for (const [name, elicsFn, ecsyFn] of suites) {
-	try {
-		const elicsTime = elicsFn();
-		const ecsyTime = ecsyFn();
-		console.log(`${name}:`);
-		console.log(`  EliCS: ${elicsTime.toFixed(2)} ms`);
-		console.log(`  ecsy:  ${ecsyTime.toFixed(2)} ms`);
-	} catch (err) {
-		console.error(`Failed to run ${name}:`, err.message);
-	}
+        try {
+                const elicsTime = elicsFn();
+                const ecsyTime = ecsyFn();
+                results.push({ name, elicsTime, ecsyTime });
+                console.log(`${name}:`);
+                console.log(`  EliCS: ${elicsTime.toFixed(2)} ms`);
+                console.log(`  ecsy:  ${ecsyTime.toFixed(2)} ms`);
+        } catch (err) {
+                console.error(`Failed to run ${name}:`, err.message);
+        }
 }
+
+function updateReadme(res) {
+        const readmePath = path.resolve(
+                path.dirname(fileURLToPath(import.meta.url)),
+                '..',
+                'README.md',
+        );
+        let text = fs.readFileSync(readmePath, 'utf8');
+        const start = '<!-- benchmark-start -->';
+        const end = '<!-- benchmark-end -->';
+        const lines = res
+                .map(
+                        (r) =>
+                                `- **${r.name}**: EliCS ${r.elicsTime.toFixed(
+                                        2,
+                                )} ms | ecsy ${r.ecsyTime.toFixed(2)} ms`,
+                )
+                .join('\n');
+        const block = `${start}\n${lines}\n${end}`;
+        if (text.includes(start) && text.includes(end)) {
+                text = text.replace(new RegExp(`${start}[\s\S]*?${end}`), block);
+        } else {
+                text += `\n${block}\n`;
+        }
+        fs.writeFileSync(readmePath, text);
+}
+
+updateReadme(results);
