@@ -1,6 +1,6 @@
 import type { Component, ComponentMask } from './Component.js';
 
-import BitSet from 'bitset';
+import BitSet from './BitSet.js';
 import type { ComponentManager } from './ComponentManager.js';
 import type { EntityManager } from './EntityManager.js';
 import type { QueryManager } from './QueryManager.js';
@@ -14,8 +14,9 @@ import {
 import { assertCondition, ErrorMessages } from './Checks.js';
 
 export class Entity {
-	public bitmask: ComponentMask = new BitSet();
-	public active = true;
+        public bitmask: ComponentMask = new BitSet();
+        public active = true;
+        public dirty = false;
 	private vectorViews: Map<Component<any>, Map<string, TypedArray>> = new Map();
 
 	constructor(
@@ -37,7 +38,7 @@ export class Entity {
 			ErrorMessages.ComponentNotRegistered,
 			component,
 		);
-		this.bitmask = this.bitmask.or(component.bitmask!);
+                this.bitmask.orInPlace(component.bitmask!);
 		this.componentManager.attachComponentToEntity(
 			this.index,
 			component,
@@ -55,7 +56,7 @@ export class Entity {
 			ErrorMessages.ComponentNotRegistered,
 			component,
 		);
-		this.bitmask = this.bitmask.andNot(component.bitmask!);
+                this.bitmask.andNotInPlace(component.bitmask!);
 		this.queryManager.updateEntity(this);
 		component.onDetach(component.data, this.index);
 		return this;
@@ -67,7 +68,7 @@ export class Entity {
 			ErrorMessages.ComponentNotRegistered,
 			component,
 		);
-		return !this.bitmask.and(component.bitmask!).isEmpty();
+                return this.bitmask.intersects(component.bitmask!);
 	}
 
 	getComponents(): Component<any>[] {

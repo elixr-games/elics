@@ -3,8 +3,8 @@ import { Query, QueryConfig } from './Query.js';
 import { Entity } from './Entity.js';
 
 export class QueryManager {
-	private queries: Map<string, Query> = new Map();
-	private entitiesToUpdate: Set<Entity> = new Set();
+        private queries: Map<string, Query> = new Map();
+        private entitiesToUpdate: Entity[] = [];
 
 	constructor(private deferredEntityUpdates: boolean) {}
 
@@ -18,8 +18,8 @@ export class QueryManager {
 	}
 
 	updateEntity(entity: Entity, force = false): void {
-		if (force || !this.deferredEntityUpdates) {
-			if (entity.bitmask.isEmpty()) {
+                if (force || !this.deferredEntityUpdates) {
+                        if (entity.bitmask.isEmpty()) {
 				// Remove entity from all query results if it has no components
 				this.queries.forEach((query) => query.entities.delete(entity));
 				return;
@@ -41,21 +41,25 @@ export class QueryManager {
 					});
 				}
 			});
-		} else {
-			this.entitiesToUpdate.add(entity);
-		}
-	}
+                } else {
+                        if (!entity.dirty) {
+                                entity.dirty = true;
+                                this.entitiesToUpdate.push(entity);
+                        }
+                }
+        }
 
 	resetEntity(entity: Entity): void {
 		this.queries.forEach((query) => query.entities.delete(entity));
 	}
 
 	deferredUpdate(): void {
-		if (this.deferredEntityUpdates) {
-			this.entitiesToUpdate.forEach((entity) =>
-				this.updateEntity(entity, true),
-			);
-			this.entitiesToUpdate.clear();
-		}
-	}
+                if (this.deferredEntityUpdates) {
+                        for (const entity of this.entitiesToUpdate) {
+                                this.updateEntity(entity, true);
+                                entity.dirty = false;
+                        }
+                        this.entitiesToUpdate.length = 0;
+                }
+        }
 }

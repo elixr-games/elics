@@ -1,6 +1,6 @@
 import type { Component, ComponentMask } from './Component.js';
 
-import BitSet from 'bitset';
+import BitSet from './BitSet.js';
 import { Entity } from './Entity.js';
 import { assertCondition, ErrorMessages } from './Checks.js';
 
@@ -22,14 +22,12 @@ export class Query {
 		public queryId: string,
 	) {}
 
-	matches(entity: Entity) {
-		const hasRequired = entity.bitmask
-			.and(this.requiredMask)
-			.equals(this.requiredMask);
-		const hasExcluded = !entity.bitmask.and(this.excludedMask).isEmpty();
+        matches(entity: Entity) {
+                const hasRequired = entity.bitmask.contains(this.requiredMask);
+                const hasExcluded = entity.bitmask.intersects(this.excludedMask);
 
-		return hasRequired && !hasExcluded;
-	}
+                return hasRequired && !hasExcluded;
+        }
 
 	subscribe(
 		event: 'qualify' | 'disqualify',
