@@ -39,9 +39,9 @@ Execution times for EliCS and ecsy are printed in milliseconds for easy comparis
 
 ### Results
 <!-- benchmark-start -->
-- **Packed Iteration**: **EliCS 3.97 ms** | ecsy 9.02 ms | becsy 8.39 ms (56% better)
-- **Simple Iteration**: **EliCS 4.22 ms** | ecsy 11.33 ms | becsy 8.03 ms (63% better)
-- **Fragmented Iteration**: **EliCS 2.32 ms** | ecsy 3.43 ms | becsy 3.27 ms (32% better)
-- **Entity Cycle**: **EliCS 36.00 ms** | ecsy 131.61 ms | becsy 38.33 ms (73% better)
-- **Add / Remove**: EliCS 32.28 ms | ecsy 43.13 ms | **becsy 8.49 ms** (80% better)
+- **Packed Iteration**: **EliCS 13.16 ms** | ecsy 35.16 ms | becsy 26.40 ms (63% better)
+- **Simple Iteration**: **EliCS 10.11 ms** | ecsy 29.98 ms | becsy 29.75 ms (66% better)
+- **Fragmented Iteration**: **EliCS 5.42 ms** | ecsy 10.41 ms | becsy 11.81 ms (54% better)
+- **Entity Cycle**: **EliCS 52.18 ms** | ecsy 471.23 ms | becsy 128.18 ms (89% better)
+- **Add / Remove**: **EliCS 27.48 ms** | ecsy 156.46 ms | becsy 27.71 ms (82% better)
 <!-- benchmark-end -->

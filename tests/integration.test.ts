@@ -1,6 +1,6 @@
 // integration.test.ts
 
-import BitSet from 'bitset';
+import BitSet from '../src/BitSet';
 import { Query } from '../src/Query';
 import { Types } from '../src/Types';
 import { World } from '../src/World';

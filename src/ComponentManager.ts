@@ -1,4 +1,4 @@
-import BitSet from 'bitset';
+import BitSet from './BitSet.js';
 import {
 	assignInitialComponentData,
 	initializeComponentStorage,
