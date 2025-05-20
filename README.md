@@ -20,11 +20,10 @@ Thank you for being a part of the EliCS community!
 
 ## Benchmarks
 
-This repository includes a benchmark suite comparing EliCS to [ecsy](https://ecsyjs.github.io/ecsy/). Build the project and run the script:
+This repository includes a benchmark suite comparing EliCS to popular object-based ECS implementations - [becsy](https://lastolivegames.github.io/becsy/) and [ecsy](https://ecsyjs.github.io/ecsy/). Build the project and run the benchmark suite:
 
 ```bash
-npm run build
-node benchmarks/ecs-benchmark.js
+npm run bench
 ```
 
 The suite runs several scenarios derived from the [noctjs/ecs-benchmark](https://github.com/noctjs/ecs-benchmark) tests:
@@ -35,28 +34,32 @@ The suite runs several scenarios derived from the [noctjs/ecs-benchmark](https:/
 - **Entity Cycle** – 1,000 entities repeatedly spawn and then destroy entities with a B component.
 - **Add / Remove** – 1,000 entities each add then remove a B component.
 
-Execution times for EliCS and ecsy are printed in milliseconds for easy comparison.
+Execution times for EliCS and ecsy are printed in milliseconds for easy comparison, here's a snapshot of the results (**smaller is better**):
 
-### Results
 <!-- benchmark-start -->
-- **Packed Iteration**:
-  - EliCS: ████████             **13.49 ms**
-  - Ecsy:  █████████████        22.59 ms
-  - Becsy: ████████████████████ 32.83 ms
-- **Simple Iteration**:
-  - EliCS: █████                **10.72 ms**
-  - Ecsy:  ████████████████████ 39.32 ms
-  - Becsy: ███████████████      30.21 ms
-- **Fragmented Iteration**:
-  - EliCS: ██████               **5.70 ms**
-  - Ecsy:  ██████████           9.62 ms
-  - Becsy: ████████████████████ 18.02 ms
-- **Entity Cycle**:
-  - EliCS: ██                   **56.65 ms**
-  - Ecsy:  ████████████████████ 493.04 ms
-  - Becsy: ██████               150.40 ms
-- **Add / Remove**:
-  - EliCS: ███                  34.44 ms
-  - Ecsy:  ████████████████████ 177.60 ms
-  - Becsy: ███                  **27.61 ms**
+
+**Packed Iteration**:
+  - `EliCS`: █████████ **4.24 ms**
+  - `Becsy`: ██████████████████ 8.38 ms
+  - `Ecsy `: ████████████████████ 8.99 ms
+
+**Simple Iteration**:
+  - `EliCS`: ██████ **3.95 ms**
+  - `Becsy`: ███████████ 6.94 ms
+  - `Ecsy `: ████████████████████ 11.87 ms
+
+**Fragmented Iteration**:
+  - `EliCS`: ██████████ **2.56 ms**
+  - `Becsy`: ████████████████████ 4.79 ms
+  - `Ecsy `: █████████████ 3.31 ms
+
+**Entity Cycle**:
+  - `EliCS`: ██ **17.78 ms**
+  - `Becsy`: █████ 36.95 ms
+  - `Ecsy `: ████████████████████ 131.54 ms
+
+**Add / Remove**:
+  - `EliCS`: ████ **8.72 ms**
+  - `Becsy`: ████ 9.03 ms
+  - `Ecsy `: ████████████████████ 40.49 ms
 <!-- benchmark-end -->

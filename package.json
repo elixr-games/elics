@@ -25,7 +25,7 @@
 		"build:ts": "tsc",
 		"build:rollup": "rollup -c",
 		"build": "npm run clean && npm run build:ts && npm run build:rollup",
-		"bench": "node benchmarks/ecs-benchmark.js",
+		"bench": "npm run build && node benchmarks/ecs-benchmark.js",
 		"lint": "eslint \"src/**/*.{js,ts,tsx}\" --fix",
 		"format": "prettier --write \"src/**/*\"",
 		"test": "jest --coverage",
@@ -85,7 +85,6 @@
 		"vitepress": "^1.6.3"
 	},
 	"dependencies": {
-		"@preact/signals-core": "^1.8.0",
-		"bitset": "^5.2.3"
+		"@preact/signals-core": "^1.8.0"
 	}
 }

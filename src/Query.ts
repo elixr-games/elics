@@ -22,12 +22,12 @@ export class Query {
 		public queryId: string,
 	) {}
 
-        matches(entity: Entity) {
-                const hasRequired = entity.bitmask.contains(this.requiredMask);
-                const hasExcluded = entity.bitmask.intersects(this.excludedMask);
+	matches(entity: Entity) {
+		const hasRequired = entity.bitmask.contains(this.requiredMask);
+		const hasExcluded = entity.bitmask.intersects(this.excludedMask);
 
-                return hasRequired && !hasExcluded;
-        }
+		return hasRequired && !hasExcluded;
+	}
 
 	subscribe(
 		event: 'qualify' | 'disqualify',
