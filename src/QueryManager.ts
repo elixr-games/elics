@@ -4,7 +4,7 @@ import { Entity } from './Entity.js';
 
 export class QueryManager {
 	private queries: Map<string, Query> = new Map();
-	private entitiesToUpdate: Set<Entity> = new Set();
+	private entitiesToUpdate: Entity[] = [];
 
 	constructor(private deferredEntityUpdates: boolean) {}
 
@@ -42,7 +42,10 @@ export class QueryManager {
 				}
 			});
 		} else {
-			this.entitiesToUpdate.add(entity);
+			if (!entity.dirty) {
+				entity.dirty = true;
+				this.entitiesToUpdate.push(entity);
+			}
 		}
 	}
 
@@ -52,10 +55,11 @@ export class QueryManager {
 
 	deferredUpdate(): void {
 		if (this.deferredEntityUpdates) {
-			this.entitiesToUpdate.forEach((entity) =>
-				this.updateEntity(entity, true),
-			);
-			this.entitiesToUpdate.clear();
+			for (const entity of this.entitiesToUpdate) {
+				this.updateEntity(entity, true);
+				entity.dirty = false;
+			}
+			this.entitiesToUpdate.length = 0;
 		}
 	}
 }

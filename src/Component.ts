@@ -8,7 +8,7 @@ import {
 } from './Types.js';
 import { ErrorMessages, assertCondition } from './Checks.js';
 
-import BitSet from 'bitset';
+import BitSet from './BitSet.js';
 
 export type ComponentMask = BitSet;
 
