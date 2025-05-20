@@ -5,6 +5,7 @@ import type { QueryManager } from './QueryManager.js';
 export class EntityManager {
 	pool: Entity[] = [];
 	private entityIndex = 0;
+	private indexLookup: Map<number, Entity> = new Map();
 
 	constructor(
 		private queryManager: QueryManager,
@@ -25,10 +26,16 @@ export class EntityManager {
 			);
 		}
 
+		this.indexLookup.set(entity.index, entity);
+
 		return entity;
 	}
 
 	releaseEntityInstance(entity: Entity): void {
 		this.pool.push(entity);
+	}
+
+	getEntityByIndex(index: number): Entity | undefined {
+		return this.indexLookup.get(index);
 	}
 }

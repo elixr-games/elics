@@ -6,6 +6,7 @@ import { Types } from '../src/Types';
 import { World } from '../src/World';
 import { createComponent } from '../src/Component';
 import { createSystem } from '../src/System';
+import { Entity } from '../src/Entity';
 
 // Define components for testing
 const PositionComponent = createComponent({
@@ -32,15 +33,19 @@ const NameComponent = createComponent({
 });
 
 const CustomDataComponent = createComponent({
-        data: { type: Types.Object, default: null },
+	data: { type: Types.Object, default: null },
 });
 
 const BoolComponent = createComponent({
-        flag: { type: Types.Boolean, default: false },
+	flag: { type: Types.Boolean, default: false },
+});
+
+const ReferenceComponent = createComponent({
+	target: { type: Types.Entity, default: null as unknown as Entity },
 });
 
 const SimpleComponent = createComponent({
-        value: { type: Types.Int8, default: 0 },
+	value: { type: Types.Int8, default: 0 },
 });
 
 // Define systems for testing
@@ -100,6 +105,7 @@ describe('EliCS Integration Tests', () => {
 		world.registerComponent(VectorComponent);
 		world.registerComponent(NameComponent);
 		world.registerComponent(CustomDataComponent);
+		world.registerComponent(ReferenceComponent);
 
 		world.globals['gravity'] = 9.81;
 	});
@@ -212,32 +218,32 @@ describe('EliCS Integration Tests', () => {
 			expect(entity.getValue(PositionComponent, 'y')).toBe(35);
 		});
 
-                test('Component default values', () => {
-                        const entity = world.createEntity();
-                        entity.addComponent(HealthComponent);
+		test('Component default values', () => {
+			const entity = world.createEntity();
+			entity.addComponent(HealthComponent);
 
-                        expect(entity.getValue(HealthComponent, 'value')).toBe(100); // Default value
-                });
+			expect(entity.getValue(HealthComponent, 'value')).toBe(100); // Default value
+		});
 
-                test('getValue handles boolean types', () => {
-                        world.registerComponent(BoolComponent);
-                        const entity = world.createEntity();
-                        entity.addComponent(BoolComponent);
+		test('getValue handles boolean types', () => {
+			world.registerComponent(BoolComponent);
+			const entity = world.createEntity();
+			entity.addComponent(BoolComponent);
 
-                        expect(entity.getValue(BoolComponent, 'flag')).toBe(false);
-                        entity.setValue(BoolComponent, 'flag', 1 as any);
-                        expect(entity.getValue(BoolComponent, 'flag')).toBe(true);
-                        (BoolComponent.data as any).flag = undefined;
-                        expect(entity.getValue(BoolComponent, 'flag')).toBe(false);
-                });
+			expect(entity.getValue(BoolComponent, 'flag')).toBe(false);
+			entity.setValue(BoolComponent, 'flag', 1 as any);
+			expect(entity.getValue(BoolComponent, 'flag')).toBe(true);
+			(BoolComponent.data as any).flag = undefined;
+			expect(entity.getValue(BoolComponent, 'flag')).toBe(false);
+		});
 
 		test('Vec3 component data access', () => {
 			const entity = world.createEntity();
 			entity.addComponent(VectorComponent, { position: [1.0, 2.0, 3.0] });
 
-                        const position = entity.getVectorView(VectorComponent, 'position');
-                        const secondView = entity.getVectorView(VectorComponent, 'position');
-                        expect(secondView).toBe(position);
+			const position = entity.getVectorView(VectorComponent, 'position');
+			const secondView = entity.getVectorView(VectorComponent, 'position');
+			expect(secondView).toBe(position);
 
 			expect(position[0]).toBe(1.0);
 			expect(position[1]).toBe(2.0);
@@ -277,6 +283,27 @@ describe('EliCS Integration Tests', () => {
 			entity.setValue(CustomDataComponent, 'data', newData);
 
 			expect(entity.getValue(CustomDataComponent, 'data')).toEqual(newData);
+		});
+
+		test('Entity reference component data access', () => {
+			const e1 = world.createEntity();
+			const e2 = world.createEntity();
+			e1.addComponent(ReferenceComponent, { target: e2 });
+
+			expect(e1.getValue(ReferenceComponent, 'target')).toBe(e2);
+
+			const e3 = world.createEntity();
+			e1.setValue(ReferenceComponent, 'target', e3);
+
+			expect(e1.getValue(ReferenceComponent, 'target')).toBe(e3);
+			expect(ReferenceComponent.data.target[e1.index]).toBe(e3.index);
+		});
+
+		test('Entity reference default value', () => {
+			const e = world.createEntity();
+			e.addComponent(ReferenceComponent);
+			expect(e.getValue(ReferenceComponent, 'target')).toBeUndefined();
+			expect(ReferenceComponent.data.target[e.index]).toBe(-1);
 		});
 
 		test('onAttach and onDetach hooks', () => {
@@ -400,11 +427,11 @@ describe('EliCS Integration Tests', () => {
 			expect(query2.entities).not.toContain(entity1);
 		});
 
-                test('Removing components affects query results', () => {
-                        const queryConfig = {
-                                required: [PositionComponent, VelocityComponent],
-                        };
-                        const query = world.queryManager.registerQuery(queryConfig);
+		test('Removing components affects query results', () => {
+			const queryConfig = {
+				required: [PositionComponent, VelocityComponent],
+			};
+			const query = world.queryManager.registerQuery(queryConfig);
 
 			const entity = world.createEntity();
 			entity.addComponent(PositionComponent);
@@ -415,28 +442,32 @@ describe('EliCS Integration Tests', () => {
 			// Remove a component
 			entity.removeComponent(VelocityComponent);
 
-                        expect(query.entities).not.toContain(entity);
-                });
+			expect(query.entities).not.toContain(entity);
+		});
 
-                test('Entity removal from all queries when last component removed', () => {
-                        world.registerComponent(SimpleComponent);
-                        const query = world.queryManager.registerQuery({ required: [SimpleComponent] });
-                        const entity = world.createEntity();
-                        entity.addComponent(SimpleComponent);
-                        expect(query.entities).toContain(entity);
-                        entity.removeComponent(SimpleComponent);
-                        expect(query.entities).not.toContain(entity);
-                });
+		test('Entity removal from all queries when last component removed', () => {
+			world.registerComponent(SimpleComponent);
+			const query = world.queryManager.registerQuery({
+				required: [SimpleComponent],
+			});
+			const entity = world.createEntity();
+			entity.addComponent(SimpleComponent);
+			expect(query.entities).toContain(entity);
+			entity.removeComponent(SimpleComponent);
+			expect(query.entities).not.toContain(entity);
+		});
 
-                test('Entity destroy cleans up query results', () => {
-                        world.registerComponent(SimpleComponent);
-                        const query = world.queryManager.registerQuery({ required: [SimpleComponent] });
-                        const entity = world.createEntity();
-                        entity.addComponent(SimpleComponent);
-                        expect(query.entities).toContain(entity);
-                        entity.destroy();
-                        expect(query.entities).not.toContain(entity);
-                });
+		test('Entity destroy cleans up query results', () => {
+			world.registerComponent(SimpleComponent);
+			const query = world.queryManager.registerQuery({
+				required: [SimpleComponent],
+			});
+			const entity = world.createEntity();
+			entity.addComponent(SimpleComponent);
+			expect(query.entities).toContain(entity);
+			entity.destroy();
+			expect(query.entities).not.toContain(entity);
+		});
 
 		test('Query subscribers run as expected', () => {
 			const queryConfig = {
@@ -491,55 +522,55 @@ describe('EliCS Integration Tests', () => {
 			expect(query.entities).toContain(entity);
 		});
 
-                test('Registering the same query multiple times', () => {
-                        const queryConfig = {
-                                required: [PositionComponent],
-                        };
+		test('Registering the same query multiple times', () => {
+			const queryConfig = {
+				required: [PositionComponent],
+			};
 
-                        world.registerQuery(queryConfig);
-                        const query1 = world.queryManager.registerQuery(queryConfig);
-                        const query2 = world.queryManager.registerQuery(queryConfig);
+			world.registerQuery(queryConfig);
+			const query1 = world.queryManager.registerQuery(queryConfig);
+			const query2 = world.queryManager.registerQuery(queryConfig);
 
-                        expect(query1).toBe(query2);
-                });
+			expect(query1).toBe(query2);
+		});
 
-                test('Registering query with unregistered component throws error', () => {
-                        const UnregisteredComponent = createComponent({
-                                value: { type: Types.Int16, default: 0 },
-                        });
+		test('Registering query with unregistered component throws error', () => {
+			const UnregisteredComponent = createComponent({
+				value: { type: Types.Int16, default: 0 },
+			});
 
-                        const queryConfig = {
-                                required: [UnregisteredComponent],
-                        };
+			const queryConfig = {
+				required: [UnregisteredComponent],
+			};
 
-                        expect(() => {
-                                world.queryManager.registerQuery(queryConfig);
-                        }).toThrow();
-                });
+			expect(() => {
+				world.queryManager.registerQuery(queryConfig);
+			}).toThrow();
+		});
 
-                test('Query results from unregistered query', () => {
-                        const world = new World({ checksOn: false });
-                        world.registerComponent(PositionComponent);
-                        const entity = world.createEntity();
-                        entity.addComponent(PositionComponent);
+		test('Query results from unregistered query', () => {
+			const world = new World({ checksOn: false });
+			world.registerComponent(PositionComponent);
+			const entity = world.createEntity();
+			entity.addComponent(PositionComponent);
 
-                        expect(
-                                new Query(PositionComponent.bitmask!, new BitSet(), '').entities,
-                        ).toEqual(new Set());
-                });
+			expect(
+				new Query(PositionComponent.bitmask!, new BitSet(), '').entities,
+			).toEqual(new Set());
+		});
 
-                test('Newly registered query finds existing entities', () => {
-                        const entity = world.createEntity();
-                        entity.addComponent(PositionComponent);
+		test('Newly registered query finds existing entities', () => {
+			const entity = world.createEntity();
+			entity.addComponent(PositionComponent);
 
-                        const queryConfig = {
-                                required: [PositionComponent],
-                        };
+			const queryConfig = {
+				required: [PositionComponent],
+			};
 
-                        const query = world.queryManager.registerQuery(queryConfig);
-                        expect(query.entities).toContain(entity);
-                });
-        });
+			const query = world.queryManager.registerQuery(queryConfig);
+			expect(query.entities).toContain(entity);
+		});
+	});
 
 	// System Tests
 	describe('System Tests', () => {
@@ -679,25 +710,25 @@ describe('EliCS Integration Tests', () => {
 			expect(entity.getValue(HealthComponent, 'value')).toBe(40);
 		});
 
-                test('System config signals funcion correctly', () => {
-                        world.registerSystem(HealthSystem, {
-                                configData: { healthDecreaseRate: 20 },
-                        });
-                        const valueChangeCallback = jest.fn();
-                        const systemInstance = world.getSystem(HealthSystem);
-                        expect(systemInstance).toBeDefined();
-                        systemInstance!.config.healthDecreaseRate.subscribe(valueChangeCallback);
-                        systemInstance!.config.healthDecreaseRate.value = 40;
-                        expect(valueChangeCallback).toHaveBeenCalledWith(40);
-                });
+		test('System config signals funcion correctly', () => {
+			world.registerSystem(HealthSystem, {
+				configData: { healthDecreaseRate: 20 },
+			});
+			const valueChangeCallback = jest.fn();
+			const systemInstance = world.getSystem(HealthSystem);
+			expect(systemInstance).toBeDefined();
+			systemInstance!.config.healthDecreaseRate.subscribe(valueChangeCallback);
+			systemInstance!.config.healthDecreaseRate.value = 40;
+			expect(valueChangeCallback).toHaveBeenCalledWith(40);
+		});
 
-                test('Default system methods execute', () => {
-                        class DefaultSystem extends createSystem() {}
-                        world.registerSystem(DefaultSystem);
-                        world.update(0, 0);
-                        world.unregisterSystem(DefaultSystem);
-                });
-        });
+		test('Default system methods execute', () => {
+			class DefaultSystem extends createSystem() {}
+			world.registerSystem(DefaultSystem);
+			world.update(0, 0);
+			world.unregisterSystem(DefaultSystem);
+		});
+	});
 
 	// Overall Tests
 	describe('Overall ECS functionality in production mode', () => {
