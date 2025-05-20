@@ -105,7 +105,7 @@ world.registerComponent(EnemyComponent).registerSystem(EnemySystem, {
 });
 ```
 
-After registration, the `update` method of the systems is called every time the **World** is updated, in the order defined by their priorities. You can alo control a system's local execution state using the `play()` and `stop()` methods:
+After registration, the `update` method of the systems is called every time the **World** is updated, in the order defined by their priorities. You can also control a system's local execution state using the `play()` and `stop()` methods:
 
 ```ts
 const enemySystem = world.getSystem(EnemySystem);
