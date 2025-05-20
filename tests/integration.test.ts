@@ -449,22 +449,36 @@ describe('EliCS Integration Tests', () => {
 			expect(query.entities).toContain(entity);
 		});
 
-		test('Registering the same query multiple times', () => {
-			const queryConfig = {
-				required: [PositionComponent],
-			};
+                test('Registering the same query multiple times', () => {
+                        const queryConfig = {
+                                required: [PositionComponent],
+                        };
 
-			world.registerQuery(queryConfig);
-			const query1 = world.queryManager.registerQuery(queryConfig);
-			const query2 = world.queryManager.registerQuery(queryConfig);
+                        world.registerQuery(queryConfig);
+                        const query1 = world.queryManager.registerQuery(queryConfig);
+                        const query2 = world.queryManager.registerQuery(queryConfig);
 
-			expect(query1).toBe(query2);
-		});
+                        expect(query1).toBe(query2);
+                });
 
-		test('Query results from unregistered query', () => {
-			const world = new World({ checksOn: false });
-			world.registerComponent(PositionComponent);
-			const entity = world.createEntity();
+                test('Registering query with unregistered component throws error', () => {
+                        const UnregisteredComponent = createComponent({
+                                value: { type: Types.Int16, default: 0 },
+                        });
+
+                        const queryConfig = {
+                                required: [UnregisteredComponent],
+                        };
+
+                        expect(() => {
+                                world.queryManager.registerQuery(queryConfig);
+                        }).toThrow();
+                });
+
+                test('Query results from unregistered query', () => {
+                        const world = new World({ checksOn: false });
+                        world.registerComponent(PositionComponent);
+                        const entity = world.createEntity();
 			entity.addComponent(PositionComponent);
 
 			expect(
