@@ -57,6 +57,7 @@ export class Entity {
 			component,
 		);
 		this.bitmask.andNotInPlace(component.bitmask!);
+		this.vectorViews.delete(component);
 		this.queryManager.updateEntity(this);
 		component.onDetach(component.data, this.index);
 		return this;
@@ -139,6 +140,7 @@ export class Entity {
 			component.onDetach(component.data, this.index);
 		}
 		this.bitmask = new BitSet();
+		this.vectorViews.clear();
 		this.queryManager.resetEntity(this);
 	}
 }
