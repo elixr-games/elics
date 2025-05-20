@@ -32,7 +32,15 @@ const NameComponent = createComponent({
 });
 
 const CustomDataComponent = createComponent({
-	data: { type: Types.Object, default: null },
+        data: { type: Types.Object, default: null },
+});
+
+const BoolComponent = createComponent({
+        flag: { type: Types.Boolean, default: false },
+});
+
+const SimpleComponent = createComponent({
+        value: { type: Types.Int8, default: 0 },
 });
 
 // Define systems for testing
@@ -204,12 +212,24 @@ describe('EliCS Integration Tests', () => {
 			expect(entity.getValue(PositionComponent, 'y')).toBe(35);
 		});
 
-		test('Component default values', () => {
-			const entity = world.createEntity();
-			entity.addComponent(HealthComponent);
+                test('Component default values', () => {
+                        const entity = world.createEntity();
+                        entity.addComponent(HealthComponent);
 
-			expect(entity.getValue(HealthComponent, 'value')).toBe(100); // Default value
-		});
+                        expect(entity.getValue(HealthComponent, 'value')).toBe(100); // Default value
+                });
+
+                test('getValue handles boolean types', () => {
+                        world.registerComponent(BoolComponent);
+                        const entity = world.createEntity();
+                        entity.addComponent(BoolComponent);
+
+                        expect(entity.getValue(BoolComponent, 'flag')).toBe(false);
+                        entity.setValue(BoolComponent, 'flag', 1 as any);
+                        expect(entity.getValue(BoolComponent, 'flag')).toBe(true);
+                        (BoolComponent.data as any).flag = undefined;
+                        expect(entity.getValue(BoolComponent, 'flag')).toBe(false);
+                });
 
 		test('Vec3 component data access', () => {
 			const entity = world.createEntity();
@@ -380,11 +400,11 @@ describe('EliCS Integration Tests', () => {
 			expect(query2.entities).not.toContain(entity1);
 		});
 
-		test('Removing components affects query results', () => {
-			const queryConfig = {
-				required: [PositionComponent, VelocityComponent],
-			};
-			const query = world.queryManager.registerQuery(queryConfig);
+                test('Removing components affects query results', () => {
+                        const queryConfig = {
+                                required: [PositionComponent, VelocityComponent],
+                        };
+                        const query = world.queryManager.registerQuery(queryConfig);
 
 			const entity = world.createEntity();
 			entity.addComponent(PositionComponent);
@@ -395,8 +415,28 @@ describe('EliCS Integration Tests', () => {
 			// Remove a component
 			entity.removeComponent(VelocityComponent);
 
-			expect(query.entities).not.toContain(entity);
-		});
+                        expect(query.entities).not.toContain(entity);
+                });
+
+                test('Entity removal from all queries when last component removed', () => {
+                        world.registerComponent(SimpleComponent);
+                        const query = world.queryManager.registerQuery({ required: [SimpleComponent] });
+                        const entity = world.createEntity();
+                        entity.addComponent(SimpleComponent);
+                        expect(query.entities).toContain(entity);
+                        entity.removeComponent(SimpleComponent);
+                        expect(query.entities).not.toContain(entity);
+                });
+
+                test('Entity destroy cleans up query results', () => {
+                        world.registerComponent(SimpleComponent);
+                        const query = world.queryManager.registerQuery({ required: [SimpleComponent] });
+                        const entity = world.createEntity();
+                        entity.addComponent(SimpleComponent);
+                        expect(query.entities).toContain(entity);
+                        entity.destroy();
+                        expect(query.entities).not.toContain(entity);
+                });
 
 		test('Query subscribers run as expected', () => {
 			const queryConfig = {
@@ -639,18 +679,25 @@ describe('EliCS Integration Tests', () => {
 			expect(entity.getValue(HealthComponent, 'value')).toBe(40);
 		});
 
-		test('System config signals funcion correctly', () => {
-			world.registerSystem(HealthSystem, {
-				configData: { healthDecreaseRate: 20 },
-			});
-			const valueChangeCallback = jest.fn();
-			const systemInstance = world.getSystem(HealthSystem);
-			expect(systemInstance).toBeDefined();
-			systemInstance!.config.healthDecreaseRate.subscribe(valueChangeCallback);
-			systemInstance!.config.healthDecreaseRate.value = 40;
-			expect(valueChangeCallback).toHaveBeenCalledWith(40);
-		});
-	});
+                test('System config signals funcion correctly', () => {
+                        world.registerSystem(HealthSystem, {
+                                configData: { healthDecreaseRate: 20 },
+                        });
+                        const valueChangeCallback = jest.fn();
+                        const systemInstance = world.getSystem(HealthSystem);
+                        expect(systemInstance).toBeDefined();
+                        systemInstance!.config.healthDecreaseRate.subscribe(valueChangeCallback);
+                        systemInstance!.config.healthDecreaseRate.value = 40;
+                        expect(valueChangeCallback).toHaveBeenCalledWith(40);
+                });
+
+                test('Default system methods execute', () => {
+                        class DefaultSystem extends createSystem() {}
+                        world.registerSystem(DefaultSystem);
+                        world.update(0, 0);
+                        world.unregisterSystem(DefaultSystem);
+                });
+        });
 
 	// Overall Tests
 	describe('Overall ECS functionality in production mode', () => {
