@@ -43,3 +43,7 @@ The suite runs several scenarios derived from the
 
 Execution times for EliCS and ecsy are printed in milliseconds for easy
 comparison.
+
+### Results
+<!-- benchmark-start -->
+<!-- benchmark-end -->
