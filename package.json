@@ -74,12 +74,13 @@
 		"eslint-config-prettier": "^10.1.1",
 		"eslint-plugin-prettier": "^5.2.3",
 		"jest": "^29.7.0",
-		"prettier": "^3.5.3",
-		"rimraf": "^6.0.1",
-		"rollup": "^4.35.0",
-		"ts-jest": "^29.2.5",
-		"typescript": "^5.8.2",
-		"vitepress": "^1.6.3"
+        "prettier": "^3.5.3",
+        "rimraf": "^6.0.1",
+        "rollup": "^4.35.0",
+        "ts-jest": "^29.2.5",
+        "typescript": "^5.8.2",
+        "vitepress": "^1.6.3",
+        "ecsy": "^0.6.6"
 	},
 	"dependencies": {
 		"@preact/signals-core": "^1.8.0",
