@@ -46,7 +46,7 @@ class GenericSystem extends createSystem(queryConfig) {
 	init(): void {
 		// Subscribe to the query to receive notifications when entities qualify.
 		const qualifyCallback = (entity: Entity) => {
-			console.log(`Entity ${entity.id} qualifies for query AButNotC.`);
+			console.log(`Entity ${entity.index} qualifies for query AButNotC.`);
 		};
 		const unsub = this.queries.AButNotC.subscribe('qualify', qualifyCallback);
 		// Unsubscribe later if needed.
@@ -86,7 +86,7 @@ You can subscribe to a query to receive notifications when entities `qualify` or
 
 ```ts
 const qualifyCallback = (entity: Entity) => {
-	console.log(`Entity ${entity.id} qualifies for query AButNotC.`);
+	console.log(`Entity ${entity.index} qualifies for query AButNotC.`);
 };
 const unsub = this.queries.AButNotC.subscribe('qualify', qualifyCallback);
 // Unsubscribe later if needed.
