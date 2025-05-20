@@ -9,11 +9,17 @@ import {
 	Types,
 } from '../lib/index.js';
 import {
-	World as EcsyWorld,
-	System as EcsySystem,
-	Component as EcsyComponent,
-	Types as EcsyTypes,
+        World as EcsyWorld,
+        System as EcsySystem,
+        Component as EcsyComponent,
+        Types as EcsyTypes,
 } from 'ecsy';
+import {
+        World as BecsyWorld,
+        System as BecsySystem,
+        component as becsyComponent,
+        field as becsyField,
+} from '@lastolivegames/becsy';
 
 // Silence ecsy warnings in console
 console.warn = () => {};
@@ -21,9 +27,15 @@ console.warn = () => {};
 const ITERATIONS = 100;
 
 function time(fn) {
-	const start = performance.now();
-	fn();
-	return performance.now() - start;
+        const start = performance.now();
+        fn();
+        return performance.now() - start;
+}
+
+async function timeAsync(fn) {
+        const start = performance.now();
+        await fn();
+        return performance.now() - start;
 }
 
 // EliCS benchmarks
@@ -479,7 +491,7 @@ function entityCycleEcsy() {
 }
 
 function addRemoveEcsy() {
-	const world = new EcsyWorld();
+        const world = new EcsyWorld();
 	const [A, B] = createLetterComponentsEcsy(2);
 
 	class AddRemoveSystem extends EcsySystem {
@@ -503,35 +515,251 @@ function addRemoveEcsy() {
 		.registerSystem(AddRemoveSystem);
 	for (let i = 0; i < 1000; i++) world.createEntity().addComponent(A);
 
-	return time(() => {
-		for (let i = 0; i < ITERATIONS; i++) world.execute(0);
-	});
+        return time(() => {
+                for (let i = 0; i < ITERATIONS; i++) world.execute(0);
+        });
+}
+
+// becsy benchmarks
+async function packedIterationBecsy() {
+        class A {}
+        becsyField.float32(A.prototype, 'value');
+        becsyComponent(A);
+        class B {}
+        becsyField.float32(B.prototype, 'value');
+        becsyComponent(B);
+        class C {}
+        becsyField.float32(C.prototype, 'value');
+        becsyComponent(C);
+        class D {}
+        becsyField.float32(D.prototype, 'value');
+        becsyComponent(D);
+        class E {}
+        becsyField.float32(E.prototype, 'value');
+        becsyComponent(E);
+
+        class PackedSystem extends BecsySystem {
+                a = this.query((q) => q.all.with(A).write);
+                b = this.query((q) => q.all.with(B).write);
+                c = this.query((q) => q.all.with(C).write);
+                d = this.query((q) => q.all.with(D).write);
+                e = this.query((q) => q.all.with(E).write);
+                execute() {
+                        for (const ent of this.a.current) ent.write(A).value *= 2;
+                        for (const ent of this.b.current) ent.write(B).value *= 2;
+                        for (const ent of this.c.current) ent.write(C).value *= 2;
+                        for (const ent of this.d.current) ent.write(D).value *= 2;
+                        for (const ent of this.e.current) ent.write(E).value *= 2;
+                }
+        }
+
+        const world = await BecsyWorld.create({ defs: [A, B, C, D, E, PackedSystem] });
+        world.build((s) => {
+                for (let i = 0; i < 1000; i++) s.createEntity(A, B, C, D, E);
+        });
+
+        return timeAsync(async () => {
+                for (let i = 0; i < ITERATIONS; i++) await world.execute(0);
+        });
+}
+
+async function simpleIterationBecsy() {
+        class A {}
+        becsyField.float32(A.prototype, 'value');
+        becsyComponent(A);
+        class B {}
+        becsyField.float32(B.prototype, 'value');
+        becsyComponent(B);
+        class C {}
+        becsyField.float32(C.prototype, 'value');
+        becsyComponent(C);
+        class D {}
+        becsyField.float32(D.prototype, 'value');
+        becsyComponent(D);
+        class E {}
+        becsyField.float32(E.prototype, 'value');
+        becsyComponent(E);
+
+        class SystemAB extends BecsySystem {
+                q = this.query((q) => q.all.with(A, B).write);
+                execute() {
+                        for (const ent of this.q.current) {
+                                const av = ent.write(A).value;
+                                const bv = ent.write(B).value;
+                                ent.write(A).value = bv;
+                                ent.write(B).value = av;
+                        }
+                }
+        }
+
+        class SystemCD extends BecsySystem {
+                q = this.query((q) => q.all.with(C, D).write);
+                execute() {
+                        for (const ent of this.q.current) {
+                                const cv = ent.write(C).value;
+                                const dv = ent.write(D).value;
+                                ent.write(C).value = dv;
+                                ent.write(D).value = cv;
+                        }
+                }
+        }
+
+        class SystemCE extends BecsySystem {
+                q = this.query((q) => q.all.with(C, E).write);
+                execute() {
+                        for (const ent of this.q.current) {
+                                const cv = ent.write(C).value;
+                                const ev = ent.write(E).value;
+                                ent.write(C).value = ev;
+                                ent.write(E).value = cv;
+                        }
+                }
+        }
+
+        const world = await BecsyWorld.create({
+                defs: [A, B, C, D, E, SystemAB, SystemCD, SystemCE],
+        });
+        world.build((s) => {
+                for (let i = 0; i < 1000; i++) s.createEntity(A, B);
+                for (let i = 0; i < 1000; i++) s.createEntity(A, B, C);
+                for (let i = 0; i < 1000; i++) s.createEntity(A, B, C, D);
+                for (let i = 0; i < 1000; i++) s.createEntity(A, B, C, E);
+        });
+
+        return timeAsync(async () => {
+                for (let i = 0; i < ITERATIONS; i++) await world.execute(0);
+        });
+}
+
+async function fragmentedIterationBecsy() {
+        class Data {}
+        becsyField.float32(Data.prototype, 'value');
+        becsyComponent(Data);
+        const comps = [];
+        for (let i = 0; i < 26; i++) {
+                const C = class {};
+                becsyField.float32(C.prototype, 'value');
+                becsyComponent(C);
+                comps[i] = C;
+        }
+
+        class FragSystem extends BecsySystem {
+                data = this.query((q) => q.all.with(Data).write);
+                z = this.query((q) => q.all.with(comps[25]).write);
+                execute() {
+                        for (const ent of this.data.current) ent.write(Data).value *= 2;
+                        for (const ent of this.z.current) ent.write(comps[25]).value *= 2;
+                }
+        }
+
+        const world = await BecsyWorld.create({ defs: [Data, ...comps, FragSystem] });
+        world.build((s) => {
+                for (let i = 0; i < 26; i++) {
+                        for (let j = 0; j < 100; j++) {
+                                s.createEntity(comps[i], Data);
+                        }
+                }
+        });
+
+        return timeAsync(async () => {
+                for (let i = 0; i < ITERATIONS; i++) await world.execute(0);
+        });
+}
+
+async function entityCycleBecsy() {
+        class A {}
+        becsyField.float32(A.prototype, 'value');
+        becsyComponent(A);
+        class B {}
+        becsyField.float32(B.prototype, 'value');
+        becsyComponent(B);
+
+        class CycleSystem extends BecsySystem {
+                as = this.query((q) => q.all.with(A));
+                bs = this.query((q) => q.all.with(B));
+                execute() {
+                        for (const _ of this.as.current) {
+                                this.createEntity(B);
+                        }
+                        for (const ent of [...this.bs.current]) {
+                                ent.delete();
+                        }
+                }
+        }
+
+        const world = await BecsyWorld.create({ defs: [A, B, CycleSystem] });
+        world.build((s) => {
+                for (let i = 0; i < 1000; i++) s.createEntity(A);
+        });
+
+        return timeAsync(async () => {
+                for (let i = 0; i < ITERATIONS; i++) await world.execute(0);
+        });
+}
+
+async function addRemoveBecsy() {
+        class A {}
+        becsyField.float32(A.prototype, 'value');
+        becsyComponent(A);
+        class B {}
+        becsyField.float32(B.prototype, 'value');
+        becsyComponent(B);
+
+        class AddRemoveSystem extends BecsySystem {
+                as = this.query((q) => q.all.with(A));
+                bs = this.query((q) => q.all.with(B));
+                execute() {
+                        for (const ent of this.as.current) {
+                                ent.add(B);
+                        }
+                        for (const ent of this.bs.current) {
+                                ent.remove(B);
+                        }
+                }
+        }
+
+        const world = await BecsyWorld.create({ defs: [A, B, AddRemoveSystem] });
+        world.build((s) => {
+                for (let i = 0; i < 1000; i++) s.createEntity(A);
+        });
+
+        return timeAsync(async () => {
+                for (let i = 0; i < ITERATIONS; i++) await world.execute(0);
+        });
 }
 
 const suites = [
-	['Packed Iteration', packedIterationElics, packedIterationEcsy],
-	['Simple Iteration', simpleIterationElics, simpleIterationEcsy],
-	['Fragmented Iteration', fragmentedIterationElics, fragmentedIterationEcsy],
-	['Entity Cycle', entityCycleElics, entityCycleEcsy],
-	['Add / Remove', addRemoveElics, addRemoveEcsy],
+        ['Packed Iteration', packedIterationElics, packedIterationEcsy, packedIterationBecsy],
+        ['Simple Iteration', simpleIterationElics, simpleIterationEcsy, simpleIterationBecsy],
+        ['Fragmented Iteration', fragmentedIterationElics, fragmentedIterationEcsy, fragmentedIterationBecsy],
+        ['Entity Cycle', entityCycleElics, entityCycleEcsy, entityCycleBecsy],
+        ['Add / Remove', addRemoveElics, addRemoveEcsy, addRemoveBecsy],
 ];
 
 const results = [];
 
-for (const [name, elicsFn, ecsyFn] of suites) {
-       try {
-               const elicsTime = elicsFn();
-               const ecsyTime = ecsyFn();
-               results.push({ name, elicsTime, ecsyTime });
+async function run() {
+       for (const [name, elicsFn, ecsyFn, becsyFn] of suites) {
+               try {
+                       const elicsTime = elicsFn();
+                       const ecsyTime = ecsyFn();
+                       const becsyTime = await becsyFn();
+                       results.push({ name, elicsTime, ecsyTime, becsyTime });
 
-               console.log(`${name}:`);
-               console.log(`  EliCS: ${elicsTime.toFixed(2)} ms`);
-               console.log(`  ecsy:  ${ecsyTime.toFixed(2)} ms`);
+                       console.log(`${name}:`);
+                       console.log(`  EliCS: ${elicsTime.toFixed(2)} ms`);
+                       console.log(`  ecsy:  ${ecsyTime.toFixed(2)} ms`);
+                       console.log(`  becsy: ${becsyTime.toFixed(2)} ms`);
 
-       } catch (err) {
-               console.error(`Failed to run ${name}:`, err.message);
+               } catch (err) {
+                       console.error(`Failed to run ${name}:`, err.message);
+               }
        }
+
+       updateReadme(results);
 }
+
+await run();
 
 function updateReadme(res) {
         const readmePath = path.resolve(
@@ -552,14 +780,14 @@ function updateReadme(res) {
        const lines = res.map((r) => {
                const el = r.elicsTime.toFixed(2);
                const ec = r.ecsyTime.toFixed(2);
-               const elicsFaster = r.elicsTime <= r.ecsyTime;
-               const faster = elicsFaster ? r.ecsyTime : r.elicsTime;
-               const slower = elicsFaster ? r.elicsTime : r.ecsyTime;
-               const percent = (((faster - slower) / faster) * 100).toFixed(0);
-               if (elicsFaster) {
-                       return `- **${r.name}**: **EliCS ${el} ms** | ecsy ${ec} ms (${percent}% better)`;
-               }
-               return `- **${r.name}**: EliCS ${el} ms | **ecsy ${ec} ms** (${percent}% better)`;
+               const bc = r.becsyTime.toFixed(2);
+               const fastest = Math.min(r.elicsTime, r.ecsyTime, r.becsyTime);
+               const slowest = Math.max(r.elicsTime, r.ecsyTime, r.becsyTime);
+               const percent = (((slowest - fastest) / slowest) * 100).toFixed(0);
+               const elBold = r.elicsTime === fastest ? `**EliCS ${el} ms**` : `EliCS ${el} ms`;
+               const ecBold = r.ecsyTime === fastest ? `**ecsy ${ec} ms**` : `ecsy ${ec} ms`;
+               const bcBold = r.becsyTime === fastest ? `**becsy ${bc} ms**` : `becsy ${bc} ms`;
+               return `- **${r.name}**: ${elBold} | ${ecBold} | ${bcBold} (${percent}% better)`;
        });
 
        const before = text.slice(0, startIdx + start.length);
@@ -568,4 +796,3 @@ function updateReadme(res) {
        fs.writeFileSync(readmePath, text);
 }
 
-updateReadme(results);
