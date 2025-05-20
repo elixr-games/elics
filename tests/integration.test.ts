@@ -215,7 +215,9 @@ describe('EliCS Integration Tests', () => {
 			const entity = world.createEntity();
 			entity.addComponent(VectorComponent, { position: [1.0, 2.0, 3.0] });
 
-			const position = entity.getVectorView(VectorComponent, 'position');
+                        const position = entity.getVectorView(VectorComponent, 'position');
+                        const secondView = entity.getVectorView(VectorComponent, 'position');
+                        expect(secondView).toBe(position);
 
 			expect(position[0]).toBe(1.0);
 			expect(position[1]).toBe(2.0);
