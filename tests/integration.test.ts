@@ -481,13 +481,25 @@ describe('EliCS Integration Tests', () => {
                         const world = new World({ checksOn: false });
                         world.registerComponent(PositionComponent);
                         const entity = world.createEntity();
-			entity.addComponent(PositionComponent);
+                        entity.addComponent(PositionComponent);
 
-			expect(
-				new Query(PositionComponent.bitmask!, new BitSet(), '').entities,
-			).toEqual(new Set());
-		});
-	});
+                        expect(
+                                new Query(PositionComponent.bitmask!, new BitSet(), '').entities,
+                        ).toEqual(new Set());
+                });
+
+                test('Newly registered query finds existing entities', () => {
+                        const entity = world.createEntity();
+                        entity.addComponent(PositionComponent);
+
+                        const queryConfig = {
+                                required: [PositionComponent],
+                        };
+
+                        const query = world.queryManager.registerQuery(queryConfig);
+                        expect(query.entities).toContain(entity);
+                });
+        });
 
 	// System Tests
 	describe('System Tests', () => {

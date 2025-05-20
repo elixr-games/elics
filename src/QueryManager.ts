@@ -5,6 +5,7 @@ import { Entity } from './Entity.js';
 export class QueryManager {
 	private queries: Map<string, Query> = new Map();
 	private entitiesToUpdate: Entity[] = [];
+	private trackedEntities: Set<Entity> = new Set();
 
 	constructor(private deferredEntityUpdates: boolean) {}
 
@@ -12,13 +13,21 @@ export class QueryManager {
 		const { requiredMask, excludedMask, queryId } =
 			Query.generateQueryInfo(query);
 		if (!this.queries.has(queryId)) {
-			this.queries.set(queryId, new Query(requiredMask, excludedMask, queryId));
+			const newQuery = new Query(requiredMask, excludedMask, queryId);
+			// populate query with existing entities that match
+			this.trackedEntities.forEach((entity) => {
+				if (newQuery.matches(entity)) {
+					newQuery.entities.add(entity);
+				}
+			});
+			this.queries.set(queryId, newQuery);
 		}
 		return this.queries.get(queryId)!;
 	}
 
 	updateEntity(entity: Entity, force = false): void {
 		if (force || !this.deferredEntityUpdates) {
+			this.trackedEntities.add(entity);
 			if (entity.bitmask.isEmpty()) {
 				// Remove entity from all query results if it has no components
 				this.queries.forEach((query) => query.entities.delete(entity));
@@ -50,6 +59,7 @@ export class QueryManager {
 	}
 
 	resetEntity(entity: Entity): void {
+		this.trackedEntities.delete(entity);
 		this.queries.forEach((query) => query.entities.delete(entity));
 	}
 
