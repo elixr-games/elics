@@ -28,7 +28,7 @@ function time(fn) {
 
 // EliCS benchmarks
 function packedIterationElics() {
-	const world = new EliWorld();
+	const world = new EliWorld({ entityCapacity: 1000, checksOn: false });
 	const A = createComponent({ value: { type: Types.Float32, default: 1 } });
 	const B = createComponent({ value: { type: Types.Float32, default: 1 } });
 	const C = createComponent({ value: { type: Types.Float32, default: 1 } });
@@ -44,19 +44,24 @@ function packedIterationElics() {
 	}) {
 		update() {
 			for (const e of this.queries.a.entities) {
-				e.setValue(A, 'value', e.getValue(A, 'value') * 2);
+				const idx = e.index;
+				A.data.value[idx] *= 2;
 			}
 			for (const e of this.queries.b.entities) {
-				e.setValue(B, 'value', e.getValue(B, 'value') * 2);
+				const idx = e.index;
+				B.data.value[idx] *= 2;
 			}
 			for (const e of this.queries.c.entities) {
-				e.setValue(C, 'value', e.getValue(C, 'value') * 2);
+				const idx = e.index;
+				C.data.value[idx] *= 2;
 			}
 			for (const e of this.queries.d.entities) {
-				e.setValue(D, 'value', e.getValue(D, 'value') * 2);
+				const idx = e.index;
+				D.data.value[idx] *= 2;
 			}
 			for (const e of this.queries.e.entities) {
-				e.setValue(E, 'value', e.getValue(E, 'value') * 2);
+				const idx = e.index;
+				E.data.value[idx] *= 2;
 			}
 		}
 	}
@@ -85,7 +90,7 @@ function packedIterationElics() {
 }
 
 function simpleIterationElics() {
-	const world = new EliWorld();
+	const world = new EliWorld({ entityCapacity: 5000, checksOn: false });
 	const A = createComponent({ value: { type: Types.Float32, default: 0 } });
 	const B = createComponent({ value: { type: Types.Float32, default: 0 } });
 	const C = createComponent({ value: { type: Types.Float32, default: 0 } });
@@ -95,30 +100,33 @@ function simpleIterationElics() {
 	class SystemAB extends createSystem({ q: { required: [A, B] } }) {
 		update() {
 			for (const e of this.queries.q.entities) {
-				const av = e.getValue(A, 'value');
-				const bv = e.getValue(B, 'value');
-				e.setValue(A, 'value', bv);
-				e.setValue(B, 'value', av);
+				const idx = e.index;
+				const av = A.data.value[idx];
+				const bv = B.data.value[idx];
+				A.data.value[idx] = bv;
+				B.data.value[idx] = av;
 			}
 		}
 	}
 	class SystemCD extends createSystem({ q: { required: [C, D] } }) {
 		update() {
 			for (const e of this.queries.q.entities) {
-				const cv = e.getValue(C, 'value');
-				const dv = e.getValue(D, 'value');
-				e.setValue(C, 'value', dv);
-				e.setValue(D, 'value', cv);
+				const idx = e.index;
+				const cv = C.data.value[idx];
+				const dv = D.data.value[idx];
+				C.data.value[idx] = dv;
+				D.data.value[idx] = cv;
 			}
 		}
 	}
 	class SystemCE extends createSystem({ q: { required: [C, E] } }) {
 		update() {
 			for (const e of this.queries.q.entities) {
-				const cv = e.getValue(C, 'value');
-				const ev = e.getValue(E, 'value');
-				e.setValue(C, 'value', ev);
-				e.setValue(E, 'value', cv);
+				const idx = e.index;
+				const cv = C.data.value[idx];
+				const ev = E.data.value[idx];
+				C.data.value[idx] = ev;
+				E.data.value[idx] = cv;
 			}
 		}
 	}
@@ -159,7 +167,7 @@ function simpleIterationElics() {
 }
 
 function fragmentedIterationElics() {
-	const world = new EliWorld();
+	const world = new EliWorld({ entityCapacity: 3000, checksOn: false });
 	const Data = createComponent({ value: { type: Types.Float32, default: 0 } });
 	const comps = [];
 	for (let i = 0; i < 26; i++) {
@@ -174,10 +182,12 @@ function fragmentedIterationElics() {
 	}) {
 		update() {
 			for (const e of this.queries.data.entities) {
-				e.setValue(Data, 'value', e.getValue(Data, 'value') * 2);
+				const idx = e.index;
+				Data.data.value[idx] *= 2;
 			}
 			for (const e of this.queries.z.entities) {
-				e.setValue(comps[25], 'value', e.getValue(comps[25], 'value') * 2);
+				const idx = e.index;
+				comps[25].data.value[idx] *= 2;
 			}
 		}
 	}
@@ -196,7 +206,7 @@ function fragmentedIterationElics() {
 }
 
 function entityCycleElics() {
-	const world = new EliWorld();
+	const world = new EliWorld({ entityCapacity: 2000, checksOn: false });
 	const A = createComponent({ value: { type: Types.Float32, default: 0 } });
 	const B = createComponent({ value: { type: Types.Float32, default: 0 } });
 
@@ -222,7 +232,11 @@ function entityCycleElics() {
 }
 
 function addRemoveElics() {
-	const world = new EliWorld();
+	const world = new EliWorld({
+		entityCapacity: 1000,
+		checksOn: false,
+		deferredEntityUpdates: true,
+	});
 	const A = createComponent({ value: { type: Types.Float32, default: 0 } });
 	const B = createComponent({ value: { type: Types.Float32, default: 0 } });
 
@@ -505,40 +519,53 @@ const suites = [
 const results = [];
 
 for (const [name, elicsFn, ecsyFn] of suites) {
-	try {
-		const elicsTime = elicsFn();
-		const ecsyTime = ecsyFn();
-		results.push({ name, elicsTime, ecsyTime });
-		console.log(`${name}:`);
-		console.log(`  EliCS: ${elicsTime.toFixed(2)} ms`);
-		console.log(`  ecsy:  ${ecsyTime.toFixed(2)} ms`);
-	} catch (err) {
-		console.error(`Failed to run ${name}:`, err.message);
-	}
+       try {
+               const elicsTime = elicsFn();
+               const ecsyTime = ecsyFn();
+               results.push({ name, elicsTime, ecsyTime });
+
+               console.log(`${name}:`);
+               console.log(`  EliCS: ${elicsTime.toFixed(2)} ms`);
+               console.log(`  ecsy:  ${ecsyTime.toFixed(2)} ms`);
+
+       } catch (err) {
+               console.error(`Failed to run ${name}:`, err.message);
+       }
 }
 
 function updateReadme(res) {
-	const readmePath = path.resolve(
-		path.dirname(fileURLToPath(import.meta.url)),
-		'..',
-		'README.md',
-	);
-	console.log(readmePath);
-	let text = fs.readFileSync(readmePath, 'utf8');
-	const start = '<!-- benchmark-start -->';
-	const end = '<!-- benchmark-end -->';
-	const lines = res.map(
-		(r) =>
-			`- **${r.name}**: EliCS ${r.elicsTime.toFixed(
-				2,
-			)} ms | ecsy ${r.ecsyTime.toFixed(2)} ms`,
-	);
-	console.log(lines);
-	const fileLines = text.split('\n');
-	// Replace the last 6 lines with the block content
-	const newLines = fileLines.slice(0, -6).concat(lines);
-	text = newLines.join('\n');
-	fs.writeFileSync(readmePath, text);
+        const readmePath = path.resolve(
+                path.dirname(fileURLToPath(import.meta.url)),
+                '..',
+                'README.md',
+        );
+       let text = fs.readFileSync(readmePath, 'utf8');
+       const start = '<!-- benchmark-start -->';
+       const end = '<!-- benchmark-end -->';
+       const startIdx = text.indexOf(start);
+       const endIdx = text.indexOf(end);
+       if (startIdx === -1 || endIdx === -1 || endIdx < startIdx) {
+               console.error('Benchmark markers missing in README');
+               return;
+       }
+
+       const lines = res.map((r) => {
+               const el = r.elicsTime.toFixed(2);
+               const ec = r.ecsyTime.toFixed(2);
+               const elicsFaster = r.elicsTime <= r.ecsyTime;
+               const faster = elicsFaster ? r.ecsyTime : r.elicsTime;
+               const slower = elicsFaster ? r.elicsTime : r.ecsyTime;
+               const percent = (((faster - slower) / faster) * 100).toFixed(0);
+               if (elicsFaster) {
+                       return `- **${r.name}**: **EliCS ${el} ms** | ecsy ${ec} ms (${percent}% better)`;
+               }
+               return `- **${r.name}**: EliCS ${el} ms | **ecsy ${ec} ms** (${percent}% better)`;
+       });
+
+       const before = text.slice(0, startIdx + start.length);
+       const after = text.slice(endIdx);
+       text = `${before}\n${lines.join('\n')}\n${after}`;
+       fs.writeFileSync(readmePath, text);
 }
 
 updateReadme(results);
