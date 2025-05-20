@@ -505,42 +505,40 @@ const suites = [
 const results = [];
 
 for (const [name, elicsFn, ecsyFn] of suites) {
-        try {
-                const elicsTime = elicsFn();
-                const ecsyTime = ecsyFn();
-                results.push({ name, elicsTime, ecsyTime });
-                console.log(`${name}:`);
-                console.log(`  EliCS: ${elicsTime.toFixed(2)} ms`);
-                console.log(`  ecsy:  ${ecsyTime.toFixed(2)} ms`);
-        } catch (err) {
-                console.error(`Failed to run ${name}:`, err.message);
-        }
+	try {
+		const elicsTime = elicsFn();
+		const ecsyTime = ecsyFn();
+		results.push({ name, elicsTime, ecsyTime });
+		console.log(`${name}:`);
+		console.log(`  EliCS: ${elicsTime.toFixed(2)} ms`);
+		console.log(`  ecsy:  ${ecsyTime.toFixed(2)} ms`);
+	} catch (err) {
+		console.error(`Failed to run ${name}:`, err.message);
+	}
 }
 
 function updateReadme(res) {
-        const readmePath = path.resolve(
-                path.dirname(fileURLToPath(import.meta.url)),
-                '..',
-                'README.md',
-        );
-        let text = fs.readFileSync(readmePath, 'utf8');
-        const start = '<!-- benchmark-start -->';
-        const end = '<!-- benchmark-end -->';
-        const lines = res
-                .map(
-                        (r) =>
-                                `- **${r.name}**: EliCS ${r.elicsTime.toFixed(
-                                        2,
-                                )} ms | ecsy ${r.ecsyTime.toFixed(2)} ms`,
-                )
-                .join('\n');
-        const block = `${start}\n${lines}\n${end}`;
-        if (text.includes(start) && text.includes(end)) {
-                text = text.replace(new RegExp(`${start}[\s\S]*?${end}`), block);
-        } else {
-                text += `\n${block}\n`;
-        }
-        fs.writeFileSync(readmePath, text);
+	const readmePath = path.resolve(
+		path.dirname(fileURLToPath(import.meta.url)),
+		'..',
+		'README.md',
+	);
+	console.log(readmePath);
+	let text = fs.readFileSync(readmePath, 'utf8');
+	const start = '<!-- benchmark-start -->';
+	const end = '<!-- benchmark-end -->';
+	const lines = res.map(
+		(r) =>
+			`- **${r.name}**: EliCS ${r.elicsTime.toFixed(
+				2,
+			)} ms | ecsy ${r.ecsyTime.toFixed(2)} ms`,
+	);
+	console.log(lines);
+	const fileLines = text.split('\n');
+	// Replace the last 6 lines with the block content
+	const newLines = fileLines.slice(0, -6).concat(lines);
+	text = newLines.join('\n');
+	fs.writeFileSync(readmePath, text);
 }
 
 updateReadme(results);
