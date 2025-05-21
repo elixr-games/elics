@@ -182,13 +182,23 @@ describe('EliCS Integration Tests', () => {
 			expect(newEntity.active).toBe(true);
 		});
 
-		test('Modifying destroyed entity throws error', () => {
-			const entity = world.createEntity();
-			entity.destroy();
+                test('Modifying destroyed entity throws error', () => {
+                        const entity = world.createEntity();
+                        entity.destroy();
 
-			expect(() => entity.addComponent(PositionComponent)).toThrow();
-		});
-	});
+                        expect(() => entity.addComponent(PositionComponent)).toThrow();
+                });
+
+                test('Entity index lookup updates on destroy', () => {
+                        const entity = world.createEntity();
+                        const index = entity.index;
+                        entity.destroy();
+
+                        const newEntity = world.createEntity();
+                        expect(newEntity.index).toBe(index);
+                        expect(world.entityManager.getEntityByIndex(index)).toBe(newEntity);
+                });
+        });
 
 	// Component Tests
 	describe('Component Tests', () => {

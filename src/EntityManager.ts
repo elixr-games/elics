@@ -32,6 +32,7 @@ export class EntityManager {
 	}
 
 	releaseEntityInstance(entity: Entity): void {
+		this.indexLookup.delete(entity.index);
 		this.pool.push(entity);
 	}
 
