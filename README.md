@@ -34,6 +34,8 @@ The suite runs several scenarios derived from the [noctjs/ecs-benchmark](https:/
 - **Entity Cycle** – 1,000 entities repeatedly spawn and then destroy entities with a B component.
 - **Add / Remove** – 1,000 entities each add then remove a B component.
 
+Each scenario is executed 20 times and the average time is reported to reduce variance between runs.
+
 Execution times for EliCS and ecsy are printed in milliseconds for easy comparison, here's a snapshot of the results (**smaller is better**):
 
 <!-- benchmark-start -->

@@ -1,35 +1,50 @@
 import { performance } from 'node:perf_hooks';
 import {
-    World as EcsyWorld,
-    System as EcsySystem,
-    Component as EcsyComponent,
-    Types as EcsyTypes,
+	World as EcsyWorld,
+	System as EcsySystem,
+	Component as EcsyComponent,
+	Types as EcsyTypes,
 } from 'ecsy';
 
 const ITERATIONS = 100;
 
 function time(fn) {
-    const start = performance.now();
-    fn();
-    return performance.now() - start;
+	const start = performance.now();
+	fn();
+	return performance.now() - start;
 }
 
 class ValueCompEcsy extends EcsyComponent {}
 ValueCompEcsy.schema = { value: { type: EcsyTypes.Number, default: 0 } };
 
-function createLetterComponentsEcsy(n) {
-	const out = [];
-	for (let i = 0; i < n; i++) {
-		class C extends EcsyComponent {}
-		C.schema = { value: { type: EcsyTypes.Number, default: 0 } };
-		out.push(C);
+const letterComponentCache = new Map();
+
+function createLetterComponentsEcsy(n, key = n) {
+	if (!letterComponentCache.has(key)) {
+		const out = [];
+		for (let i = 0; i < n; i++) {
+			class C extends EcsyComponent {}
+			C.schema = { value: { type: EcsyTypes.Number, default: 0 } };
+			out.push(C);
+		}
+		letterComponentCache.set(key, out);
 	}
-	return out;
+	return letterComponentCache.get(key);
+}
+
+let dataComponent;
+function getDataComponent() {
+	if (!dataComponent) {
+		class Data extends EcsyComponent {}
+		Data.schema = { value: { type: EcsyTypes.Number, default: 0 } };
+		dataComponent = Data;
+	}
+	return dataComponent;
 }
 
 export function packedIteration() {
 	const world = new EcsyWorld();
-	const [A, B, C, D, E] = createLetterComponentsEcsy(5);
+	const [A, B, C, D, E] = createLetterComponentsEcsy(5, 'packed');
 	class PackedSystem extends EcsySystem {
 		execute() {
 			this.queries.a.results.forEach((e) => {
@@ -87,7 +102,7 @@ export function packedIteration() {
 
 export function simpleIteration() {
 	const world = new EcsyWorld();
-	const [A, B, C, D, E] = createLetterComponentsEcsy(5);
+	const [A, B, C, D, E] = createLetterComponentsEcsy(5, 'simple');
 
 	class SystemAB extends EcsySystem {
 		execute() {
@@ -164,9 +179,8 @@ export function simpleIteration() {
 
 export function fragmentedIteration() {
 	const world = new EcsyWorld();
-	class Data extends EcsyComponent {}
-	Data.schema = { value: { type: EcsyTypes.Number, default: 0 } };
-	const comps = createLetterComponentsEcsy(26);
+	const Data = getDataComponent();
+	const comps = createLetterComponentsEcsy(26, 'fragmented');
 
 	class FragSystem extends EcsySystem {
 		execute() {
@@ -202,7 +216,7 @@ export function fragmentedIteration() {
 
 export function entityCycle() {
 	const world = new EcsyWorld();
-	const [A, B] = createLetterComponentsEcsy(2);
+	const [A, B] = createLetterComponentsEcsy(2, 'cycle');
 
 	class CycleSystem extends EcsySystem {
 		execute() {
@@ -229,7 +243,7 @@ export function entityCycle() {
 
 export function addRemove() {
 	const world = new EcsyWorld();
-	const [A, B] = createLetterComponentsEcsy(2);
+	const [A, B] = createLetterComponentsEcsy(2, 'addRemove');
 
 	class AddRemoveSystem extends EcsySystem {
 		execute() {
@@ -256,4 +270,3 @@ export function addRemove() {
 		for (let i = 0; i < ITERATIONS; i++) world.execute(0);
 	});
 }
-
