@@ -28,6 +28,7 @@ export enum Types {
 export type TypedArray =
 	| Int8Array
 	| Int16Array
+	| Int32Array
 	| Float32Array
 	| Float64Array
 	| Uint8Array;
@@ -35,6 +36,7 @@ export type TypedArray =
 export type TypedArrayConstructor =
 	| Int8ArrayConstructor
 	| Int16ArrayConstructor
+	| Int32ArrayConstructor
 	| Float32ArrayConstructor
 	| Float64ArrayConstructor
 	| Uint8ArrayConstructor;
@@ -47,7 +49,7 @@ export const TypedArrayMap: {
 } = {
 	Int8: { arrayConstructor: Int8Array, length: 1 },
 	Int16: { arrayConstructor: Int16Array, length: 1 },
-	Entity: { arrayConstructor: Int16Array, length: 1 },
+	Entity: { arrayConstructor: Int32Array, length: 1 },
 	Float32: { arrayConstructor: Float32Array, length: 1 },
 	Float64: { arrayConstructor: Float64Array, length: 1 },
 	Boolean: { arrayConstructor: Uint8Array, length: 1 },
