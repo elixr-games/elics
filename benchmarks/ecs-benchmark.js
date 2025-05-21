@@ -9,7 +9,7 @@ import * as koota from './koota.js';
 // Silence ecsy warnings in console
 console.warn = () => {};
 
-const RUNS = 20;
+const RUNS = 10;
 
 const suites = [
 	[
@@ -54,10 +54,23 @@ const results = [];
 async function run() {
 	for (const [name, elicsFn, ecsyFn, becsyFn, kootaFn] of suites) {
 		try {
-			const elicsTime = elicsFn();
-			const ecsyTime = ecsyFn();
-			const becsyTime = await becsyFn();
-			const kootaTime = kootaFn();
+			let elicsSum = 0;
+			let ecsySum = 0;
+			let becsySum = 0;
+			let kootaSum = 0;
+
+			for (let i = 0; i < RUNS; i++) {
+				elicsSum += elicsFn();
+				ecsySum += ecsyFn();
+				becsySum += await becsyFn();
+				kootaSum += kootaFn();
+			}
+
+			const elicsTime = elicsSum / RUNS;
+			const ecsyTime = ecsySum / RUNS;
+			const becsyTime = becsySum / RUNS;
+			const kootaTime = kootaSum / RUNS;
+
 			results.push({ name, elicsTime, ecsyTime, becsyTime, kootaTime });
 
 			console.log(`${name}:`);
