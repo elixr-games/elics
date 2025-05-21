@@ -13,52 +13,70 @@ console.warn = () => {};
 const RUNS = 10;
 
 const suites = [
-	[
-		'Packed Iteration',
-		elics.packedIteration,
-		ecsy.packedIteration,
-		becsy.packedIteration,
-		koota.packedIteration,
-		bitecs.packedIteration,
-	],
-	[
-		'Simple Iteration',
-		elics.simpleIteration,
-		ecsy.simpleIteration,
-		becsy.simpleIteration,
-		koota.simpleIteration,
-		bitecs.simpleIteration,
-	],
-	[
-		'Fragmented Iteration',
-		elics.fragmentedIteration,
-		ecsy.fragmentedIteration,
-		becsy.fragmentedIteration,
-		koota.fragmentedIteration,
-		bitecs.fragmentedIteration,
-	],
-	[
-		'Entity Cycle',
-		elics.entityCycle,
-		ecsy.entityCycle,
-		becsy.entityCycle,
-		koota.entityCycle,
-		bitecs.entityCycle,
-	],
-	[
-		'Add / Remove',
-		elics.addRemove,
-		ecsy.addRemove,
-		becsy.addRemove,
-		koota.addRemove,
-		bitecs.addRemove,
-	],
+	{
+		name: 'Packed Iteration (5 queries)',
+		description:
+			'1,000 entities each with components A\u2013E. Each query doubles the value stored in a single component.',
+		elics: elics.packedIteration,
+		ecsy: ecsy.packedIteration,
+		becsy: becsy.packedIteration,
+		koota: koota.packedIteration,
+		bitecs: bitecs.packedIteration,
+	},
+	{
+		name: 'Simple Iteration',
+		description:
+			'4,000 entities split across various component sets; three systems swap component values.',
+		elics: elics.simpleIteration,
+		ecsy: ecsy.simpleIteration,
+		becsy: becsy.simpleIteration,
+		koota: koota.simpleIteration,
+		bitecs: bitecs.simpleIteration,
+	},
+	{
+		name: 'Fragmented Iteration',
+		description:
+			'26 component types (A\u2013Z) with 100 entities each plus a Data component. Two queries double the Data and Z values.',
+		elics: elics.fragmentedIteration,
+		ecsy: ecsy.fragmentedIteration,
+		becsy: becsy.fragmentedIteration,
+		koota: koota.fragmentedIteration,
+		bitecs: bitecs.fragmentedIteration,
+	},
+	{
+		name: 'Entity Cycle',
+		description:
+			'1,000 entities repeatedly spawn and then destroy entities with a B component.',
+		elics: elics.entityCycle,
+		ecsy: ecsy.entityCycle,
+		becsy: becsy.entityCycle,
+		koota: koota.entityCycle,
+		bitecs: bitecs.entityCycle,
+	},
+	{
+		name: 'Add / Remove',
+		description: '1,000 entities each add then remove a B component.',
+		elics: elics.addRemove,
+		ecsy: ecsy.addRemove,
+		becsy: becsy.addRemove,
+		koota: koota.addRemove,
+		bitecs: bitecs.addRemove,
+	},
 ];
 
 const results = [];
 
 async function run() {
-	for (const [name, elicsFn, ecsyFn, becsyFn, kootaFn, bitecsFn] of suites) {
+	for (const suite of suites) {
+		const {
+			name,
+			description,
+			elics: elicsFn,
+			ecsy: ecsyFn,
+			becsy: becsyFn,
+			koota: kootaFn,
+			bitecs: bitecsFn,
+		} = suite;
 		try {
 			let elicsSum = 0;
 			let ecsySum = 0;
@@ -82,6 +100,7 @@ async function run() {
 
 			results.push({
 				name,
+				description,
 				elicsTime,
 				ecsyTime,
 				becsyTime,
@@ -122,7 +141,7 @@ function updateBenchmarksPage(res) {
 		return;
 	}
 
-	const lines = res.map((r) => {
+	const sections = res.map((r) => {
 		const el = r.elicsTime.toFixed(2);
 		const ec = r.ecsyTime.toFixed(2);
 		const bc = r.becsyTime.toFixed(2);
@@ -152,11 +171,11 @@ function updateBenchmarksPage(res) {
 		const bcBold = r.becsyTime === fastest ? `**${bc} ms**` : `${bc} ms`;
 		const koBold = r.kootaTime === fastest ? `**${ko} ms**` : `${ko} ms`;
 		const biBold = r.bitecsTime === fastest ? `**${bi} ms**` : `${bi} ms`;
-		return `\n**${r.name}**:\n  - \`EliCS\u00A0\`: ${elBar} ${elBold}\n  - \`Bitecs\`: ${biBar} ${biBold}\n  - \`Koota\u00A0\`: ${koBar} ${koBold}\n  - \`Becsy\u00A0\`: ${bcBar} ${bcBold}\n  - \`Ecsy\u00A0\u00A0\`: ${ecBar} ${ecBold}`;
+		return `\n## ${r.name}\n\n${r.description} Benchmark results:\n\n- \`EliCS\u00A0\`: ${elBar} ${elBold}\n- \`Bitecs\`: ${biBar} ${biBold}\n- \`Koota\u00A0\`: ${koBar} ${koBold}\n- \`Becsy\u00A0\`: ${bcBar} ${bcBold}\n- \`Ecsy\u00A0\u00A0\`: ${ecBar} ${ecBold}`;
 	});
 
 	const before = text.slice(0, startIdx + start.length);
 	const after = text.slice(endIdx);
-	text = `${before}\n${lines.join('\n')}\n${after}`;
+	text = `${before}\n${sections.join('\n')}\n${after}`;
 	fs.writeFileSync(benchPath, text);
 }
