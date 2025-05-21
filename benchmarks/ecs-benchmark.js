@@ -8,6 +8,8 @@ import * as becsy from './becsy.js';
 // Silence ecsy warnings in console
 console.warn = () => {};
 
+const RUNS = 20;
+
 const suites = [
 	[
 		'Packed Iteration',
@@ -36,9 +38,20 @@ const results = [];
 async function run() {
 	for (const [name, elicsFn, ecsyFn, becsyFn] of suites) {
 		try {
-			const elicsTime = elicsFn();
-			const ecsyTime = ecsyFn();
-			const becsyTime = await becsyFn();
+			let elicsSum = 0;
+			let ecsySum = 0;
+			let becsySum = 0;
+
+			for (let i = 0; i < RUNS; i++) {
+				elicsSum += elicsFn();
+				ecsySum += ecsyFn();
+				becsySum += await becsyFn();
+			}
+
+			const elicsTime = elicsSum / RUNS;
+			const ecsyTime = ecsySum / RUNS;
+			const becsyTime = becsySum / RUNS;
+
 			results.push({ name, elicsTime, ecsyTime, becsyTime });
 
 			console.log(`${name}:`);
