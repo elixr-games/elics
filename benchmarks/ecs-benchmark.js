@@ -90,9 +90,9 @@ function updateReadme(res) {
 		const bc = r.becsyTime.toFixed(2);
 		const fastest = Math.min(r.elicsTime, r.ecsyTime, r.becsyTime);
 		const slowest = Math.max(r.elicsTime, r.ecsyTime, r.becsyTime);
-		const elBar = '█'.repeat(Math.floor((r.elicsTime / slowest) * 20));
-		const ecBar = '█'.repeat(Math.floor((r.ecsyTime / slowest) * 20));
-		const bcBar = '█'.repeat(Math.floor((r.becsyTime / slowest) * 20));
+		const elBar = '█'.repeat(Math.ceil((r.elicsTime / slowest) * 20));
+		const ecBar = '█'.repeat(Math.ceil((r.ecsyTime / slowest) * 20));
+		const bcBar = '█'.repeat(Math.ceil((r.becsyTime / slowest) * 20));
 		const elBold = r.elicsTime === fastest ? `**${el} ms**` : `${el} ms`;
 		const ecBold = r.ecsyTime === fastest ? `**${ec} ms**` : `${ec} ms`;
 		const bcBold = r.becsyTime === fastest ? `**${bc} ms**` : `${bc} ms`;
