@@ -60,6 +60,12 @@ export class QueryManager {
 
 	resetEntity(entity: Entity): void {
 		this.trackedEntities.delete(entity);
+		// remove pending updates for this entity
+		const idx = this.entitiesToUpdate.indexOf(entity);
+		if (idx !== -1) {
+			this.entitiesToUpdate.splice(idx, 1);
+		}
+		entity.dirty = false;
 		this.queries.forEach((query) => query.entities.delete(entity));
 	}
 
