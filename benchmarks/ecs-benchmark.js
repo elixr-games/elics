@@ -100,25 +100,25 @@ async function run() {
 		}
 	}
 
-        updateReadme(results);
-        updateBenchmarksPage(results);
+	updateBenchmarksPage(results);
 }
 
 await run();
 
-function updateReadme(res) {
-	const readmePath = path.resolve(
+function updateBenchmarksPage(res) {
+	const benchPath = path.resolve(
 		path.dirname(fileURLToPath(import.meta.url)),
 		'..',
-		'README.md',
+		'docs',
+		'benchmarks.md',
 	);
-	let text = fs.readFileSync(readmePath, 'utf8');
+	let text = fs.readFileSync(benchPath, 'utf8');
 	const start = '<!-- benchmark-start -->';
 	const end = '<!-- benchmark-end -->';
 	const startIdx = text.indexOf(start);
 	const endIdx = text.indexOf(end);
 	if (startIdx === -1 || endIdx === -1 || endIdx < startIdx) {
-		console.error('Benchmark markers missing in README');
+		console.error('Benchmark markers missing in docs/benchmarks.md');
 		return;
 	}
 
@@ -155,64 +155,8 @@ function updateReadme(res) {
 		return `\n**${r.name}**:\n  - \`EliCS\u00A0\`: ${elBar} ${elBold}\n  - \`Bitecs\`: ${biBar} ${biBold}\n  - \`Koota\u00A0\`: ${koBar} ${koBold}\n  - \`Becsy\u00A0\`: ${bcBar} ${bcBold}\n  - \`Ecsy\u00A0\u00A0\`: ${ecBar} ${ecBold}`;
 	});
 
-        const before = text.slice(0, startIdx + start.length);
-        const after = text.slice(endIdx);
-        text = `${before}\n${lines.join('\n')}\n${after}`;
-        fs.writeFileSync(readmePath, text);
-}
-
-function updateBenchmarksPage(res) {
-        const benchPath = path.resolve(
-                path.dirname(fileURLToPath(import.meta.url)),
-                '..',
-                'docs',
-                'benchmarks.md',
-        );
-        let text = fs.readFileSync(benchPath, 'utf8');
-        const start = '<!-- benchmark-start -->';
-        const end = '<!-- benchmark-end -->';
-        const startIdx = text.indexOf(start);
-        const endIdx = text.indexOf(end);
-        if (startIdx === -1 || endIdx === -1 || endIdx < startIdx) {
-                console.error('Benchmark markers missing in docs/benchmarks.md');
-                return;
-        }
-
-        const lines = res.map((r) => {
-                const el = r.elicsTime.toFixed(2);
-                const ec = r.ecsyTime.toFixed(2);
-                const bc = r.becsyTime.toFixed(2);
-                const ko = r.kootaTime.toFixed(2);
-                const bi = r.bitecsTime.toFixed(2);
-                const fastest = Math.min(
-                        r.elicsTime,
-                        r.ecsyTime,
-                        r.becsyTime,
-                        r.kootaTime,
-                        r.bitecsTime,
-                );
-                const slowest = Math.max(
-                        r.elicsTime,
-                        r.ecsyTime,
-                        r.becsyTime,
-                        r.kootaTime,
-                        r.bitecsTime,
-                );
-                const elBar = '█'.repeat(Math.floor((r.elicsTime / slowest) * 20));
-                const ecBar = '█'.repeat(Math.floor((r.ecsyTime / slowest) * 20));
-                const bcBar = '█'.repeat(Math.floor((r.becsyTime / slowest) * 20));
-                const koBar = '█'.repeat(Math.floor((r.kootaTime / slowest) * 20));
-                const biBar = '█'.repeat(Math.floor((r.bitecsTime / slowest) * 20));
-                const elBold = r.elicsTime === fastest ? `**${el} ms**` : `${el} ms`;
-                const ecBold = r.ecsyTime === fastest ? `**${ec} ms**` : `${ec} ms`;
-                const bcBold = r.becsyTime === fastest ? `**${bc} ms**` : `${bc} ms`;
-                const koBold = r.kootaTime === fastest ? `**${ko} ms**` : `${ko} ms`;
-                const biBold = r.bitecsTime === fastest ? `**${bi} ms**` : `${bi} ms`;
-                return `\n**${r.name}**:\n  - \`EliCS\u00A0\`: ${elBar} ${elBold}\n  - \`Bitecs\`: ${biBar} ${biBold}\n  - \`Koota\u00A0\`: ${koBar} ${koBold}\n  - \`Becsy\u00A0\`: ${bcBar} ${bcBold}\n  - \`Ecsy\u00A0\u00A0\`: ${ecBar} ${ecBold}`;
-        });
-
-        const before = text.slice(0, startIdx + start.length);
-        const after = text.slice(endIdx);
-        text = `${before}\n${lines.join('\n')}\n${after}`;
-        fs.writeFileSync(benchPath, text);
+	const before = text.slice(0, startIdx + start.length);
+	const after = text.slice(endIdx);
+	text = `${before}\n${lines.join('\n')}\n${after}`;
+	fs.writeFileSync(benchPath, text);
 }
