@@ -1,23 +1,15 @@
-import { performance } from 'node:perf_hooks';
 import {
-	createWorld,
-	defineComponent,
-	defineQuery,
-	addEntity,
-	addComponent,
+        createWorld,
+        defineComponent,
+        defineQuery,
+        addEntity,
+        addComponent,
 	removeEntity,
 	removeComponent,
 	Types,
-	deleteWorld,
+        deleteWorld,
 } from 'bitecs';
-
-const ITERATIONS = 100;
-
-function time(fn) {
-	const start = performance.now();
-	fn();
-	return performance.now() - start;
-}
+import { time, ITERATIONS } from './bench-util.js';
 
 export function packedIteration() {
 	const world = createWorld();

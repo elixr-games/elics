@@ -84,10 +84,11 @@ export default defineConfig({
 					{ text: 'Component', link: '/architecture/component' },
 					{ text: 'Query', link: '/architecture/query' },
 					{ text: 'System', link: '/architecture/system' },
-					{ text: 'World', link: '/architecture/world' },
-				],
-			},
-		],
+                                        { text: 'World', link: '/architecture/world' },
+                                ],
+                        },
+                        { text: 'Benchmarks', link: '/benchmarks' },
+                ],
 
 		socialLinks: [
 			{ icon: 'github', link: 'https://github.com/felixtrz/elics' },

@@ -41,42 +41,37 @@ Execution times for EliCS and ecsy are printed in milliseconds for easy comparis
 <!-- benchmark-start -->
 
 **Packed Iteration**:
-
-- `EliCS `: ██ **3.13 ms**
-- `Bitecs`: ██ 3.54 ms
-- `Koota `: ██████████ 14.76 ms
-- `Becsy `: ████████████████████ 27.51 ms
-- `Ecsy  `: █████ 8.08 ms
+  - `EliCS `: ██ **7.80 ms**
+  - `Bitecs`: ██ 7.94 ms
+  - `Koota `: ███████████ 33.26 ms
+  - `Becsy `: ████████████████████ 58.91 ms
+  - `Ecsy  `: ████ 13.10 ms
 
 **Simple Iteration**:
-
-- `EliCS `: █ **3.73 ms**
-- `Bitecs`: █ 4.64 ms
-- `Koota `: █████████ 31.45 ms
-- `Becsy `: ████████████████████ 65.32 ms
-- `Ecsy  `: ███ 10.58 ms
+  - `EliCS `: █ 10.60 ms
+  - `Bitecs`: █ **10.15 ms**
+  - `Koota `: █████████ 75.00 ms
+  - `Becsy `: ████████████████████ 156.98 ms
+  - `Ecsy  `: ██ 21.31 ms
 
 **Fragmented Iteration**:
-
-- `EliCS `: ███ **2.20 ms**
-- `Bitecs`: ███████ 5.14 ms
-- `Koota `: ██████████████ 10.26 ms
-- `Becsy `: ████████████████████ 14.12 ms
-- `Ecsy  `: ████ 3.04 ms
+  - `EliCS `: ██ **3.55 ms**
+  - `Bitecs`: ██████ 10.50 ms
+  - `Koota `: ██████████████ 22.14 ms
+  - `Becsy `: ████████████████████ 30.94 ms
+  - `Ecsy  `: ████ 7.46 ms
 
 **Entity Cycle**:
-
-- `EliCS `: ███ **22.83 ms**
-- `Bitecs`: ██████████ 67.34 ms
-- `Koota `: █████████████ 85.57 ms
-- `Becsy `: ██████ 40.58 ms
-- `Ecsy  `: ████████████████████ 130.16 ms
+  - `EliCS `: ███ **52.97 ms**
+  - `Bitecs`: ███████████ 179.39 ms
+  - `Koota `: ██████████████████ 287.89 ms
+  - `Becsy `: █████ 86.03 ms
+  - `Ecsy  `: ████████████████████ 319.01 ms
 
 **Add / Remove**:
-
-- `EliCS `: ███ **8.10 ms**
-- `Bitecs`: ████████████████████ 53.67 ms
-- `Koota `: ████████████ 34.23 ms
-- `Becsy `: ███ 9.04 ms
-- `Ecsy  `: ███████████████ 40.53 ms
+  - `EliCS `: ██ **18.75 ms**
+  - `Bitecs`: ████████████████████ 125.94 ms
+  - `Koota `: ██████████████████ 119.17 ms
+  - `Becsy `: ███ 20.64 ms
+  - `Ecsy  `: █████████████████ 107.10 ms
 <!-- benchmark-end -->
