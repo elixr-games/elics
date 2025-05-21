@@ -22,30 +22,30 @@ export class Query {
 		public queryId: string,
 	) {}
 
-        matches(entity: Entity): boolean {
-                const hasRequired = entity.bitmask.contains(this.requiredMask);
-                const hasExcluded = entity.bitmask.intersects(this.excludedMask);
+	matches(entity: Entity): boolean {
+		const hasRequired = entity.bitmask.contains(this.requiredMask);
+		const hasExcluded = entity.bitmask.intersects(this.excludedMask);
 
-                return hasRequired && !hasExcluded;
-        }
+		return hasRequired && !hasExcluded;
+	}
 
-        subscribe(
-                event: 'qualify' | 'disqualify',
-                callback: (entity: Entity) => void,
-        ): () => void {
-                this.subscribers[event].add(callback);
-                return () => {
-                        this.subscribers[event].delete(callback);
-                };
-        }
+	subscribe(
+		event: 'qualify' | 'disqualify',
+		callback: (entity: Entity) => void,
+	): () => void {
+		this.subscribers[event].add(callback);
+		return () => {
+			this.subscribers[event].delete(callback);
+		};
+	}
 
-        static generateQueryInfo(queryConfig: QueryConfig): {
-                requiredMask: BitSet;
-                excludedMask: BitSet;
-                queryId: string;
-        } {
-                let requiredMask = new BitSet();
-                let excludedMask = new BitSet();
+	static generateQueryInfo(queryConfig: QueryConfig): {
+		requiredMask: BitSet;
+		excludedMask: BitSet;
+		queryId: string;
+	} {
+		let requiredMask = new BitSet();
+		let excludedMask = new BitSet();
 		queryConfig.required.forEach((c) => {
 			assertCondition(
 				c.bitmask !== null,
