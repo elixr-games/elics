@@ -34,32 +34,34 @@ The suite runs several scenarios derived from the [noctjs/ecs-benchmark](https:/
 - **Entity Cycle** – 1,000 entities repeatedly spawn and then destroy entities with a B component.
 - **Add / Remove** – 1,000 entities each add then remove a B component.
 
+Each scenario is executed 20 times and the average time is reported to reduce variance between runs.
+
 Execution times for EliCS and ecsy are printed in milliseconds for easy comparison, here's a snapshot of the results (**smaller is better**):
 
 <!-- benchmark-start -->
 
 **Packed Iteration**:
-  - `EliCS`: █████████ **4.24 ms**
-  - `Becsy`: ██████████████████ 8.38 ms
-  - `Ecsy `: ████████████████████ 8.99 ms
+  - `EliCS`: ██ **2.60 ms**
+  - `Becsy`: ████████████████████ 27.02 ms
+  - `Ecsy `: ██████ 7.92 ms
 
 **Simple Iteration**:
-  - `EliCS`: ██████ **3.95 ms**
-  - `Becsy`: ███████████ 6.94 ms
-  - `Ecsy `: ████████████████████ 11.87 ms
+  - `EliCS`: █ **3.25 ms**
+  - `Becsy`: ████████████████████ 66.47 ms
+  - `Ecsy `: ████ 10.61 ms
 
 **Fragmented Iteration**:
-  - `EliCS`: ██████████ **2.56 ms**
-  - `Becsy`: ████████████████████ 4.79 ms
-  - `Ecsy `: █████████████ 3.31 ms
+  - `EliCS`: ██ **1.35 ms**
+  - `Becsy`: ████████████████████ 14.00 ms
+  - `Ecsy `: █████ 2.92 ms
 
 **Entity Cycle**:
-  - `EliCS`: ██ **17.78 ms**
-  - `Becsy`: █████ 36.95 ms
-  - `Ecsy `: ████████████████████ 131.54 ms
+  - `EliCS`: ████ **21.84 ms**
+  - `Becsy`: ███████ 40.57 ms
+  - `Ecsy `: ████████████████████ 130.27 ms
 
 **Add / Remove**:
-  - `EliCS`: ████ **8.72 ms**
-  - `Becsy`: ████ 9.03 ms
-  - `Ecsy `: ████████████████████ 40.49 ms
+  - `EliCS`: ████ **7.77 ms**
+  - `Becsy`: █████ 8.85 ms
+  - `Ecsy `: ████████████████████ 40.97 ms
 <!-- benchmark-end -->

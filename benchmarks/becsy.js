@@ -1,34 +1,47 @@
 import { performance } from 'node:perf_hooks';
 import {
-    World as BecsyWorld,
-    System as BecsySystem,
-    component as becsyComponent,
-    field as becsyField,
+	World as BecsyWorld,
+	System as BecsySystem,
+	component as becsyComponent,
+	field as becsyField,
 } from '@lastolivegames/becsy/perf.js';
 
 const ITERATIONS = 100;
 
 function timeAsync(fn) {
-    const start = performance.now();
-    return fn().then(() => performance.now() - start);
+	const start = performance.now();
+	return fn().then(() => performance.now() - start);
+}
+
+const letterComponentCache = new Map();
+
+function getLetterComponentsBecsy(n, key = n) {
+	if (!letterComponentCache.has(key)) {
+		const arr = [];
+		for (let i = 0; i < n; i++) {
+			const C = new Function(`return class ${key}C${i} {}`)();
+			becsyField.float32(C.prototype, 'value');
+			becsyComponent(C);
+			arr.push(C);
+		}
+		letterComponentCache.set(key, arr);
+	}
+	return letterComponentCache.get(key);
+}
+
+let dataFComponent;
+function getDataFComponent() {
+	if (!dataFComponent) {
+		class DataF {}
+		becsyField.float32(DataF.prototype, 'value');
+		becsyComponent(DataF);
+		dataFComponent = DataF;
+	}
+	return dataFComponent;
 }
 
 export async function packedIteration() {
-	class A1 {}
-	becsyField.float32(A1.prototype, 'value');
-	becsyComponent(A1);
-	class B1 {}
-	becsyField.float32(B1.prototype, 'value');
-	becsyComponent(B1);
-	class C1 {}
-	becsyField.float32(C1.prototype, 'value');
-	becsyComponent(C1);
-	class D1 {}
-	becsyField.float32(D1.prototype, 'value');
-	becsyComponent(D1);
-	class E1 {}
-	becsyField.float32(E1.prototype, 'value');
-	becsyComponent(E1);
+	const [A1, B1, C1, D1, E1] = getLetterComponentsBecsy(5, 'packed');
 
 	class PackedSystem extends BecsySystem {
 		a = this.query((q) => q.current.with(A1).write);
@@ -60,21 +73,7 @@ export async function packedIteration() {
 }
 
 export async function simpleIteration() {
-	class A2 {}
-	becsyField.float32(A2.prototype, 'value');
-	becsyComponent(A2);
-	class B2 {}
-	becsyField.float32(B2.prototype, 'value');
-	becsyComponent(B2);
-	class C2 {}
-	becsyField.float32(C2.prototype, 'value');
-	becsyComponent(C2);
-	class D2 {}
-	becsyField.float32(D2.prototype, 'value');
-	becsyComponent(D2);
-	class E2 {}
-	becsyField.float32(E2.prototype, 'value');
-	becsyComponent(E2);
+	const [A2, B2, C2, D2, E2] = getLetterComponentsBecsy(5, 'simple');
 
 	class SystemAB extends BecsySystem {
 		q = this.query((q) => q.current.with(A2, B2).write);
@@ -131,16 +130,8 @@ export async function simpleIteration() {
 }
 
 export async function fragmentedIteration() {
-	class DataF {}
-	becsyField.float32(DataF.prototype, 'value');
-	becsyComponent(DataF);
-	const comps = [];
-	for (let i = 0; i < 26; i++) {
-		const C = new Function(`return class F${i} {}`)();
-		becsyField.float32(C.prototype, 'value');
-		becsyComponent(C);
-		comps[i] = C;
-	}
+	const DataF = getDataFComponent();
+	const comps = getLetterComponentsBecsy(26, 'fragmented');
 
 	class FragSystem extends BecsySystem {
 		data = this.query((q) => q.current.with(DataF).write);
@@ -170,12 +161,7 @@ export async function fragmentedIteration() {
 }
 
 export async function entityCycle() {
-	class A3 {}
-	becsyField.float32(A3.prototype, 'value');
-	becsyComponent(A3);
-	class B3 {}
-	becsyField.float32(B3.prototype, 'value');
-	becsyComponent(B3);
+	const [A3, B3] = getLetterComponentsBecsy(2, 'cycle');
 
 	class CycleSystem extends BecsySystem {
 		as = this.query((q) => q.current.with(A3));
@@ -207,12 +193,7 @@ export async function entityCycle() {
 }
 
 export async function addRemove() {
-	class A4 {}
-	becsyField.float32(A4.prototype, 'value');
-	becsyComponent(A4);
-	class B4 {}
-	becsyField.float32(B4.prototype, 'value');
-	becsyComponent(B4);
+	const [A4, B4] = getLetterComponentsBecsy(2, 'addRemove');
 
 	class AddRemoveSystem extends BecsySystem {
 		as = this.query((q) => q.current.with(A4).without(B4));
@@ -242,4 +223,3 @@ export async function addRemove() {
 	await world.terminate();
 	return result;
 }
-

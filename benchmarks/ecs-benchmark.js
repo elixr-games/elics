@@ -8,6 +8,8 @@ import * as becsy from './becsy.js';
 // Silence ecsy warnings in console
 console.warn = () => {};
 
+const RUNS = 20;
+
 const suites = [
 	[
 		'Packed Iteration',
@@ -36,9 +38,20 @@ const results = [];
 async function run() {
 	for (const [name, elicsFn, ecsyFn, becsyFn] of suites) {
 		try {
-			const elicsTime = elicsFn();
-			const ecsyTime = ecsyFn();
-			const becsyTime = await becsyFn();
+			let elicsSum = 0;
+			let ecsySum = 0;
+			let becsySum = 0;
+
+			for (let i = 0; i < RUNS; i++) {
+				elicsSum += elicsFn();
+				ecsySum += ecsyFn();
+				becsySum += await becsyFn();
+			}
+
+			const elicsTime = elicsSum / RUNS;
+			const ecsyTime = ecsySum / RUNS;
+			const becsyTime = becsySum / RUNS;
+
 			results.push({ name, elicsTime, ecsyTime, becsyTime });
 
 			console.log(`${name}:`);
@@ -77,9 +90,9 @@ function updateReadme(res) {
 		const bc = r.becsyTime.toFixed(2);
 		const fastest = Math.min(r.elicsTime, r.ecsyTime, r.becsyTime);
 		const slowest = Math.max(r.elicsTime, r.ecsyTime, r.becsyTime);
-		const elBar = '█'.repeat(Math.floor((r.elicsTime / slowest) * 20));
-		const ecBar = '█'.repeat(Math.floor((r.ecsyTime / slowest) * 20));
-		const bcBar = '█'.repeat(Math.floor((r.becsyTime / slowest) * 20));
+		const elBar = '█'.repeat(Math.ceil((r.elicsTime / slowest) * 20));
+		const ecBar = '█'.repeat(Math.ceil((r.ecsyTime / slowest) * 20));
+		const bcBar = '█'.repeat(Math.ceil((r.becsyTime / slowest) * 20));
 		const elBold = r.elicsTime === fastest ? `**${el} ms**` : `${el} ms`;
 		const ecBold = r.ecsyTime === fastest ? `**${ec} ms**` : `${ec} ms`;
 		const bcBold = r.becsyTime === fastest ? `**${bc} ms**` : `${bc} ms`;
