@@ -20,7 +20,7 @@ Thank you for being a part of the EliCS community!
 
 ## Benchmarks
 
-This repository includes a benchmark suite comparing EliCS to popular ECS implementations - [koota](https://github.com/pmndrs/koota), [becsy](https://lastolivegames.github.io/becsy/) and [ecsy](https://ecsyjs.github.io/ecsy/). Build the project and run the benchmark suite:
+This repository includes a benchmark suite comparing EliCS to popular ECS implementations -[bitecs](https://github.com/NateTheGreatt/bitECS), [koota](https://github.com/pmndrs/koota), [becsy](https://lastolivegames.github.io/becsy/) and [ecsy](https://ecsyjs.github.io/ecsy/). Build the project and run the benchmark suite:
 
 ```bash
 npm run bench
@@ -42,36 +42,41 @@ Execution times for EliCS and ecsy are printed in milliseconds for easy comparis
 
 **Packed Iteration**:
 
-- `EliCS`: ████ **3.34 ms**
-- `Koota`: ████████████████████ 14.11 ms
-- `Becsy`: ██████████████ 10.08 ms
-- `Ecsy `: ████████████ 9.16 ms
+- `EliCS `: ██ **3.13 ms**
+- `Bitecs`: ██ 3.54 ms
+- `Koota `: ██████████ 14.76 ms
+- `Becsy `: ████████████████████ 27.51 ms
+- `Ecsy  `: █████ 8.08 ms
 
 **Simple Iteration**:
 
-- `EliCS`: ██ **3.45 ms**
-- `Koota`: ████████████████████ 29.18 ms
-- `Becsy`: ██████████████████ 26.54 ms
-- `Ecsy `: ████████ 12.70 ms
+- `EliCS `: █ **3.73 ms**
+- `Bitecs`: █ 4.64 ms
+- `Koota `: █████████ 31.45 ms
+- `Becsy `: ████████████████████ 65.32 ms
+- `Ecsy  `: ███ 10.58 ms
 
 **Fragmented Iteration**:
 
-- `EliCS`: ███ **1.62 ms**
-- `Koota`: ████████████████████ 9.54 ms
-- `Becsy`: ███████████ 5.36 ms
-- `Ecsy `: ███████ 3.78 ms
+- `EliCS `: ███ **2.20 ms**
+- `Bitecs`: ███████ 5.14 ms
+- `Koota `: ██████████████ 10.26 ms
+- `Becsy `: ████████████████████ 14.12 ms
+- `Ecsy  `: ████ 3.04 ms
 
 **Entity Cycle**:
 
-- `EliCS`: █ **20.44 ms**
-- `Koota`: ███████ 83.76 ms
-- `Becsy`: ████████████████████ 231.32 ms
-- `Ecsy `: ███████████ 135.17 ms
+- `EliCS `: ███ **22.83 ms**
+- `Bitecs`: ██████████ 67.34 ms
+- `Koota `: █████████████ 85.57 ms
+- `Becsy `: ██████ 40.58 ms
+- `Ecsy  `: ████████████████████ 130.16 ms
 
 **Add / Remove**:
 
-- `EliCS`: ███ **7.73 ms**
-- `Koota`: ██████████████ 32.16 ms
-- `Becsy`: ███ 7.97 ms
-- `Ecsy `: ████████████████████ 43.07 ms
+- `EliCS `: ███ **8.10 ms**
+- `Bitecs`: ████████████████████ 53.67 ms
+- `Koota `: ████████████ 34.23 ms
+- `Becsy `: ███ 9.04 ms
+- `Ecsy  `: ███████████████ 40.53 ms
 <!-- benchmark-end -->
