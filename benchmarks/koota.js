@@ -49,6 +49,7 @@ export function packedIteration() {
 			qD().updateEach(updateD, { changeDetection: 'never' });
 			qE().updateEach(updateE, { changeDetection: 'never' });
 		}
+		world.destroy();
 	});
 }
 
@@ -91,6 +92,7 @@ export function simpleIteration() {
 			qCD().updateEach(updateCD, { changeDetection: 'never' });
 			qCE().updateEach(updateCE, { changeDetection: 'never' });
 		}
+		world.destroy();
 	});
 }
 
@@ -120,6 +122,7 @@ export function fragmentedIteration() {
 			qData().updateEach(updateData, { changeDetection: 'never' });
 			qZ().updateEach(updateZ, { changeDetection: 'never' });
 		}
+		world.destroy();
 	});
 }
 
@@ -142,6 +145,7 @@ export function entityCycle() {
 					e.destroy();
 				});
 		}
+		world.destroy();
 	});
 }
 
@@ -157,5 +161,6 @@ export function addRemove() {
 			world.query(A).forEach((e) => e.add(B));
 			world.query(B).forEach((e) => e.remove(B));
 		}
+		world.destroy();
 	});
 }
