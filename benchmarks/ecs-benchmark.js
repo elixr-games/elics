@@ -151,7 +151,7 @@ function updateReadme(res) {
 		const bcBold = r.becsyTime === fastest ? `**${bc} ms**` : `${bc} ms`;
 		const koBold = r.kootaTime === fastest ? `**${ko} ms**` : `${ko} ms`;
 		const biBold = r.bitecsTime === fastest ? `**${bi} ms**` : `${bi} ms`;
-		return `\n**${r.name}**:\n  - \`EliCS\`: ${elBar} ${elBold}\n  - \`Koota\`: ${koBar} ${koBold}\n  - \`Becsy\`: ${bcBar} ${bcBold}\n  - \`Ecsy \`: ${ecBar} ${ecBold}\n  - \`bitecs\`: ${biBar} ${biBold}`;
+		return `\n**${r.name}**:\n  - \`EliCS\u00A0\`: ${elBar} ${elBold}\n  - \`Bitecs\`: ${biBar} ${biBold}\n  - \`Koota\u00A0\`: ${koBar} ${koBold}\n  - \`Becsy\u00A0\`: ${bcBar} ${bcBold}\n  - \`Ecsy\u00A0\u00A0\`: ${ecBar} ${ecBold}`;
 	});
 
 	const before = text.slice(0, startIdx + start.length);
