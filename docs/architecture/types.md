@@ -12,6 +12,7 @@ The **Types** enum in EliCS provides a set of predefined data types that can be 
 | ------------- | --------------- | ---------------------------- | --------------- |
 | Types.Int8    | number          | 8-bit integer                | Int8Array       |
 | Types.Int16   | number          | 16-bit integer               | Int16Array      |
+| Types.Entity  | Entity          | Reference to another entity  | Int16Array      |
 | Types.Float32 | number          | 32-bit floating point number | Float32Array    |
 | Types.Float64 | number          | 64-bit floating point number | Float64Array    |
 | Types.Boolean | boolean         | True/false value             | Uint8Array      |

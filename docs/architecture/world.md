@@ -12,7 +12,7 @@ The **World** class is the central hub of the EliCS ECS architecture. It orchest
 - **Entity Management**: Efficiently creates, pools, and recycles entities to minimize memory overhead.
 - **System Integration**: Registers systems with customizable configuration and execution priority, automatically wiring up system queries.
 - **Query Handling**: Uses BitSet masks for fast entity filtering and supports deferred updates to batch processing.
-- **Global State Access**: Provides a shared global object for cross-system communication and configuration.
+- **Global State Access**: Provides a shared `globals` object for cross-system communication and configuration.
 
 ## Implementation Overview
 
@@ -75,13 +75,15 @@ An interface that defines the configuration options for the **World** class.
 
 ```ts
 interface WorldOptions {
-	entityCapacity: number;
-	checksOn: boolean;
+        entityCapacity: number;
+        checksOn: boolean;
+        deferredEntityUpdates: boolean;
 }
 ```
 
 - `entityCapacity` (`number`): The maximum number of entities the world can manage (default is 1000).
 - `checksOn` (`boolean`): Enables runtime validations for debugging purposes (default is true). It's recommended to disable checks in production for better performance.
+- `deferredEntityUpdates` (`boolean`): When `true`, entity changes are batched and processed after all systems update (default is false).
 
 ### World.constructor
 
@@ -140,6 +142,18 @@ unregisterSystem(system: System): void;
 - **Parameters:**
   - `system`: The system instance to unregister.
 
+### World.registerQuery
+
+Registers a query outside of a system context.
+
+```ts
+registerQuery(queryConfig: QueryConfig): this;
+```
+
+- **Parameters:**
+  - `queryConfig`: The query configuration object.
+- **Returns:** The **World** instance for method chaining.
+
 ### World.getSystem
 
 Retrieves a registered system instance by its constructor.
@@ -174,10 +188,10 @@ update(delta: number, time: number): void;
   - `delta`: Time elapsed since the last update (in seconds).
   - `time`: Total elapsed time since application start.
 
-### World.global
+### World.globals
 
 A global object for storing shared state or configuration data accessible by all systems.
 
 ```ts
-global: Record<string, any>;
+globals: Record<string, any>;
 ```
