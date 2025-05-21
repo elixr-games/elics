@@ -1,13 +1,5 @@
-import { performance } from 'node:perf_hooks';
 import { World as EliWorld, createComponent, createSystem, Types } from '../lib/index.js';
-
-const ITERATIONS = 100;
-
-function time(fn) {
-    const start = performance.now();
-    fn();
-    return performance.now() - start;
-}
+import { time, ITERATIONS } from './bench-util.js';
 
 
 export function packedIteration() {

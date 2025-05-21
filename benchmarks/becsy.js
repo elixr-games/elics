@@ -1,17 +1,10 @@
-import { performance } from 'node:perf_hooks';
 import {
-	World as BecsyWorld,
-	System as BecsySystem,
-	component as becsyComponent,
-	field as becsyField,
+        World as BecsyWorld,
+        System as BecsySystem,
+        component as becsyComponent,
+        field as becsyField,
 } from '@lastolivegames/becsy/perf.js';
-
-const ITERATIONS = 100;
-
-function timeAsync(fn) {
-	const start = performance.now();
-	return fn().then(() => performance.now() - start);
-}
+import { timeAsync, ITERATIONS } from './bench-util.js';
 
 const letterComponentCache = new Map();
 

@@ -100,24 +100,25 @@ async function run() {
 		}
 	}
 
-	updateReadme(results);
+	updateBenchmarksPage(results);
 }
 
 await run();
 
-function updateReadme(res) {
-	const readmePath = path.resolve(
+function updateBenchmarksPage(res) {
+	const benchPath = path.resolve(
 		path.dirname(fileURLToPath(import.meta.url)),
 		'..',
-		'README.md',
+		'docs',
+		'benchmarks.md',
 	);
-	let text = fs.readFileSync(readmePath, 'utf8');
+	let text = fs.readFileSync(benchPath, 'utf8');
 	const start = '<!-- benchmark-start -->';
 	const end = '<!-- benchmark-end -->';
 	const startIdx = text.indexOf(start);
 	const endIdx = text.indexOf(end);
 	if (startIdx === -1 || endIdx === -1 || endIdx < startIdx) {
-		console.error('Benchmark markers missing in README');
+		console.error('Benchmark markers missing in docs/benchmarks.md');
 		return;
 	}
 
@@ -157,5 +158,5 @@ function updateReadme(res) {
 	const before = text.slice(0, startIdx + start.length);
 	const after = text.slice(endIdx);
 	text = `${before}\n${lines.join('\n')}\n${after}`;
-	fs.writeFileSync(readmePath, text);
+	fs.writeFileSync(benchPath, text);
 }

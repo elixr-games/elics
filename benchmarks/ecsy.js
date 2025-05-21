@@ -1,18 +1,10 @@
-import { performance } from 'node:perf_hooks';
 import {
-	World as EcsyWorld,
-	System as EcsySystem,
-	Component as EcsyComponent,
-	Types as EcsyTypes,
+        World as EcsyWorld,
+        System as EcsySystem,
+        Component as EcsyComponent,
+        Types as EcsyTypes,
 } from 'ecsy';
-
-const ITERATIONS = 100;
-
-function time(fn) {
-	const start = performance.now();
-	fn();
-	return performance.now() - start;
-}
+import { time, ITERATIONS } from './bench-util.js';
 
 class ValueCompEcsy extends EcsyComponent {}
 ValueCompEcsy.schema = { value: { type: EcsyTypes.Number, default: 0 } };
