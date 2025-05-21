@@ -1,4 +1,4 @@
-import { createWorld, trait } from 'koota';
+import { createWorld, trait, cacheQuery } from 'koota';
 import { time, ITERATIONS } from './bench-util.js';
 
 export function packedIteration() {
@@ -11,38 +11,47 @@ export function packedIteration() {
 
 	for (let i = 0; i < 1000; i++) world.spawn(A, B, C, D, E);
 
-	const qA = () => world.query(A);
-	const qB = () => world.query(B);
-	const qC = () => world.query(C);
-	const qD = () => world.query(D);
-	const qE = () => world.query(E);
+        const qA = cacheQuery(A);
+        const qB = cacheQuery(B);
+        const qC = cacheQuery(C);
+        const qD = cacheQuery(D);
+        const qE = cacheQuery(E);
 
-	const updateA = ([a]) => {
-		a.value *= 2;
-	};
-	const updateB = ([b]) => {
-		b.value *= 2;
-	};
-	const updateC = ([c]) => {
-		c.value *= 2;
-	};
-	const updateD = ([d]) => {
-		d.value *= 2;
-	};
-	const updateE = ([e]) => {
-		e.value *= 2;
-	};
-
-	return time(() => {
-		for (let i = 0; i < ITERATIONS; i++) {
-			qA().updateEach(updateA, { changeDetection: 'never' });
-			qB().updateEach(updateB, { changeDetection: 'never' });
-			qC().updateEach(updateC, { changeDetection: 'never' });
-			qD().updateEach(updateD, { changeDetection: 'never' });
-			qE().updateEach(updateE, { changeDetection: 'never' });
-		}
-		world.destroy();
-	});
+        return time(() => {
+                for (let i = 0; i < ITERATIONS; i++) {
+                        world.query(qA).useStores(([a], entities) => {
+                                for (let j = 0; j < entities.length; j++) {
+                                        const id = entities[j].id();
+                                        a.value[id] *= 2;
+                                }
+                        });
+                        world.query(qB).useStores(([b], entities) => {
+                                for (let j = 0; j < entities.length; j++) {
+                                        const id = entities[j].id();
+                                        b.value[id] *= 2;
+                                }
+                        });
+                        world.query(qC).useStores(([c], entities) => {
+                                for (let j = 0; j < entities.length; j++) {
+                                        const id = entities[j].id();
+                                        c.value[id] *= 2;
+                                }
+                        });
+                        world.query(qD).useStores(([d], entities) => {
+                                for (let j = 0; j < entities.length; j++) {
+                                        const id = entities[j].id();
+                                        d.value[id] *= 2;
+                                }
+                        });
+                        world.query(qE).useStores(([e], entities) => {
+                                for (let j = 0; j < entities.length; j++) {
+                                        const id = entities[j].id();
+                                        e.value[id] *= 2;
+                                }
+                        });
+                }
+                world.destroy();
+        });
 }
 
 export function simpleIteration() {
@@ -58,34 +67,39 @@ export function simpleIteration() {
 	for (let i = 0; i < 1000; i++) world.spawn(A, B, C, D);
 	for (let i = 0; i < 1000; i++) world.spawn(A, B, C, E);
 
-	const qAB = () => world.query(A, B);
-	const qCD = () => world.query(C, D);
-	const qCE = () => world.query(C, E);
+        const qAB = cacheQuery(A, B);
+        const qCD = cacheQuery(C, D);
+        const qCE = cacheQuery(C, E);
 
-	const updateAB = ([a, b]) => {
-		const t = a.value;
-		a.value = b.value;
-		b.value = t;
-	};
-	const updateCD = ([c, d]) => {
-		const t = c.value;
-		c.value = d.value;
-		d.value = t;
-	};
-	const updateCE = ([c, e]) => {
-		const t = c.value;
-		c.value = e.value;
-		e.value = t;
-	};
-
-	return time(() => {
-		for (let i = 0; i < ITERATIONS; i++) {
-			qAB().updateEach(updateAB, { changeDetection: 'never' });
-			qCD().updateEach(updateCD, { changeDetection: 'never' });
-			qCE().updateEach(updateCE, { changeDetection: 'never' });
-		}
-		world.destroy();
-	});
+        return time(() => {
+                for (let i = 0; i < ITERATIONS; i++) {
+                        world.query(qAB).useStores(([a, b], entities) => {
+                                for (let j = 0; j < entities.length; j++) {
+                                        const id = entities[j].id();
+                                        const t = a.value[id];
+                                        a.value[id] = b.value[id];
+                                        b.value[id] = t;
+                                }
+                        });
+                        world.query(qCD).useStores(([c, d], entities) => {
+                                for (let j = 0; j < entities.length; j++) {
+                                        const id = entities[j].id();
+                                        const t = c.value[id];
+                                        c.value[id] = d.value[id];
+                                        d.value[id] = t;
+                                }
+                        });
+                        world.query(qCE).useStores(([c, e], entities) => {
+                                for (let j = 0; j < entities.length; j++) {
+                                        const id = entities[j].id();
+                                        const t = c.value[id];
+                                        c.value[id] = e.value[id];
+                                        e.value[id] = t;
+                                }
+                        });
+                }
+                world.destroy();
+        });
 }
 
 export function fragmentedIteration() {
@@ -100,22 +114,26 @@ export function fragmentedIteration() {
 		}
 	}
 
-	const qData = () => world.query(Data);
-	const qZ = () => world.query(comps[25]);
-	const updateData = ([d]) => {
-		d.value *= 2;
-	};
-	const updateZ = ([z]) => {
-		z.value *= 2;
-	};
+        const qData = cacheQuery(Data);
+        const qZ = cacheQuery(comps[25]);
 
-	return time(() => {
-		for (let i = 0; i < ITERATIONS; i++) {
-			qData().updateEach(updateData, { changeDetection: 'never' });
-			qZ().updateEach(updateZ, { changeDetection: 'never' });
-		}
-		world.destroy();
-	});
+        return time(() => {
+                for (let i = 0; i < ITERATIONS; i++) {
+                        world.query(qData).useStores(([d], entities) => {
+                                for (let j = 0; j < entities.length; j++) {
+                                        const id = entities[j].id();
+                                        d.value[id] *= 2;
+                                }
+                        });
+                        world.query(qZ).useStores(([z], entities) => {
+                                for (let j = 0; j < entities.length; j++) {
+                                        const id = entities[j].id();
+                                        z.value[id] *= 2;
+                                }
+                        });
+                }
+                world.destroy();
+        });
 }
 
 export function entityCycle() {
