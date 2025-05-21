@@ -20,7 +20,7 @@ Thank you for being a part of the EliCS community!
 
 ## Benchmarks
 
-This repository includes a benchmark suite comparing EliCS to popular object-based ECS implementations - [becsy](https://lastolivegames.github.io/becsy/) and [ecsy](https://ecsyjs.github.io/ecsy/). Build the project and run the benchmark suite:
+This repository includes a benchmark suite comparing EliCS to popular ECS implementations - [koota](https://github.com/pmndrs/koota), [becsy](https://lastolivegames.github.io/becsy/) and [ecsy](https://ecsyjs.github.io/ecsy/). Build the project and run the benchmark suite:
 
 ```bash
 npm run bench
@@ -41,27 +41,37 @@ Execution times for EliCS and ecsy are printed in milliseconds for easy comparis
 <!-- benchmark-start -->
 
 **Packed Iteration**:
-  - `EliCS`: ██ **2.60 ms**
-  - `Becsy`: ████████████████████ 27.02 ms
-  - `Ecsy `: ██████ 7.92 ms
+
+- `EliCS`: ████ **3.34 ms**
+- `Koota`: ████████████████████ 14.11 ms
+- `Becsy`: ██████████████ 10.08 ms
+- `Ecsy `: ████████████ 9.16 ms
 
 **Simple Iteration**:
-  - `EliCS`: █ **3.25 ms**
-  - `Becsy`: ████████████████████ 66.47 ms
-  - `Ecsy `: ████ 10.61 ms
+
+- `EliCS`: ██ **3.45 ms**
+- `Koota`: ████████████████████ 29.18 ms
+- `Becsy`: ██████████████████ 26.54 ms
+- `Ecsy `: ████████ 12.70 ms
 
 **Fragmented Iteration**:
-  - `EliCS`: ██ **1.35 ms**
-  - `Becsy`: ████████████████████ 14.00 ms
-  - `Ecsy `: █████ 2.92 ms
+
+- `EliCS`: ███ **1.62 ms**
+- `Koota`: ████████████████████ 9.54 ms
+- `Becsy`: ███████████ 5.36 ms
+- `Ecsy `: ███████ 3.78 ms
 
 **Entity Cycle**:
-  - `EliCS`: ████ **21.84 ms**
-  - `Becsy`: ███████ 40.57 ms
-  - `Ecsy `: ████████████████████ 130.27 ms
+
+- `EliCS`: █ **20.44 ms**
+- `Koota`: ███████ 83.76 ms
+- `Becsy`: ████████████████████ 231.32 ms
+- `Ecsy `: ███████████ 135.17 ms
 
 **Add / Remove**:
-  - `EliCS`: ████ **7.77 ms**
-  - `Becsy`: █████ 8.85 ms
-  - `Ecsy `: ████████████████████ 40.97 ms
+
+- `EliCS`: ███ **7.73 ms**
+- `Koota`: ██████████████ 32.16 ms
+- `Becsy`: ███ 7.97 ms
+- `Ecsy `: ████████████████████ 43.07 ms
 <!-- benchmark-end -->
