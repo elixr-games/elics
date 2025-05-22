@@ -38,7 +38,10 @@ export class World {
 		deferredEntityUpdates = false,
 	}: Partial<WorldOptions> = {}) {
 		this.componentManager = new ComponentManager(entityCapacity);
-		this.queryManager = new QueryManager(deferredEntityUpdates);
+		this.queryManager = new QueryManager(
+			deferredEntityUpdates,
+			this.componentManager,
+		);
 		this.entityManager = new EntityManager(
 			this.queryManager,
 			this.componentManager,
