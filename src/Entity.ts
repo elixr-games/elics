@@ -25,7 +25,6 @@ export type VectorKeys<C extends Component<any>> = {
 export class Entity {
 	public bitmask: ComponentMask = new BitSet();
 	public active = true;
-	public dirty = false;
 	private vectorViews: Map<Component<any>, Map<string, TypedArray>> = new Map();
 
 	constructor(
