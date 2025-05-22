@@ -11,7 +11,7 @@ The **World** class is the central hub of the EliCS ECS architecture. It orchest
 - **Component Registration**: Registers components with unique type IDs and BitSet masks, and initializes optimized storage using typed arrays.
 - **Entity Management**: Efficiently creates, pools, and recycles entities to minimize memory overhead.
 - **System Integration**: Registers systems with customizable configuration and execution priority, automatically wiring up system queries.
-- **Query Handling**: Uses BitSet masks for fast entity filtering and supports deferred updates to batch processing.
+- **Query Handling**: Uses BitSet masks for fast entity filtering.
 - **Global State Access**: Provides a shared `globals` object for cross-system communication and configuration.
 
 ## Implementation Overview
@@ -20,7 +20,7 @@ Under the hood, the **World** class initializes and connects three core managers
 
 - **ComponentManager**: Handles registration and storage of component data with performance in mind by leveraging typed arrays for cache-friendly access.
 - **EntityManager**: Uses an efficient pooling mechanism to create and recycle entities, reducing garbage collection overhead.
-- **QueryManager**: Maintains entity queries using BitSet masks for rapid matching and supports deferred entity updates, which are processed after each system update to optimize bulk modifications.
+- **QueryManager**: Maintains entity queries using BitSet masks for rapid matching.
 
 Systems are sorted based on priority during registration, ensuring that lower-priority systems are executed first. This design, along with the use of BitSet operations, contributes to a highly performant ECS implementation ideal for performance-critical applications.
 
@@ -77,13 +77,11 @@ An interface that defines the configuration options for the **World** class.
 interface WorldOptions {
         entityCapacity: number;
         checksOn: boolean;
-        deferredEntityUpdates: boolean;
 }
 ```
 
 - `entityCapacity` (`number`): The maximum number of entities the world can manage (default is 1000).
 - `checksOn` (`boolean`): Enables runtime validations for debugging purposes (default is true). It's recommended to disable checks in production for better performance.
-- `deferredEntityUpdates` (`boolean`): When `true`, entity changes are batched and processed after all systems update (default is false).
 
 ### World.constructor
 
@@ -178,7 +176,7 @@ getSystems(): System[];
 
 ### World.update
 
-Processes the ECS loop by updating each active system and processing any deferred entity updates.
+Processes the ECS loop by updating each active system.
 
 ```ts
 update(delta: number, time: number): void;

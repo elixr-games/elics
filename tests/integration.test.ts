@@ -504,58 +504,6 @@ describe('EliCS Integration Tests', () => {
 			expect(qualifyCallback).toHaveBeenCalledTimes(1);
 		});
 
-                test('Deferred entity updates', () => {
-                        const world = new World({
-                                checksOn: true,
-                                deferredEntityUpdates: true,
-                        });
-
-			world.registerComponent(PositionComponent);
-			world.registerComponent(VelocityComponent);
-
-			const queryConfig = {
-				required: [PositionComponent, VelocityComponent],
-			};
-
-			const query = world.queryManager.registerQuery(queryConfig);
-
-			const entity = world.createEntity();
-			entity.addComponent(PositionComponent);
-			entity.addComponent(VelocityComponent);
-
-			// query should not contain the entity before deferred update
-			expect(query.entities).not.toContain(entity);
-
-                        world.queryManager.deferredUpdate();
-
-                        // query should contain the entity after deferred update
-                        expect(query.entities).toContain(entity);
-                });
-
-                test('Destroyed entity pending update is ignored', () => {
-                        const world = new World({
-                                checksOn: true,
-                                deferredEntityUpdates: true,
-                        });
-
-                        world.registerComponent(PositionComponent);
-
-                        const queryConfig = {
-                                required: [PositionComponent],
-                        };
-
-                        const query = world.queryManager.registerQuery(queryConfig);
-
-                        const entity = world.createEntity();
-                        entity.addComponent(PositionComponent);
-
-                        entity.destroy();
-
-                        world.queryManager.deferredUpdate();
-
-                        expect((world.queryManager as any).trackedEntities.has(entity)).toBe(false);
-                        expect(query.entities).not.toContain(entity);
-                });
 
 		test('Registering the same query multiple times', () => {
 			const queryConfig = {
@@ -594,18 +542,29 @@ describe('EliCS Integration Tests', () => {
 			).toEqual(new Set());
 		});
 
-		test('Newly registered query finds existing entities', () => {
-			const entity = world.createEntity();
-			entity.addComponent(PositionComponent);
+                test('Newly registered query finds existing entities', () => {
+                        const entity = world.createEntity();
+                        entity.addComponent(PositionComponent);
 
-			const queryConfig = {
-				required: [PositionComponent],
-			};
+                        const queryConfig = {
+                                required: [PositionComponent],
+                        };
 
-			const query = world.queryManager.registerQuery(queryConfig);
-			expect(query.entities).toContain(entity);
-		});
-	});
+                        const query = world.queryManager.registerQuery(queryConfig);
+                        expect(query.entities).toContain(entity);
+                });
+
+                test('updateEntity without component parameter updates all queries', () => {
+                        const query = world.queryManager.registerQuery({
+                                required: [PositionComponent],
+                        });
+                        const entity = world.createEntity();
+                        entity.addComponent(PositionComponent);
+                        // manually trigger without changed component
+                        (world.queryManager as any).updateEntity(entity);
+                        expect(query.entities).toContain(entity);
+                });
+        });
 
 	// System Tests
 	describe('System Tests', () => {

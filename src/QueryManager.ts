@@ -1,13 +1,14 @@
 import { Query, QueryConfig } from './Query.js';
 
 import { Entity } from './Entity.js';
+import type { Component } from './Component.js';
 
 export class QueryManager {
 	private queries: Map<string, Query> = new Map();
-	private entitiesToUpdate: Entity[] = [];
 	private trackedEntities: Set<Entity> = new Set();
+	private queriesByComponent: Map<number, Set<Query>> = new Map();
 
-	constructor(private deferredEntityUpdates: boolean) {}
+	constructor() {}
 
 	registerQuery(query: QueryConfig): Query {
 		const { requiredMask, excludedMask, queryId } =
@@ -21,61 +22,63 @@ export class QueryManager {
 				}
 			});
 			this.queries.set(queryId, newQuery);
+
+			const allComponents = [...query.required, ...(query.excluded ?? [])];
+			allComponents.forEach((component) => {
+				const list = this.queriesByComponent.get(component.typeId);
+				if (list) {
+					list.add(newQuery);
+				} else {
+					this.queriesByComponent.set(component.typeId, new Set([newQuery]));
+				}
+			});
 		}
 		return this.queries.get(queryId)!;
 	}
 
-	updateEntity(entity: Entity, force = false): void {
-		if (force || !this.deferredEntityUpdates) {
-			this.trackedEntities.add(entity);
-			if (entity.bitmask.isEmpty()) {
-				// Remove entity from all query results if it has no components
-				this.queries.forEach((query) => query.entities.delete(entity));
-				return;
-			}
-
-			this.queries.forEach((query) => {
-				const matches = query.matches(entity);
-				const isInResultSet = query.entities.has(entity);
-
-				if (matches && !isInResultSet) {
-					query.entities.add(entity);
-					query.subscribers.qualify.forEach((callback) => {
-						callback(entity);
-					});
-				} else if (!matches && isInResultSet) {
-					query.entities.delete(entity);
-					query.subscribers.disqualify.forEach((callback) => {
-						callback(entity);
-					});
-				}
-			});
-		} else {
-			if (!entity.dirty) {
-				entity.dirty = true;
-				this.entitiesToUpdate.push(entity);
-			}
+	updateEntity(
+		entity: Entity,
+		changed?: Component<any> | Component<any>[],
+	): void {
+		this.trackedEntities.add(entity);
+		if (entity.bitmask.isEmpty()) {
+			// Remove entity from all query results if it has no components
+			this.queries.forEach((query) => query.entities.delete(entity));
+			return;
 		}
+
+		let queriesToUpdate: Set<Query>;
+		if (changed) {
+			const comps = Array.isArray(changed) ? changed : [changed];
+			queriesToUpdate = new Set();
+			for (const c of comps) {
+				const q = this.queriesByComponent.get(c.typeId);
+				if (q) q.forEach((qry) => queriesToUpdate.add(qry));
+			}
+		} else {
+			queriesToUpdate = new Set(this.queries.values());
+		}
+
+		queriesToUpdate.forEach((query) => {
+			const matches = query.matches(entity);
+			const isInResultSet = query.entities.has(entity);
+
+			if (matches && !isInResultSet) {
+				query.entities.add(entity);
+				query.subscribers.qualify.forEach((callback) => {
+					callback(entity);
+				});
+			} else if (!matches && isInResultSet) {
+				query.entities.delete(entity);
+				query.subscribers.disqualify.forEach((callback) => {
+					callback(entity);
+				});
+			}
+		});
 	}
 
 	resetEntity(entity: Entity): void {
 		this.trackedEntities.delete(entity);
-		// remove pending updates for this entity
-		const idx = this.entitiesToUpdate.indexOf(entity);
-		if (idx !== -1) {
-			this.entitiesToUpdate.splice(idx, 1);
-		}
-		entity.dirty = false;
 		this.queries.forEach((query) => query.entities.delete(entity));
-	}
-
-	deferredUpdate(): void {
-		if (this.deferredEntityUpdates) {
-			for (const entity of this.entitiesToUpdate) {
-				this.updateEntity(entity, true);
-				entity.dirty = false;
-			}
-			this.entitiesToUpdate.length = 0;
-		}
 	}
 }

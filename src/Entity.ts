@@ -25,7 +25,6 @@ export type VectorKeys<C extends Component<any>> = {
 export class Entity {
 	public bitmask: ComponentMask = new BitSet();
 	public active = true;
-	public dirty = false;
 	private vectorViews: Map<Component<any>, Map<string, TypedArray>> = new Map();
 
 	constructor(
@@ -53,7 +52,7 @@ export class Entity {
 			component,
 			initialData,
 		);
-		this.queryManager.updateEntity(this);
+		this.queryManager.updateEntity(this, component);
 		component.onAttach(component.data, this.index);
 		return this;
 	}
@@ -67,7 +66,7 @@ export class Entity {
 		);
 		this.bitmask.andNotInPlace(component.bitmask!);
 		this.vectorViews.delete(component);
-		this.queryManager.updateEntity(this);
+		this.queryManager.updateEntity(this, component);
 		component.onDetach(component.data, this.index);
 		return this;
 	}
