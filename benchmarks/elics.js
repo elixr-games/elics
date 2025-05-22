@@ -1,6 +1,13 @@
-import { World as EliWorld, createComponent, createSystem, Types } from '../lib/index.js';
+import {
+	World as EliWorld,
+	createComponent,
+	createSystem,
+	Types,
+} from '../lib/index.js';
 import { time, ITERATIONS } from './bench-util.js';
 
+// Silence ecsy warnings in console
+console.warn = () => {};
 
 export function packedIteration() {
 	const world = new EliWorld({ entityCapacity: 1000, checksOn: false });
