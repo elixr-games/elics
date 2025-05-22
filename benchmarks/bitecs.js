@@ -1,15 +1,18 @@
 import {
-        createWorld,
-        defineComponent,
-        defineQuery,
-        addEntity,
-        addComponent,
+	createWorld,
+	defineComponent,
+	defineQuery,
+	addEntity,
+	addComponent,
 	removeEntity,
 	removeComponent,
 	Types,
-        deleteWorld,
+	deleteWorld,
 } from 'bitecs';
 import { time, ITERATIONS } from './bench-util.js';
+
+// Silence ecsy warnings in console
+console.warn = () => {};
 
 export function packedIteration() {
 	const world = createWorld();

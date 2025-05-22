@@ -3,10 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
-// Silence ecsy warnings in console
-console.warn = () => {};
-
-const RUNS = 10;
+const RUNS = 25;
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const runnerPath = path.resolve(__dirname, 'run-benchmark.js');

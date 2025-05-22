@@ -1,10 +1,13 @@
 import {
-        World as BecsyWorld,
-        System as BecsySystem,
-        component as becsyComponent,
-        field as becsyField,
+	World as BecsyWorld,
+	System as BecsySystem,
+	component as becsyComponent,
+	field as becsyField,
 } from '@lastolivegames/becsy/perf.js';
 import { timeAsync, ITERATIONS } from './bench-util.js';
+
+// Silence ecsy warnings in console
+console.warn = () => {};
 
 const letterComponentCache = new Map();
 
