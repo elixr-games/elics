@@ -154,12 +154,14 @@ export class Entity {
 		assertCondition(this.active, ErrorMessages.ModifyDestroyedEntity, this);
 		this.entityManager.releaseEntityInstance(this);
 		this.active = false;
-		const bitArray = this.bitmask.toArray();
-		for (const typeId of bitArray) {
-			const component = this.componentManager.getComponentByTypeId(typeId)!;
-			component.onDetach(component.data, this.index);
+		const bits = this.bitmask.bits;
+		for (let i = 0; i < 32; i++) {
+			if (bits & (1 << i)) {
+				const c = this.componentManager.getComponentByTypeId(i)!;
+				c.onDetach(c.data, this.index);
+			}
 		}
-		this.bitmask = new BitSet();
+		this.bitmask.bits = 0;
 		this.vectorViews.clear();
 		this.queryManager.resetEntity(this);
 	}
