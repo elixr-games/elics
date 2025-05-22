@@ -182,23 +182,23 @@ describe('EliCS Integration Tests', () => {
 			expect(newEntity.active).toBe(true);
 		});
 
-                test('Modifying destroyed entity throws error', () => {
-                        const entity = world.createEntity();
-                        entity.destroy();
+		test('Modifying destroyed entity throws error', () => {
+			const entity = world.createEntity();
+			entity.destroy();
 
-                        expect(() => entity.addComponent(PositionComponent)).toThrow();
-                });
+			expect(() => entity.addComponent(PositionComponent)).toThrow();
+		});
 
-                test('Entity index lookup updates on destroy', () => {
-                        const entity = world.createEntity();
-                        const index = entity.index;
-                        entity.destroy();
+		test('Entity index lookup updates on destroy', () => {
+			const entity = world.createEntity();
+			const index = entity.index;
+			entity.destroy();
 
-                        const newEntity = world.createEntity();
-                        expect(newEntity.index).toBe(index);
-                        expect(world.entityManager.getEntityByIndex(index)).toBe(newEntity);
-                });
-        });
+			const newEntity = world.createEntity();
+			expect(newEntity.index).toBe(index);
+			expect(world.entityManager.getEntityByIndex(index)).toBe(newEntity);
+		});
+	});
 
 	// Component Tests
 	describe('Component Tests', () => {
@@ -479,6 +479,44 @@ describe('EliCS Integration Tests', () => {
 			expect(query.entities).not.toContain(entity);
 		});
 
+		test('Entity destroy with multiple components cleans queries', () => {
+			world.registerComponent(PositionComponent);
+			world.registerComponent(VelocityComponent);
+			const q1 = world.queryManager.registerQuery({
+				required: [PositionComponent],
+			});
+			const q2 = world.queryManager.registerQuery({
+				required: [VelocityComponent],
+			});
+			const entity = world.createEntity();
+			entity.addComponent(PositionComponent);
+			entity.addComponent(VelocityComponent);
+			expect(q1.entities).toContain(entity);
+			expect(q2.entities).toContain(entity);
+			entity.destroy();
+			expect(q1.entities).not.toContain(entity);
+			expect(q2.entities).not.toContain(entity);
+		});
+
+		test('resetEntity removes entity from relevant queries', () => {
+			world.registerComponent(PositionComponent);
+			world.registerComponent(VelocityComponent);
+			const q1 = world.queryManager.registerQuery({
+				required: [PositionComponent],
+			});
+			const q2 = world.queryManager.registerQuery({
+				required: [VelocityComponent],
+			});
+			const entity = world.createEntity();
+			entity.addComponent(PositionComponent);
+			entity.addComponent(VelocityComponent);
+			expect(q1.entities).toContain(entity);
+			expect(q2.entities).toContain(entity);
+			world.queryManager.resetEntity(entity);
+			expect(q1.entities).not.toContain(entity);
+			expect(q2.entities).not.toContain(entity);
+		});
+
 		test('Query subscribers run as expected', () => {
 			const queryConfig = {
 				required: [PositionComponent, VelocityComponent],
@@ -504,11 +542,11 @@ describe('EliCS Integration Tests', () => {
 			expect(qualifyCallback).toHaveBeenCalledTimes(1);
 		});
 
-                test('Deferred entity updates', () => {
-                        const world = new World({
-                                checksOn: true,
-                                deferredEntityUpdates: true,
-                        });
+		test('Deferred entity updates', () => {
+			const world = new World({
+				checksOn: true,
+				deferredEntityUpdates: true,
+			});
 
 			world.registerComponent(PositionComponent);
 			world.registerComponent(VelocityComponent);
@@ -526,36 +564,38 @@ describe('EliCS Integration Tests', () => {
 			// query should not contain the entity before deferred update
 			expect(query.entities).not.toContain(entity);
 
-                        world.queryManager.deferredUpdate();
+			world.queryManager.deferredUpdate();
 
-                        // query should contain the entity after deferred update
-                        expect(query.entities).toContain(entity);
-                });
+			// query should contain the entity after deferred update
+			expect(query.entities).toContain(entity);
+		});
 
-                test('Destroyed entity pending update is ignored', () => {
-                        const world = new World({
-                                checksOn: true,
-                                deferredEntityUpdates: true,
-                        });
+		test('Destroyed entity pending update is ignored', () => {
+			const world = new World({
+				checksOn: true,
+				deferredEntityUpdates: true,
+			});
 
-                        world.registerComponent(PositionComponent);
+			world.registerComponent(PositionComponent);
 
-                        const queryConfig = {
-                                required: [PositionComponent],
-                        };
+			const queryConfig = {
+				required: [PositionComponent],
+			};
 
-                        const query = world.queryManager.registerQuery(queryConfig);
+			const query = world.queryManager.registerQuery(queryConfig);
 
-                        const entity = world.createEntity();
-                        entity.addComponent(PositionComponent);
+			const entity = world.createEntity();
+			entity.addComponent(PositionComponent);
 
-                        entity.destroy();
+			entity.destroy();
 
-                        world.queryManager.deferredUpdate();
+			world.queryManager.deferredUpdate();
 
-                        expect((world.queryManager as any).trackedEntities.has(entity)).toBe(false);
-                        expect(query.entities).not.toContain(entity);
-                });
+			expect((world.queryManager as any).trackedEntities.has(entity)).toBe(
+				false,
+			);
+			expect(query.entities).not.toContain(entity);
+		});
 
 		test('Registering the same query multiple times', () => {
 			const queryConfig = {
