@@ -1,66 +1,58 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import * as elics from './elics.js';
-import * as ecsy from './ecsy.js';
-import * as becsy from './becsy.js';
-import * as koota from './koota.js';
-import * as bitecs from './bitecs.js';
+import { spawnSync } from 'node:child_process';
 
 // Silence ecsy warnings in console
 console.warn = () => {};
 
 const RUNS = 10;
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const runnerPath = path.resolve(__dirname, 'run-benchmark.js');
+
+function runIsolated(modulePath, fnName) {
+	const modPath = path.resolve(__dirname, modulePath);
+	const { stdout, status, stderr } = spawnSync(
+		'node',
+		[runnerPath, modPath, fnName],
+		{ encoding: 'utf8' },
+	);
+	if (status !== 0) {
+		throw new Error(stderr.trim() || 'Failed to run benchmark');
+	}
+	return parseFloat(stdout);
+}
+
 const suites = [
 	{
 		name: 'Packed Iteration (5 queries)',
 		description:
 			'1,000 entities each with components A\u2013E. Each query doubles the value stored in a single component.',
-		elics: elics.packedIteration,
-		ecsy: ecsy.packedIteration,
-		becsy: becsy.packedIteration,
-		koota: koota.packedIteration,
-		bitecs: bitecs.packedIteration,
+		fn: 'packedIteration',
 	},
 	{
 		name: 'Simple Iteration',
 		description:
 			'4,000 entities split across various component sets; three systems swap component values.',
-		elics: elics.simpleIteration,
-		ecsy: ecsy.simpleIteration,
-		becsy: becsy.simpleIteration,
-		koota: koota.simpleIteration,
-		bitecs: bitecs.simpleIteration,
+		fn: 'simpleIteration',
 	},
 	{
 		name: 'Fragmented Iteration',
 		description:
 			'26 component types (A\u2013Z) with 100 entities each plus a Data component. Two queries double the Data and Z values.',
-		elics: elics.fragmentedIteration,
-		ecsy: ecsy.fragmentedIteration,
-		becsy: becsy.fragmentedIteration,
-		koota: koota.fragmentedIteration,
-		bitecs: bitecs.fragmentedIteration,
+		fn: 'fragmentedIteration',
 	},
 	{
 		name: 'Entity Cycle',
 		description:
 			'1,000 entities repeatedly spawn and then destroy entities with a B component.',
-		elics: elics.entityCycle,
-		ecsy: ecsy.entityCycle,
-		becsy: becsy.entityCycle,
-		koota: koota.entityCycle,
-		bitecs: bitecs.entityCycle,
+		fn: 'entityCycle',
 	},
 	{
 		name: 'Add / Remove',
 		description: '1,000 entities each add then remove a B component.',
-		elics: elics.addRemove,
-		ecsy: ecsy.addRemove,
-		becsy: becsy.addRemove,
-		koota: koota.addRemove,
-		bitecs: bitecs.addRemove,
+		fn: 'addRemove',
 	},
 ];
 
@@ -68,15 +60,7 @@ const results = [];
 
 async function run() {
 	for (const suite of suites) {
-		const {
-			name,
-			description,
-			elics: elicsFn,
-			ecsy: ecsyFn,
-			becsy: becsyFn,
-			koota: kootaFn,
-			bitecs: bitecsFn,
-		} = suite;
+		const { name, description, fn } = suite;
 		try {
 			let elicsSum = 0;
 			let ecsySum = 0;
@@ -85,11 +69,11 @@ async function run() {
 			let bitecsSum = 0;
 
 			for (let i = 0; i < RUNS; i++) {
-				elicsSum += elicsFn();
-				ecsySum += ecsyFn();
-				becsySum += await becsyFn();
-				kootaSum += kootaFn();
-				bitecsSum += bitecsFn();
+				elicsSum += runIsolated('./elics.js', fn);
+				ecsySum += runIsolated('./ecsy.js', fn);
+				becsySum += runIsolated('./becsy.js', fn);
+				kootaSum += runIsolated('./koota.js', fn);
+				bitecsSum += runIsolated('./bitecs.js', fn);
 			}
 
 			const elicsTime = elicsSum / RUNS;
