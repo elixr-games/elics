@@ -1,0 +1,13 @@
+{
+	"name": "benchmarks",
+	"license": "MIT",
+	"scripts": {
+		"bench": "npm ci && node ecs-benchmark.js"
+	},
+	"dependencies": {
+		"@lastolivegames/becsy": "^0.15.5",
+		"bitecs": "^0.3.40",
+		"ecsy": "^0.4.3",
+		"koota": "^0.4.1"
+	}
+}
