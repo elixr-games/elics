@@ -1,6 +1,7 @@
 {
 	"name": "benchmarks",
 	"license": "MIT",
+	"type": "module",
 	"scripts": {
 		"bench": "npm ci && node ecs-benchmark.js"
 	},

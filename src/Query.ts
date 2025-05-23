@@ -44,24 +44,26 @@ export class Query {
 		excludedMask: BitSet;
 		queryId: string;
 	} {
-		let requiredMask = new BitSet();
-		let excludedMask = new BitSet();
-		queryConfig.required.forEach((c) => {
+		const requiredMask = new BitSet();
+		const excludedMask = new BitSet();
+		for (const c of queryConfig.required) {
 			assertCondition(
 				c.bitmask !== null,
 				ErrorMessages.ComponentNotRegistered,
 				c,
 			);
-			requiredMask = requiredMask.or(c.bitmask!);
-		});
-		queryConfig.excluded?.forEach((c) => {
-			assertCondition(
-				c.bitmask !== null,
-				ErrorMessages.ComponentNotRegistered,
-				c,
-			);
-			excludedMask = excludedMask.or(c.bitmask!);
-		});
+			requiredMask.orInPlace(c.bitmask!);
+		}
+		if (queryConfig.excluded) {
+			for (const c of queryConfig.excluded) {
+				assertCondition(
+					c.bitmask !== null,
+					ErrorMessages.ComponentNotRegistered,
+					c,
+				);
+				excludedMask.orInPlace(c.bitmask!);
+			}
+		}
 		return {
 			requiredMask,
 			excludedMask,

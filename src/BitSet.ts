@@ -34,8 +34,11 @@ export default class BitSet {
 	}
 	toArray(): number[] {
 		const arr: number[] = [];
-		for (let i = 0; i < 32; i++) {
-			if (this.bits & (1 << i)) arr.push(i);
+		let bits = this.bits;
+		while (bits !== 0) {
+			const i = Math.floor(Math.log2(bits & -bits));
+			arr.push(i);
+			bits &= bits - 1;
 		}
 		return arr;
 	}

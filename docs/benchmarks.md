@@ -25,49 +25,49 @@ This command builds the library and runs the benchmark suite in the
 
 1,000 entities each with components A–E. Each query doubles the value stored in a single component. Benchmark results:
 
-- `EliCS `: █████████ **6.32 ms**
-- `Bitecs`: █████████ 6.48 ms
-- `Koota `: █████████████ 9.10 ms
-- `Becsy `: ███████████████████ 12.95 ms
-- `Ecsy  `: ████████████████████ 13.56 ms
+- `EliCS `: █████████ 6.23 ms
+- `Bitecs`: █████████ **6.06 ms**
+- `Koota `: █████████████ 9.04 ms
+- `Becsy `: ██████████████████ 12.43 ms
+- `Ecsy  `: ████████████████████ 13.46 ms
 
 ## Simple Iteration
 
 4,000 entities split across various component sets; three systems swap component values. Benchmark results:
 
-- `EliCS `: ███████ **7.25 ms**
+- `EliCS `: ███████ **7.21 ms**
 - `Bitecs`: ███████ 7.36 ms
-- `Koota `: █████████████ 13.12 ms
-- `Becsy `: ████████████████ 16.47 ms
-- `Ecsy  `: ████████████████████ 19.93 ms
+- `Koota `: ████████████ 13.11 ms
+- `Becsy `: ████████████████ 16.40 ms
+- `Ecsy  `: ████████████████████ 20.21 ms
 
 ## Fragmented Iteration
 
 26 component types (A–Z) with 100 entities each plus a Data component. Two queries double the Data and Z values. Benchmark results:
 
-- `EliCS `: ████████ **4.43 ms**
-- `Bitecs`: ████████ 4.61 ms
-- `Koota `: ███████████████ 8.26 ms
-- `Becsy `: ████████████████████ 10.40 ms
-- `Ecsy  `: █████████████████ 8.86 ms
+- `EliCS `: ████████ **4.47 ms**
+- `Bitecs`: ████████ 4.59 ms
+- `Koota `: ████████████████ 8.32 ms
+- `Becsy `: ████████████████████ 10.33 ms
+- `Ecsy  `: █████████████████ 8.85 ms
 
 ## Entity Cycle
 
 1,000 entities repeatedly spawn and then destroy entities with a B component. Benchmark results:
 
-- `EliCS `: ████ 32.80 ms
-- `Bitecs`: ████ 33.91 ms
-- `Koota `: ██████████████ 97.86 ms
-- `Becsy `: ███ **21.31 ms**
-- `Ecsy  `: ████████████████████ 138.20 ms
+- `EliCS `: ███ **20.91 ms**
+- `Bitecs`: █████ 35.65 ms
+- `Koota `: ██████████████ 97.76 ms
+- `Becsy `: ███ 21.45 ms
+- `Ecsy  `: ████████████████████ 137.44 ms
 
 ## Add / Remove
 
 1,000 entities each add then remove a B component. Benchmark results:
 
-- `EliCS `: ████ **11.93 ms**
-- `Bitecs`: ████████ 24.11 ms
-- `Koota `: ███████████████ 43.68 ms
-- `Becsy `: ████ 13.46 ms
-- `Ecsy  `: ████████████████████ 56.13 ms
+- `EliCS `: ████ 13.45 ms
+- `Bitecs`: ████████ 23.91 ms
+- `Koota `: ███████████████ 43.32 ms
+- `Becsy `: ████ **13.42 ms**
+- `Ecsy  `: ████████████████████ 56.02 ms
 <!-- benchmark-end -->

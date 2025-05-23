@@ -217,7 +217,6 @@ export function addRemove() {
 	const world = new EliWorld({
 		entityCapacity: 1000,
 		checksOn: false,
-		deferredEntityUpdates: true,
 	});
 	const A = createComponent({ value: { type: Types.Float32, default: 0 } });
 	const B = createComponent({ value: { type: Types.Float32, default: 0 } });

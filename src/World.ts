@@ -17,7 +17,6 @@ import { QueryManager } from './QueryManager.js';
 export interface WorldOptions {
 	entityCapacity: number;
 	checksOn: boolean;
-	deferredEntityUpdates: boolean;
 }
 
 export interface SystemOptions<T extends DataType, S extends SystemSchema<T>> {
@@ -35,11 +34,9 @@ export class World {
 	constructor({
 		entityCapacity = 1000,
 		checksOn = true,
-		deferredEntityUpdates = false,
 	}: Partial<WorldOptions> = {}) {
 		this.componentManager = new ComponentManager(entityCapacity);
 		this.queryManager = new QueryManager(
-			deferredEntityUpdates,
 			this.componentManager,
 		);
 		this.entityManager = new EntityManager(
@@ -132,12 +129,11 @@ export class World {
 	}
 
 	update(delta: number, time: number): void {
-		this.systems.forEach((system) => {
+		for (const system of this.systems) {
 			if (!system.isPaused) {
 				system.update(delta, time);
 			}
-		});
-		this.queryManager.deferredUpdate();
+		}
 	}
 
 	getSystem<

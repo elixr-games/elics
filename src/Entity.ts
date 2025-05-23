@@ -25,7 +25,6 @@ export type VectorKeys<C extends Component<any>> = {
 export class Entity {
 	public bitmask: ComponentMask = new BitSet();
 	public active = true;
-	public dirty = false;
 	private vectorViews: Map<Component<any>, Map<string, TypedArray>> = new Map();
 
 	constructor(
@@ -53,8 +52,8 @@ export class Entity {
 			component,
 			initialData,
 		);
-		this.queryManager.updateEntity(this, false, component);
 		component.onAttach(component.data, this.index);
+		this.queryManager.updateEntity(this, component);
 		return this;
 	}
 
@@ -67,8 +66,8 @@ export class Entity {
 		);
 		this.bitmask.andNotInPlace(component.bitmask!);
 		this.vectorViews.delete(component);
-		this.queryManager.updateEntity(this, false, component);
 		component.onDetach(component.data, this.index);
+		this.queryManager.updateEntity(this, component);
 		return this;
 	}
 
@@ -152,8 +151,9 @@ export class Entity {
 
 	destroy(): void {
 		assertCondition(this.active, ErrorMessages.ModifyDestroyedEntity, this);
-		this.entityManager.releaseEntityInstance(this);
 		this.active = false;
+		
+		// Batch component cleanup before query updates
 		let bits = this.bitmask.bits;
 		while (bits !== 0) {
 			const i = Math.floor(Math.log2(bits & -bits));
@@ -161,9 +161,11 @@ export class Entity {
 			c.onDetach(c.data, this.index);
 			bits &= bits - 1;
 		}
+		
 		this.bitmask.bits = 0;
 		this.vectorViews.clear();
 		this.queryManager.resetEntity(this);
+		this.entityManager.releaseEntityInstance(this);
 	}
 }
 
