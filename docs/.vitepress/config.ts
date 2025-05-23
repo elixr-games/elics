@@ -84,11 +84,15 @@ export default defineConfig({
 					{ text: 'Component', link: '/architecture/component' },
 					{ text: 'Query', link: '/architecture/query' },
 					{ text: 'System', link: '/architecture/system' },
-                                        { text: 'World', link: '/architecture/world' },
-                                ],
-                        },
-                        { text: 'Benchmarks', link: '/benchmarks' },
-                ],
+					{ text: 'World', link: '/architecture/world' },
+				],
+			},
+			{ text: 'Benchmarks', link: '/benchmarks' },
+			{
+				text: 'Code Coverage',
+				link: 'https://app.codecov.io/gh/elixr-games/elics',
+			},
+		],
 
 		socialLinks: [
 			{ icon: 'github', link: 'https://github.com/felixtrz/elics' },

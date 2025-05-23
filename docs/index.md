@@ -5,21 +5,27 @@ title: Home
 
 hero:
   name: 'EliCS'
-  text: 'Agile and Powerful ECS for the Web'
-  tagline: A lightweight ECS framework that excels in complex 3D web applications, emphasizing flexibility to suit various development styles, without compromising on performance.
+  text: 'ECS for Modern Web'
+  tagline: High-performance Entity Component System implementation for complex web applications. Built with a focus on speed, developer experience, and reliability.
   actions:
     - theme: brand
-      text: Getting Started
+      text: Get Started
       link: /getting-started
     - theme: alt
-      text: API Reference
+      text: Explore API
       link: /architecture/overview
 
 features:
-  - title: 🛠️&nbsp; Adaptable ECS Design
-    details: EliCS champions a flexible approach to ECS, allowing for both traditional data-centric components and stateful systems.
-  - title: 🔒&nbsp; Robust and Type-Safe
-    details: Built with TypeScript and boasting 100% test coverage, EliCS offers a dependable, strongly-typed foundation for intricate web experiences.
-  - title: 🚀&nbsp; Lightweight and Predictable
-    details: Designed for simplicity, EliCS is straightforward and unburdened by over-engineering, ensuring maintainability and predictable behavior.
+  - title: 🚀&nbsp; Compact, Blazing Fast
+    details: Minimal footprint, maximum speed. EliCS boasts best-in-class performance, delivering exceptional efficiency for graphics-intensive applications and complex simulations.
+    linkText: See Benchmarks
+    link: /benchmarks
+  - title: 🧑🏻‍💻&nbsp; Predictable, Developer-Centric
+    details: Fluent method chaining, schema-driven components, and flexible, dual-level APIs. EliCS is designed to deliver optimal developer experience without sacrificing performance.
+    linkText: Explore API
+    link: /architecture/overview
+  - title: ☂️&nbsp; Reliable, Production-Ready
+    details: 100% test coverage with comprehensive edge case validation. Every feature is rigorously tested to ensure your applications run seamlessly in production environments.
+    linkText: View Coverage
+    link: https://app.codecov.io/gh/elixr-games/elics
 ---

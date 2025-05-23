@@ -17,7 +17,7 @@ npm run bench
 ```
 
 This command builds the library and runs the benchmark suite in the
-`benchmarks` folder. The results will be output to the console.
+[`benchmarks`](https://github.com/elixr-games/elics/tree/main/benchmarks) folder. The results will be output to the console.
 
 <!-- benchmark-start -->
 
