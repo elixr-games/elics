@@ -29,10 +29,10 @@
 		"format": "prettier --write \"src/**/*\"",
 		"test": "jest --coverage",
 		"prepare": "npm run build",
-                "docs:dev": "vitepress dev docs",
-                "docs:build": "vitepress build docs",
-                "docs:preview": "vitepress preview docs",
-                "bench": "npm run build && npm --prefix benchmarks run bench"
+		"docs:dev": "vitepress dev docs",
+		"docs:build": "vitepress build docs",
+		"docs:preview": "vitepress preview docs",
+		"bench": "npm run build && npm --prefix benchmarks run bench"
 	},
 	"repository": {
 		"type": "git",

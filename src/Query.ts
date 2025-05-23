@@ -17,16 +17,23 @@ export class Query {
 	public entities = new Set<Entity>();
 
 	constructor(
-		private requiredMask: ComponentMask,
-		private excludedMask: ComponentMask,
+		public requiredMask: ComponentMask,
+		public excludedMask: ComponentMask,
 		public queryId: string,
 	) {}
 
 	matches(entity: Entity): boolean {
-		const hasRequired = entity.bitmask.contains(this.requiredMask);
-		const hasExcluded = entity.bitmask.intersects(this.excludedMask);
-
-		return hasRequired && !hasExcluded;
+		const entityBits = entity.bitmask.bits;
+		const requiredBits = this.requiredMask.bits;
+		const excludedBits = this.excludedMask.bits;
+		
+		// Check excluded first as it's often faster to fail early
+		if (excludedBits && (entityBits & excludedBits) !== 0) {
+			return false;
+		}
+		
+		// Check if entity has all required components
+		return (entityBits & requiredBits) === requiredBits;
 	}
 
 	subscribe(

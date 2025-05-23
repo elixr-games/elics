@@ -25,30 +25,31 @@ const suites = [
 	{
 		name: 'Packed Iteration (5 queries)',
 		description:
-			'1,000 entities each with components A\u2013E. Each query doubles the value stored in a single component.',
+			'Tests optimal-case iteration performance with 1,000 entities each containing components A\u2013E. Five separate systems iterate through dense, homogeneous entity populations, doubling component values. Simulates high-performance scenarios like physics calculations where all entities share identical component layouts. Stresses query iteration speed, component data access patterns, and memory bandwidth utilization with tightly packed archetype storage.',
 		fn: 'packedIteration',
 	},
 	{
 		name: 'Simple Iteration',
 		description:
-			'4,000 entities split across various component sets; three systems swap component values.',
+			"Evaluates heterogeneous entity processing with 4,000 entities distributed across multiple component combinations (A+B, C+D, C+E, etc.). Three systems perform value swapping between different component pairs, testing the ECS's ability to efficiently handle overlapping queries on diverse entity archetypes. Simulates typical game scenarios where different entity types require different processing systems, stressing archetype diversity handling and query filtering efficiency.",
 		fn: 'simpleIteration',
 	},
 	{
 		name: 'Fragmented Iteration',
 		description:
-			'26 component types (A\u2013Z) with 100 entities each plus a Data component. Two queries double the Data and Z values.',
+			'Challenges sparse data handling with 26 different component types (A\u2013Z) where only 100 entities exist per archetype, plus a shared Data component across all entities. Two systems process the sparse entity populations, testing fragmented memory access and archetype management. Simulates complex games with many specialized entity types (items, NPCs, effects, UI elements) where entity populations are spread thin across numerous archetypes, stressing cache efficiency and memory layout optimization.',
 		fn: 'fragmentedIteration',
 	},
 	{
 		name: 'Entity Cycle',
 		description:
-			'1,000 entities repeatedly spawn and then destroy entities with a B component.',
+			'Benchmarks dynamic entity lifecycle management by repeatedly creating and destroying entities. Starting with 1,000 entities containing component A, each iteration spawns new entities with component B for every A entity, then destroys all B entities. Tests entity creation/destruction performance, memory pool efficiency, and query invalidation overhead. Simulates high-frequency spawning scenarios like bullet systems, particle effects, or temporary game objects, stressing memory allocation/deallocation and archetype table management.',
 		fn: 'entityCycle',
 	},
 	{
 		name: 'Add / Remove',
-		description: '1,000 entities each add then remove a B component.',
+		description:
+			'Tests component mutation performance through rapid archetype transitions. Starting with 1,000 entities containing component A, the system continuously adds component B to A entities, then removes B from entities that have both A and B. Simulates dynamic state changes like status effects, equipment modifications, or temporary buffs where entities frequently migrate between archetypes. Stresses component addition/removal efficiency, archetype migration performance, and query membership update overhead.',
 		fn: 'addRemove',
 	},
 ];

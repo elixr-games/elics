@@ -9,9 +9,7 @@ export class QueryManager {
 	private trackedEntities: Set<Entity> = new Set();
 	private queriesByComponent: Map<Component<any>, Set<Query>> = new Map();
 
-	constructor(
-		private componentManager: ComponentManager,
-	) {}
+	constructor(private componentManager: ComponentManager) {}
 
 	registerQuery(query: QueryConfig): Query {
 		const { requiredMask, excludedMask, queryId } =
@@ -38,10 +36,7 @@ export class QueryManager {
 		return this.queries.get(queryId)!;
 	}
 
-	updateEntity(
-		entity: Entity,
-		changedComponent?: Component<any>,
-	): void {
+	updateEntity(entity: Entity, changedComponent?: Component<any>): void {
 		this.trackedEntities.add(entity);
 		if (entity.bitmask.isEmpty()) {
 			// Remove entity from all query results if it has no components
@@ -59,15 +54,21 @@ export class QueryManager {
 			const matches = query.matches(entity);
 			const isInResultSet = query.entities.has(entity);
 
-			if (matches && !isInResultSet) {
-				query.entities.add(entity);
-				for (const callback of query.subscribers.qualify) {
-					callback(entity);
-				}
-			} else if (!matches && isInResultSet) {
-				query.entities.delete(entity);
-				for (const callback of query.subscribers.disqualify) {
-					callback(entity);
+			if (matches !== isInResultSet) {
+				if (matches) {
+					query.entities.add(entity);
+					if (query.subscribers.qualify.size > 0) {
+						for (const callback of query.subscribers.qualify) {
+							callback(entity);
+						}
+					}
+				} else {
+					query.entities.delete(entity);
+					if (query.subscribers.disqualify.size > 0) {
+						for (const callback of query.subscribers.disqualify) {
+							callback(entity);
+						}
+					}
 				}
 			}
 		}
@@ -75,7 +76,7 @@ export class QueryManager {
 
 	resetEntity(entity: Entity): void {
 		this.trackedEntities.delete(entity);
-		
+
 		// Fast path: remove from all queries if entity has no components
 		if (entity.bitmask.bits === 0) {
 			for (const query of this.queries.values()) {
@@ -83,7 +84,7 @@ export class QueryManager {
 			}
 			return;
 		}
-		
+
 		// Remove entity from relevant queries based on components
 		const processed = new Set<Query>();
 		let bits = entity.bitmask.bits;
