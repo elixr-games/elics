@@ -1,5 +1,10 @@
 # EliCS
 
+[![CI](https://github.com/elixr-games/elics/workflows/CI/badge.svg)](https://github.com/elixr-games/elics/actions)
+[![codecov](https://codecov.io/gh/elixr-games/elics/branch/main/graph/badge.svg)](https://codecov.io/gh/elixr-games/elics)
+[![npm version](https://badge.fury.io/js/elics.svg)](https://badge.fury.io/js/elics)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 **EliCS** is a lightweight Entity Component System (ECS) framework optimized for complex 3D web applications. It offers **exceptional** performance while maintaining developer-friendly **ergonomics**, and provides the **flexibility** to accommodate different programming styles and architectural approaches.
 
 ## Documentation

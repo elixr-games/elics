@@ -35,5 +35,13 @@ jobs:
       - name: Run type checking
         run: npm run typecheck
 
-      - name: Run tests
+      - name: Run tests with coverage
         run: npm test
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
