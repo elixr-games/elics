@@ -6,7 +6,7 @@ import { spawnSync } from 'node:child_process';
 const RUNS = 25;
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const runnerPath = path.resolve(__dirname, 'run-benchmark.js');
+const runnerPath = path.resolve(__dirname, 'isolated-runner.js');
 
 function runIsolated(modulePath, fnName) {
 	const modPath = path.resolve(__dirname, modulePath);
@@ -67,11 +67,11 @@ async function run() {
 			let bitecsSum = 0;
 
 			for (let i = 0; i < RUNS; i++) {
-				elicsSum += runIsolated('./elics.js', fn);
-				ecsySum += runIsolated('./ecsy.js', fn);
-				becsySum += runIsolated('./becsy.js', fn);
-				kootaSum += runIsolated('./koota.js', fn);
-				bitecsSum += runIsolated('./bitecs.js', fn);
+				elicsSum += runIsolated('./elics.bench.js', fn);
+				ecsySum += runIsolated('./ecsy.bench.js', fn);
+				becsySum += runIsolated('./becsy.bench.js', fn);
+				kootaSum += runIsolated('./koota.bench.js', fn);
+				bitecsSum += runIsolated('./bitecs.bench.js', fn);
 			}
 
 			const elicsTime = elicsSum / RUNS;

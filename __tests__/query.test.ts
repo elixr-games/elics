@@ -1,0 +1,323 @@
+import BitSet from '../src/BitSet';
+import { Query } from '../src/Query';
+import { World } from '../src/World';
+import { createComponent } from '../src/Component';
+import { Types } from '../src/Types';
+
+// Define components for testing
+const PositionComponent = createComponent({
+	x: { type: Types.Float32, default: 0 },
+	y: { type: Types.Float32, default: 0 },
+});
+
+const VelocityComponent = createComponent({
+	velocity: { type: Types.Vec2, default: [0, 0] },
+});
+
+const HealthComponent = createComponent({
+	value: { type: Types.Int16, default: 100 },
+});
+
+const SimpleComponent = createComponent({
+	value: { type: Types.Int8, default: 0 },
+});
+
+describe('Query Tests', () => {
+	let world: World;
+
+	beforeEach(() => {
+		world = new World();
+		world.registerComponent(PositionComponent);
+		world.registerComponent(VelocityComponent);
+		world.registerComponent(HealthComponent);
+	});
+
+	test('Querying entities with required components', () => {
+		const queryConfig = {
+			required: [PositionComponent, VelocityComponent],
+		};
+		const query = world.queryManager.registerQuery(queryConfig);
+
+		const entity1 = world.createEntity();
+		entity1.addComponent(PositionComponent);
+		entity1.addComponent(VelocityComponent);
+
+		const entity2 = world.createEntity();
+		entity2.addComponent(PositionComponent);
+
+		expect(query.entities).toContain(entity1);
+		expect(query.entities).not.toContain(entity2);
+	});
+
+	test('Querying entities with excluded components', () => {
+		const queryConfig = {
+			required: [PositionComponent],
+			excluded: [HealthComponent],
+		};
+		const query = world.queryManager.registerQuery(queryConfig);
+
+		const entity1 = world.createEntity();
+		entity1.addComponent(PositionComponent);
+
+		const entity2 = world.createEntity();
+		entity2.addComponent(PositionComponent);
+		entity2.addComponent(HealthComponent);
+
+		expect(query.entities).toContain(entity1);
+		expect(query.entities).not.toContain(entity2);
+	});
+
+	test('Querying entities with both required and excluded components', () => {
+		const queryConfig = {
+			required: [PositionComponent],
+			excluded: [VelocityComponent],
+		};
+		const query = world.queryManager.registerQuery(queryConfig);
+
+		const entity1 = world.createEntity();
+		entity1.addComponent(PositionComponent);
+		entity1.addComponent(VelocityComponent);
+
+		const entity2 = world.createEntity();
+		entity2.addComponent(PositionComponent);
+		entity2.addComponent(HealthComponent);
+
+		expect(query.entities).toContain(entity2);
+		expect(query.entities).not.toContain(entity1);
+	});
+
+	test('Multiple queries with overlapping components', () => {
+		const queryConfig1 = {
+			required: [PositionComponent, HealthComponent],
+		};
+
+		const queryConfig2 = {
+			required: [VelocityComponent, HealthComponent],
+		};
+
+		const query1 = world.queryManager.registerQuery(queryConfig1);
+		const query2 = world.queryManager.registerQuery(queryConfig2);
+
+		const entity1 = world.createEntity();
+		entity1.addComponent(PositionComponent);
+		entity1.addComponent(HealthComponent);
+
+		const entity2 = world.createEntity();
+		entity2.addComponent(VelocityComponent);
+		entity2.addComponent(HealthComponent);
+
+		expect(query1.entities).toContain(entity1);
+		expect(query1.entities).not.toContain(entity2);
+
+		expect(query2.entities).toContain(entity2);
+		expect(query2.entities).not.toContain(entity1);
+	});
+
+	test('Removing components affects query results', () => {
+		const queryConfig = {
+			required: [PositionComponent, VelocityComponent],
+		};
+		const query = world.queryManager.registerQuery(queryConfig);
+
+		const entity = world.createEntity();
+		entity.addComponent(PositionComponent);
+		entity.addComponent(VelocityComponent);
+
+		expect(query.entities).toContain(entity);
+
+		// Remove a component
+		entity.removeComponent(VelocityComponent);
+
+		expect(query.entities).not.toContain(entity);
+	});
+
+	test('Entity removal from all queries when last component removed', () => {
+		world.registerComponent(SimpleComponent);
+		const query = world.queryManager.registerQuery({
+			required: [SimpleComponent],
+		});
+		const entity = world.createEntity();
+		entity.addComponent(SimpleComponent);
+		expect(query.entities).toContain(entity);
+		entity.removeComponent(SimpleComponent);
+		expect(query.entities).not.toContain(entity);
+	});
+
+	test('Entity destroy cleans up query results', () => {
+		world.registerComponent(SimpleComponent);
+		const query = world.queryManager.registerQuery({
+			required: [SimpleComponent],
+		});
+		const entity = world.createEntity();
+		entity.addComponent(SimpleComponent);
+		expect(query.entities).toContain(entity);
+		entity.destroy();
+		expect(query.entities).not.toContain(entity);
+	});
+
+	test('Entity destroy with multiple components cleans queries', () => {
+		const q1 = world.queryManager.registerQuery({
+			required: [PositionComponent],
+		});
+		const q2 = world.queryManager.registerQuery({
+			required: [VelocityComponent],
+		});
+		const entity = world.createEntity();
+		entity.addComponent(PositionComponent);
+		entity.addComponent(VelocityComponent);
+		expect(q1.entities).toContain(entity);
+		expect(q2.entities).toContain(entity);
+		entity.destroy();
+		expect(q1.entities).not.toContain(entity);
+		expect(q2.entities).not.toContain(entity);
+	});
+
+	test('resetEntity removes entity from relevant queries', () => {
+		const q1 = world.queryManager.registerQuery({
+			required: [PositionComponent],
+		});
+		const q2 = world.queryManager.registerQuery({
+			required: [VelocityComponent],
+		});
+		const entity = world.createEntity();
+		entity.addComponent(PositionComponent);
+		entity.addComponent(VelocityComponent);
+		expect(q1.entities).toContain(entity);
+		expect(q2.entities).toContain(entity);
+		world.queryManager.resetEntity(entity);
+		expect(q1.entities).not.toContain(entity);
+		expect(q2.entities).not.toContain(entity);
+	});
+
+	test('Query subscribers run as expected', () => {
+		const queryConfig = {
+			required: [PositionComponent, VelocityComponent],
+		};
+		const query = world.queryManager.registerQuery(queryConfig);
+		const qualifyCallback = jest.fn();
+		const unsubQualify = query.subscribe('qualify', qualifyCallback);
+		const disqualifyCallback = jest.fn();
+		query.subscribe('disqualify', disqualifyCallback);
+
+		const entity = world.createEntity();
+		entity.addComponent(PositionComponent);
+		entity.addComponent(VelocityComponent);
+		expect(qualifyCallback).toHaveBeenCalledTimes(1);
+
+		// Remove a component which disqualifies entity from query
+		entity.removeComponent(VelocityComponent);
+		expect(disqualifyCallback).toHaveBeenCalledTimes(1);
+
+		// unsubscribe from qualify, callback no longer called when entity qualifies
+		unsubQualify();
+		entity.addComponent(VelocityComponent);
+		expect(qualifyCallback).toHaveBeenCalledTimes(1);
+	});
+
+	test('Registering the same query multiple times', () => {
+		const queryConfig = {
+			required: [PositionComponent],
+		};
+
+		world.registerQuery(queryConfig);
+		const query1 = world.queryManager.registerQuery(queryConfig);
+		const query2 = world.queryManager.registerQuery(queryConfig);
+
+		expect(query1).toBe(query2);
+	});
+
+	test('Registering query with unregistered component throws error', () => {
+		const UnregisteredComponent = createComponent({
+			value: { type: Types.Int16, default: 0 },
+		});
+
+		const queryConfig = {
+			required: [UnregisteredComponent],
+		};
+
+		expect(() => {
+			world.queryManager.registerQuery(queryConfig);
+		}).toThrow();
+	});
+
+	test('Query results from unregistered query', () => {
+		const world = new World({ checksOn: false });
+		world.registerComponent(PositionComponent);
+		const entity = world.createEntity();
+		entity.addComponent(PositionComponent);
+
+		expect(
+			new Query(PositionComponent.bitmask!, new BitSet(), '').entities,
+		).toEqual(new Set());
+	});
+
+	test('Newly registered query finds existing entities', () => {
+		const entity = world.createEntity();
+		entity.addComponent(PositionComponent);
+
+		const queryConfig = {
+			required: [PositionComponent],
+		};
+
+		const query = world.queryManager.registerQuery(queryConfig);
+		expect(query.entities).toContain(entity);
+	});
+
+	test('Query with excluded components filters correctly', () => {
+		const entity1 = world.createEntity();
+		const entity2 = world.createEntity();
+
+		entity1.addComponent(PositionComponent);
+		entity2.addComponent(PositionComponent);
+		entity2.addComponent(VelocityComponent);
+
+		const queryConfig = {
+			required: [PositionComponent],
+			excluded: [VelocityComponent],
+		};
+
+		const query = world.queryManager.registerQuery(queryConfig);
+
+		// entity1 should match (has Position, no Velocity)
+		expect(query.entities).toContain(entity1);
+		// entity2 should not match (has Position but also has excluded Velocity)
+		expect(query.entities).not.toContain(entity2);
+	});
+
+	test('Query matching with excluded components returns false correctly', () => {
+		const entity = world.createEntity();
+		entity.addComponent(PositionComponent);
+		entity.addComponent(VelocityComponent);
+
+		const queryConfig = {
+			required: [PositionComponent],
+			excluded: [VelocityComponent],
+		};
+
+		const query = world.queryManager.registerQuery(queryConfig);
+
+		// Direct test of matches method to cover the excluded branch
+		expect(query.matches(entity)).toBe(false);
+	});
+
+	test('UpdateEntity without changedComponent parameter', () => {
+		const entity = world.createEntity();
+		entity.addComponent(PositionComponent);
+
+		const queryConfig = {
+			required: [PositionComponent],
+		};
+
+		const query = world.queryManager.registerQuery(queryConfig);
+
+		// Remove entity from query first
+		query.entities.delete(entity);
+		expect(query.entities).not.toContain(entity);
+
+		// Call updateEntity without changedComponent to test all-queries path
+		world.queryManager.updateEntity(entity);
+
+		// Entity should be back in the query
+		expect(query.entities).toContain(entity);
+	});
+});

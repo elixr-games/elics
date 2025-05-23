@@ -3,7 +3,7 @@
 	"license": "MIT",
 	"type": "module",
 	"scripts": {
-		"bench": "npm ci && node ecs-benchmark.js"
+		"bench": "npm ci && node benchmark-suite.js"
 	},
 	"dependencies": {
 		"@lastolivegames/becsy": "^0.15.5",

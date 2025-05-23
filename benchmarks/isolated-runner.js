@@ -9,8 +9,8 @@ if (!modulePath || !fnName) {
 }
 
 const moduleUrl = modulePath.startsWith('file:')
-       ? modulePath
-       : pathToFileURL(modulePath).href;
+	? modulePath
+	: pathToFileURL(modulePath).href;
 const mod = await import(moduleUrl);
 const fn = mod[fnName];
 if (typeof fn !== 'function') {

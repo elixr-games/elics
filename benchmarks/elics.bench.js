@@ -200,9 +200,9 @@ export function entityCycle() {
 			for (const _ of this.queries.as.entities) {
 				world.createEntity().addComponent(B);
 			}
-                        for (const e of this.queries.bs.entities) {
-                                e.destroy();
-                        }
+			for (const e of this.queries.bs.entities) {
+				e.destroy();
+			}
 		}
 	}
 
