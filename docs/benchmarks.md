@@ -25,49 +25,49 @@ This command builds the library and runs the benchmark suite in the
 
 Tests optimal-case iteration performance with 1,000 entities each containing components A–E. Five separate systems iterate through dense, homogeneous entity populations, doubling component values. Simulates high-performance scenarios like physics calculations where all entities share identical component layouts. Stresses query iteration speed, component data access patterns, and memory bandwidth utilization with tightly packed archetype storage. Benchmark results:
 
-- `EliCS `: █████████ **6.06 ms**
-- `Bitecs`: █████████ 6.18 ms
-- `Koota `: █████████████ 8.96 ms
-- `Becsy `: ██████████████████ 12.50 ms
-- `Ecsy  `: ████████████████████ 13.38 ms
+- `EliCS `: ████████ **6.12 ms**
+- `Bitecs`: █████████ 6.24 ms
+- `Koota `: █████████████ 9.02 ms
+- `Becsy `: ██████████████████ 12.69 ms
+- `Ecsy  `: ████████████████████ 13.63 ms
 
 ## Simple Iteration
 
 Evaluates heterogeneous entity processing with 4,000 entities distributed across multiple component combinations (A+B, C+D, C+E, etc.). Three systems perform value swapping between different component pairs, testing the ECS's ability to efficiently handle overlapping queries on diverse entity archetypes. Simulates typical game scenarios where different entity types require different processing systems, stressing archetype diversity handling and query filtering efficiency. Benchmark results:
 
-- `EliCS `: ███████ **7.15 ms**
-- `Bitecs`: ███████ 7.34 ms
-- `Koota `: █████████████ 13.32 ms
-- `Becsy `: ████████████████ 16.39 ms
-- `Ecsy  `: ████████████████████ 20.22 ms
+- `EliCS `: ███████ **7.23 ms**
+- `Bitecs`: ███████ 7.44 ms
+- `Koota `: █████████████ 13.52 ms
+- `Becsy `: ███████████████ 16.03 ms
+- `Ecsy  `: ████████████████████ 20.30 ms
 
 ## Fragmented Iteration
 
 Challenges sparse data handling with 26 different component types (A–Z) where only 100 entities exist per archetype, plus a shared Data component across all entities. Two systems process the sparse entity populations, testing fragmented memory access and archetype management. Simulates complex games with many specialized entity types (items, NPCs, effects, UI elements) where entity populations are spread thin across numerous archetypes, stressing cache efficiency and memory layout optimization. Benchmark results:
 
-- `EliCS `: ████████ **4.51 ms**
-- `Bitecs`: ████████ 4.60 ms
-- `Koota `: ████████████████ 8.32 ms
-- `Becsy `: ████████████████████ 10.30 ms
-- `Ecsy  `: █████████████████ 8.87 ms
+- `EliCS `: ████████ **4.52 ms**
+- `Bitecs`: ████████ 4.58 ms
+- `Koota `: ████████████████ 8.47 ms
+- `Becsy `: ████████████████████ 10.43 ms
+- `Ecsy  `: █████████████████ 9.02 ms
 
 ## Entity Cycle
 
 Benchmarks dynamic entity lifecycle management by repeatedly creating and destroying entities. Starting with 1,000 entities containing component A, each iteration spawns new entities with component B for every A entity, then destroys all B entities. Tests entity creation/destruction performance, memory pool efficiency, and query invalidation overhead. Simulates high-frequency spawning scenarios like bullet systems, particle effects, or temporary game objects, stressing memory allocation/deallocation and archetype table management. Benchmark results:
 
-- `EliCS `: ██ **20.90 ms**
-- `Bitecs`: █████ 36.53 ms
-- `Koota `: ██████████████ 100.42 ms
-- `Becsy `: ███ 21.82 ms
-- `Ecsy  `: ████████████████████ 139.51 ms
+- `EliCS `: ███ **21.20 ms**
+- `Bitecs`: █████ 36.24 ms
+- `Koota `: ██████████████ 101.63 ms
+- `Becsy `: ███ 21.61 ms
+- `Ecsy  `: ████████████████████ 138.96 ms
 
 ## Add / Remove
 
 Tests component mutation performance through rapid archetype transitions. Starting with 1,000 entities containing component A, the system continuously adds component B to A entities, then removes B from entities that have both A and B. Simulates dynamic state changes like status effects, equipment modifications, or temporary buffs where entities frequently migrate between archetypes. Stresses component addition/removal efficiency, archetype migration performance, and query membership update overhead. Benchmark results:
 
-- `EliCS `: ████ **13.18 ms**
-- `Bitecs`: ████████ 24.24 ms
-- `Koota `: ███████████████ 44.48 ms
-- `Becsy `: ████ 13.65 ms
-- `Ecsy  `: ████████████████████ 56.83 ms
+- `EliCS `: ████ **13.24 ms**
+- `Bitecs`: ████████ 24.11 ms
+- `Koota `: ███████████████ 43.73 ms
+- `Becsy `: ████ 13.55 ms
+- `Ecsy  `: ████████████████████ 56.41 ms
 <!-- benchmark-end -->

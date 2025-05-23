@@ -1,12 +1,13 @@
 import BitSet from './BitSet.js';
 import {
+	type Component,
 	assignInitialComponentData,
 	initializeComponentStorage,
-	type Component,
 } from './Component.js';
 
 export class ComponentManager {
 	private nextComponentTypeId = 0;
+
 	private componentsByTypeId: Component<any>[] = [];
 
 	constructor(private entityCapacity: number) {}

@@ -26,9 +26,13 @@ export interface SystemOptions<T extends DataType, S extends SystemSchema<T>> {
 
 export class World {
 	public entityManager!: EntityManager;
+
 	public queryManager!: QueryManager;
+
 	public componentManager!: ComponentManager;
+
 	private systems: System<any, any, any>[] = [];
+
 	readonly globals: { [key: string]: any } = {};
 
 	constructor({
@@ -36,9 +40,7 @@ export class World {
 		checksOn = true,
 	}: Partial<WorldOptions> = {}) {
 		this.componentManager = new ComponentManager(entityCapacity);
-		this.queryManager = new QueryManager(
-			this.componentManager,
-		);
+		this.queryManager = new QueryManager(this.componentManager);
 		this.entityManager = new EntityManager(
 			this.queryManager,
 			this.componentManager,

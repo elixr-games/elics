@@ -1,33 +1,34 @@
-export default {
-	env: {
-		browser: true,
-		es2021: true,
-		node: true,
-	},
-	extends: ['plugin:@typescript-eslint/recommended', 'prettier'],
-	parser: '@typescript-eslint/parser',
-	plugins: ['@typescript-eslint', 'prettier'],
-	parserOptions: {
-		ecmaVersion: 12,
-		sourceType: 'module',
-	},
-	rules: {
-		'sort-imports': [
-			'error',
-			{
-				ignoreCase: false,
-				ignoreDeclarationSort: false,
-				ignoreMemberSort: false,
-				memberSyntaxSortOrder: ['none', 'all', 'multiple', 'single'],
-				allowSeparatedGroups: false,
+import typescript from '@typescript-eslint/eslint-plugin';
+import typescriptParser from '@typescript-eslint/parser';
+import prettier from 'eslint-plugin-prettier';
+
+export default [
+	{
+		files: ['src/**/*.{js,ts,tsx}'],
+		languageOptions: {
+			parser: typescriptParser,
+			parserOptions: {
+				ecmaVersion: 2021,
+				sourceType: 'module',
 			},
-		],
-		'no-unused-vars': [
-			'error',
-			{ vars: 'all', args: 'all', argsIgnorePattern: '^_' },
-		],
-		'lines-between-class-members': ['warn', 'always'],
-		'prettier/prettier': 'error',
+			globals: {
+				console: 'readonly',
+				process: 'readonly',
+			},
+		},
+		plugins: {
+			'@typescript-eslint': typescript,
+			prettier,
+		},
+		rules: {
+			...typescript.configs.recommended.rules,
+			'@typescript-eslint/no-explicit-any': 'off',
+			'@typescript-eslint/no-unused-vars': [
+				'error',
+				{ vars: 'all', args: 'all', argsIgnorePattern: '^_' },
+			],
+			'lines-between-class-members': ['warn', 'always'],
+			'prettier/prettier': 'error',
+		},
 	},
-	root: true,
-};
+];

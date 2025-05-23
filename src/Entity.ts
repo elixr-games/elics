@@ -7,12 +7,12 @@ import type { QueryManager } from './QueryManager.js';
 import {
 	DataArrayToType,
 	DataType,
-	TypedArrayMap,
 	TypeValueToType,
 	type TypedArray,
+	TypedArrayMap,
 	Types,
 } from './Types.js';
-import { assertCondition, ErrorMessages } from './Checks.js';
+import { ErrorMessages, assertCondition } from './Checks.js';
 
 export type VectorKeys<C extends Component<any>> = {
 	[K in keyof C['schema']]: DataArrayToType<
@@ -24,7 +24,9 @@ export type VectorKeys<C extends Component<any>> = {
 
 export class Entity {
 	public bitmask: ComponentMask = new BitSet();
+
 	public active = true;
+
 	private vectorViews: Map<Component<any>, Map<string, TypedArray>> = new Map();
 
 	constructor(
@@ -152,7 +154,7 @@ export class Entity {
 	destroy(): void {
 		assertCondition(this.active, ErrorMessages.ModifyDestroyedEntity, this);
 		this.active = false;
-		
+
 		// Batch component cleanup before query updates
 		let bits = this.bitmask.bits;
 		while (bits !== 0) {
@@ -161,7 +163,7 @@ export class Entity {
 			c.onDetach(c.data, this.index);
 			bits &= bits - 1;
 		}
-		
+
 		this.bitmask.bits = 0;
 		this.vectorViews.clear();
 		this.queryManager.resetEntity(this);

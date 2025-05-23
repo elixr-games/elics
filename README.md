@@ -10,12 +10,14 @@ For detailed information about using EliCS, including concepts, guides, and API 
 - [API Reference](https://elixr-games.github.io/elics/architecture/overview.html)
 - [Performance Benchmarks](https://elixr-games.github.io/elics/benchmarks.html)
 
+## Contributing
+
+Your contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) for development setup and guidelines, and make sure to review our [Code of Conduct](CODE_OF_CONDUCT.md) before contributing, thank you for being part of our community!
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for version history and release notes.
+
 ## License
 
 EliCS is created by [Felix Z](https://github.com/felixtrz). This project is licensed under the MIT License. For more details, see the [LICENSE](LICENSE) file in this repository.
-
-## Contributing
-
-Your contributions are welcome! Please feel free to submit issues and pull requests. Before contributing, make sure to review our [Code of Conduct](CODE_OF_CONDUCT.md).
-
-Thank you for being a part of the EliCS community!

@@ -2,7 +2,7 @@ import type { Component, ComponentMask } from './Component.js';
 
 import BitSet from './BitSet.js';
 import { Entity } from './Entity.js';
-import { assertCondition, ErrorMessages } from './Checks.js';
+import { ErrorMessages, assertCondition } from './Checks.js';
 
 export type QueryConfig = {
 	required: Component<any>[];
@@ -14,6 +14,7 @@ export class Query {
 		qualify: new Set<(entity: Entity) => void>(),
 		disqualify: new Set<(entity: Entity) => void>(),
 	};
+
 	public entities = new Set<Entity>();
 
 	constructor(
@@ -26,12 +27,12 @@ export class Query {
 		const entityBits = entity.bitmask.bits;
 		const requiredBits = this.requiredMask.bits;
 		const excludedBits = this.excludedMask.bits;
-		
+
 		// Check excluded first as it's often faster to fail early
 		if (excludedBits && (entityBits & excludedBits) !== 0) {
 			return false;
 		}
-		
+
 		// Check if entity has all required components
 		return (entityBits & requiredBits) === requiredBits;
 	}

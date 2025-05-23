@@ -6,7 +6,9 @@ import { Entity } from './Entity.js';
 
 export class QueryManager {
 	private queries: Map<string, Query> = new Map();
+
 	private trackedEntities: Set<Entity> = new Set();
+
 	private queriesByComponent: Map<Component<any>, Set<Query>> = new Map();
 
 	constructor(private componentManager: ComponentManager) {}

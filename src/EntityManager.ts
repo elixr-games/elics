@@ -4,8 +4,11 @@ import type { QueryManager } from './QueryManager.js';
 
 export class EntityManager {
 	pool: Entity[] = [];
+
 	private entityIndex = 0;
+
 	private indexLookup: (Entity | undefined)[] = [];
+
 	private poolSize = 0;
 
 	constructor(

@@ -62,11 +62,15 @@ export function createSystem<
 >(queries: Q = {} as Q, schema: S = {} as S): SystemConstructor<T, S, Q> {
 	return class implements System<T, S, Q> {
 		static schema = schema;
+
 		static isSystem = true;
+
 		static queries = queries;
 
 		public isPaused: boolean = false;
+
 		public queries!: Record<keyof Q, Query>;
+
 		public config = {} as Record<keyof S, Signal<TypeValueToType<T>>>;
 
 		constructor(
