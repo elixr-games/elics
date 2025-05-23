@@ -1,1 +1,8 @@
+#!/bin/sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Run linting and formatting
 npx lint-staged
+
+# Run tests - block commit if tests fail
+npm run test
