@@ -38,14 +38,19 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create GitHub Release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
           body: |
-            Changes in this Release
-            - See [CHANGELOG.md](CHANGELOG.md) for details
+            ## Changes in this Release
+
+            See [CHANGELOG.md](https://github.com/elixr-games/elics/blob/main/CHANGELOG.md) for detailed release notes.
+
+            ### Quick Links
+            - 📦 [NPM Package](https://www.npmjs.com/package/elics)
+            - 📖 [Documentation](https://elixr-games.github.io/elics/)
+            - 🚀 [Getting Started](https://elixr-games.github.io/elics/getting-started.html)
           draft: false
           prerelease: false
+          generate_release_notes: true
