@@ -41,10 +41,15 @@ export async function packedIteration() {
 
 	class PackedSystem extends BecsySystem {
 		a = this.query((q) => q.current.with(A1).write);
+
 		b = this.query((q) => q.current.with(B1).write);
+
 		c = this.query((q) => q.current.with(C1).write);
+
 		d = this.query((q) => q.current.with(D1).write);
+
 		e = this.query((q) => q.current.with(E1).write);
+
 		execute() {
 			for (const ent of this.a.current) ent.write(A1).value *= 2;
 			for (const ent of this.b.current) ent.write(B1).value *= 2;
@@ -73,6 +78,7 @@ export async function simpleIteration() {
 
 	class SystemAB extends BecsySystem {
 		q = this.query((q) => q.current.with(A2, B2).write);
+
 		execute() {
 			for (const ent of this.q.current) {
 				const av = ent.write(A2).value;
@@ -85,6 +91,7 @@ export async function simpleIteration() {
 
 	class SystemCD extends BecsySystem {
 		q = this.query((q) => q.current.with(C2, D2).write);
+
 		execute() {
 			for (const ent of this.q.current) {
 				const cv = ent.write(C2).value;
@@ -97,7 +104,9 @@ export async function simpleIteration() {
 
 	class SystemCE extends BecsySystem {
 		q = this.query((q) => q.current.with(C2, E2).write);
+
 		sched = this.schedule((s) => s.after(SystemCD));
+
 		execute() {
 			for (const ent of this.q.current) {
 				const cv = ent.write(C2).value;
@@ -131,7 +140,9 @@ export async function fragmentedIteration() {
 
 	class FragSystem extends BecsySystem {
 		data = this.query((q) => q.current.with(DataF).write);
+
 		z = this.query((q) => q.current.with(comps[25]).write);
+
 		execute() {
 			for (const ent of this.data.current) ent.write(DataF).value *= 2;
 			for (const ent of this.z.current) ent.write(comps[25]).value *= 2;
@@ -161,10 +172,13 @@ export async function entityCycle() {
 
 	class CycleSystem extends BecsySystem {
 		as = this.query((q) => q.current.with(A3));
+
 		bs = this.query((q) => q.current.with(B3));
+
 		perm = this.query((q) => q.using(B3).write);
+
 		execute() {
-			for (const _ of this.as.current) {
+			for (const _entity of this.as.current) {
 				this.createEntity(B3);
 			}
 			for (const ent of [...this.bs.current]) {
@@ -193,8 +207,11 @@ export async function addRemove() {
 
 	class AddRemoveSystem extends BecsySystem {
 		as = this.query((q) => q.current.with(A4).without(B4));
+
 		bs = this.query((q) => q.current.with(B4));
+
 		perm = this.query((q) => q.using(B4).write);
+
 		execute() {
 			for (const ent of this.as.current) {
 				ent.add(B4);

@@ -1,7 +1,7 @@
 #!/bin/sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-# Run linting and formatting
+# Run linting and formatting on staged files
 npx lint-staged
 
 # Run tests - block commit if tests fail

@@ -4,7 +4,11 @@ import prettier from 'eslint-plugin-prettier';
 
 export default [
 	{
-		files: ['src/**/*.{js,ts,tsx}'],
+		files: [
+			'src/**/*.{js,ts,tsx}',
+			'__tests__/**/*.{js,ts,tsx}',
+			'benchmarks/**/*.{js,ts,tsx}',
+		],
 		languageOptions: {
 			parser: typescriptParser,
 			parserOptions: {
@@ -14,6 +18,13 @@ export default [
 			globals: {
 				console: 'readonly',
 				process: 'readonly',
+				// Jest globals
+				describe: 'readonly',
+				test: 'readonly',
+				expect: 'readonly',
+				beforeEach: 'readonly',
+				afterEach: 'readonly',
+				jest: 'readonly',
 			},
 		},
 		plugins: {
@@ -25,7 +36,12 @@ export default [
 			'@typescript-eslint/no-explicit-any': 'off',
 			'@typescript-eslint/no-unused-vars': [
 				'error',
-				{ vars: 'all', args: 'all', argsIgnorePattern: '^_' },
+				{
+					vars: 'all',
+					args: 'all',
+					argsIgnorePattern: '^_',
+					varsIgnorePattern: '^_',
+				},
 			],
 			'lines-between-class-members': ['warn', 'always'],
 			'prettier/prettier': 'error',

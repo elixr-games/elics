@@ -197,7 +197,7 @@ export function entityCycle() {
 		bs: { required: [B] },
 	}) {
 		update() {
-			for (const _ of this.queries.as.entities) {
+			for (const _entity of this.queries.as.entities) {
 				world.createEntity().addComponent(B);
 			}
 			for (const e of this.queries.bs.entities) {

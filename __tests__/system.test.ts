@@ -77,6 +77,7 @@ describe('System Tests', () => {
 	test('Globals accessable in systems', () => {
 		class TestSystem extends createSystem() {
 			init(): void {}
+
 			update(): void {
 				const gravity = this.globals['gravity'];
 				expect(gravity).toBe(9.81);
@@ -94,6 +95,7 @@ describe('System Tests', () => {
 			init(): void {
 				initCallback();
 			}
+
 			destroy(): void {
 				destroyCallback();
 			}
