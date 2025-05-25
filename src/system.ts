@@ -1,8 +1,8 @@
-import { DataType, TypeValueToType } from './Types.js';
-import { Query, QueryConfig } from './Query.js';
+import { DataType, TypeValueToType } from './types.js';
+import { Query, QueryConfig } from './query.js';
 
-import { QueryManager } from './QueryManager.js';
-import { World } from './World.js';
+import { QueryManager } from './query-manager.js';
+import { World } from './world.js';
 import { Signal, signal } from '@preact/signals-core';
 
 export type SystemSchema<T extends DataType> = Record<

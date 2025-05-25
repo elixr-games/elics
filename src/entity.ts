@@ -1,9 +1,9 @@
-import type { Component, ComponentMask } from './Component.js';
+import type { Component, ComponentMask } from './component.js';
 
-import BitSet from './BitSet.js';
-import type { ComponentManager } from './ComponentManager.js';
-import type { EntityManager } from './EntityManager.js';
-import type { QueryManager } from './QueryManager.js';
+import BitSet from './bit-set.js';
+import type { ComponentManager } from './component-manager.js';
+import type { EntityManager } from './entity-manager.js';
+import type { QueryManager } from './query-manager.js';
 import {
 	DataArrayToType,
 	DataType,
@@ -11,8 +11,8 @@ import {
 	type TypedArray,
 	TypedArrayMap,
 	Types,
-} from './Types.js';
-import { ErrorMessages, assertCondition } from './Checks.js';
+} from './types.js';
+import { ErrorMessages, assertCondition } from './checks.js';
 
 export type VectorKeys<C extends Component<any>> = {
 	[K in keyof C['schema']]: DataArrayToType<

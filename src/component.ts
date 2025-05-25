@@ -5,10 +5,10 @@ import {
 	TypedArrayMap,
 	TypedSchema,
 	Types,
-} from './Types.js';
-import { ErrorMessages, assertCondition } from './Checks.js';
+} from './types.js';
+import { ErrorMessages, assertCondition } from './checks.js';
 
-import BitSet from './BitSet.js';
+import BitSet from './bit-set.js';
 
 export type ComponentMask = BitSet;
 

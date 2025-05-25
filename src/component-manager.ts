@@ -1,9 +1,9 @@
-import BitSet from './BitSet.js';
+import BitSet from './bit-set.js';
 import {
 	type Component,
 	assignInitialComponentData,
 	initializeComponentStorage,
-} from './Component.js';
+} from './component.js';
 
 export class ComponentManager {
 	private nextComponentTypeId = 0;

@@ -1,6 +1,6 @@
-import { World } from '../src/World';
-import { createComponent } from '../src/Component';
-import { Types } from '../src/Types';
+import { World } from '../src/world';
+import { createComponent } from '../src/component';
+import { Types } from '../src/types';
 
 // Define components for testing
 const PositionComponent = createComponent({

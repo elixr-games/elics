@@ -1,18 +1,18 @@
-import { DataType, TypeValueToType } from './Types.js';
-import { ErrorMessages, assertCondition, toggleChecks } from './Checks.js';
-import { Query, QueryConfig } from './Query.js';
+import { DataType, TypeValueToType } from './types.js';
+import { ErrorMessages, assertCondition, toggleChecks } from './checks.js';
+import { Query, QueryConfig } from './query.js';
 import {
 	System,
 	SystemConstructor,
 	SystemQueries,
 	SystemSchema,
-} from './System.js';
+} from './system.js';
 
-import { Component } from './Component.js';
-import { ComponentManager } from './ComponentManager.js';
-import { Entity } from './Entity.js';
-import { EntityManager } from './EntityManager.js';
-import { QueryManager } from './QueryManager.js';
+import { Component } from './component.js';
+import { ComponentManager } from './component-manager.js';
+import { Entity } from './entity.js';
+import { EntityManager } from './entity-manager.js';
+import { QueryManager } from './query-manager.js';
 
 export interface WorldOptions {
 	entityCapacity: number;

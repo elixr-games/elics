@@ -1,4 +1,4 @@
-import BitSet from '../src/BitSet';
+import BitSet from '../src/bit-set';
 
 // Dedicated tests to ensure full coverage of BitSet operations
 

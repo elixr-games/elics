@@ -77,7 +77,7 @@ export type TypeValueToType<T extends DataType> = T extends
 					: T extends 'Vec4'
 						? [number, number, number, number]
 						: T extends 'Entity'
-							? import('./Entity.js').Entity
+							? import('./entity.js').Entity
 							: any;
 
 export type DataArrayToType<T extends DataType> = T extends

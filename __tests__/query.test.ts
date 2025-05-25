@@ -1,8 +1,8 @@
-import BitSet from '../src/BitSet';
-import { Query } from '../src/Query';
-import { World } from '../src/World';
-import { createComponent } from '../src/Component';
-import { Types } from '../src/Types';
+import BitSet from '../src/bit-set';
+import { Query } from '../src/query';
+import { World } from '../src/world';
+import { createComponent } from '../src/component';
+import { Types } from '../src/types';
 
 // Define components for testing
 const PositionComponent = createComponent({

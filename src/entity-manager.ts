@@ -1,6 +1,6 @@
-import type { ComponentManager } from './ComponentManager.js';
-import { Entity } from './Entity.js';
-import type { QueryManager } from './QueryManager.js';
+import type { ComponentManager } from './component-manager.js';
+import { Entity } from './entity.js';
+import type { QueryManager } from './query-manager.js';
 
 export class EntityManager {
 	pool: Entity[] = [];

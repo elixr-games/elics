@@ -1,4 +1,4 @@
-import { VERSION } from '../../src/Version';
+import { VERSION } from '../../src/version';
 import { defineConfig } from 'vitepress';
 
 // https://vitepress.dev/reference/site-config

@@ -1,8 +1,8 @@
-import { Query, QueryConfig } from './Query.js';
-import type { Component } from './Component.js';
-import type { ComponentManager } from './ComponentManager.js';
+import { Query, QueryConfig } from './query.js';
+import type { Component } from './component.js';
+import type { ComponentManager } from './component-manager.js';
 
-import { Entity } from './Entity.js';
+import { Entity } from './entity.js';
 
 export class QueryManager {
 	private queries: Map<string, Query> = new Map();

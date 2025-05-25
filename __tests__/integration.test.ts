@@ -1,7 +1,7 @@
-import { World } from '../src/World';
-import { createComponent } from '../src/Component';
-import { createSystem } from '../src/System';
-import { Types } from '../src/Types';
+import { World } from '../src/world';
+import { createComponent } from '../src/component';
+import { createSystem } from '../src/system';
+import { Types } from '../src/types';
 
 // Define components for testing
 const PositionComponent = createComponent({

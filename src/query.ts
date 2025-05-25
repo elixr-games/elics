@@ -1,8 +1,8 @@
-import type { Component, ComponentMask } from './Component.js';
+import type { Component, ComponentMask } from './component.js';
 
-import BitSet from './BitSet.js';
-import { Entity } from './Entity.js';
-import { ErrorMessages, assertCondition } from './Checks.js';
+import BitSet from './bit-set.js';
+import { Entity } from './entity.js';
+import { ErrorMessages, assertCondition } from './checks.js';
 
 export type QueryConfig = {
 	required: Component<any>[];
