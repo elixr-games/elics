@@ -92,7 +92,9 @@ export class Entity {
 	getValue<C extends Component<any>, K extends keyof C['schema']>(
 		component: C,
 		key: K,
-	): TypeValueToType<C['schema'][K]['type']> {
+	): C['schema'][K]['type'] extends 'Entity'
+		? Entity | undefined
+		: TypeValueToType<C['schema'][K]['type']> {
 		// allow runtime access with invalid keys, return undefined
 		const schemaEntry = (component.schema as any)[key as string];
 		if (!schemaEntry) {
