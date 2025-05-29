@@ -214,6 +214,22 @@ describe('Query Tests', () => {
 		expect(qualifyCallback).toHaveBeenCalledTimes(1);
 	});
 
+	test('Disqualify subscribers trigger on entity destroy', () => {
+		const query = world.queryManager.registerQuery({
+			required: [PositionComponent],
+		});
+		const disqualifyCallback = jest.fn();
+		query.subscribe('disqualify', disqualifyCallback);
+
+		const entity = world.createEntity();
+		entity.addComponent(PositionComponent);
+
+		// Destroying should trigger disqualify
+		entity.destroy();
+
+		expect(disqualifyCallback).toHaveBeenCalledTimes(1);
+	});
+
 	test('Registering the same query multiple times', () => {
 		const queryConfig = {
 			required: [PositionComponent],
