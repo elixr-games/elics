@@ -17,22 +17,16 @@ export interface Component<S extends TypedSchema<DataType>> {
 	data: { [K in keyof S]: DataArrayToType<S[K]['type']> };
 	bitmask: ComponentMask | null;
 	typeId: number;
-	onAttach: (data: Component<S>['data'], index: number) => void;
-	onDetach: (data: Component<S>['data'], index: number) => void;
 }
 
 export function createComponent<T extends DataType, S extends TypedSchema<T>>(
 	schema: S,
-	onAttach: (data: Component<S>['data'], index: number) => void = () => {},
-	onDetach: (data: Component<S>['data'], index: number) => void = () => {},
 ): Component<S> {
 	return {
 		schema,
 		data: {} as { [K in keyof S]: DataArrayToType<S[K]['type']> },
 		bitmask: null,
 		typeId: -1,
-		onAttach,
-		onDetach,
 	};
 }
 

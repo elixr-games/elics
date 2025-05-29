@@ -54,40 +54,47 @@ describe('Component Tests', () => {
 		expect(entity.getValue(HealthComponent, 'value')).toBe(100); // Default value
 	});
 
-	test('onAttach and onDetach hooks', () => {
-		// Create a component class that overrides onAttach and onDetach
-		const HookComponent = createComponent(
-			{
-				onAttachCalled: { type: Types.Boolean, default: false },
-				onDetachCalled: { type: Types.Boolean, default: false },
-			},
-			(data, index) => {
-				data.onAttachCalled[index] = 1;
-			},
-			(data, index) => {
-				data.onDetachCalled[index] = 1;
-			},
-		);
+	test('Query subscribe callbacks can track component lifecycle', () => {
+		// Create a test component
+		const TrackingComponent = createComponent({
+			tracked: { type: Types.Boolean, default: false },
+		});
 
-		world.registerComponent(HookComponent);
+		world.registerComponent(TrackingComponent);
+
+		// Create a query for the component
+		const query = world.queryManager.registerQuery({
+			required: [TrackingComponent],
+		});
+
+		const qualifyCallback = jest.fn();
+		const disqualifyCallback = jest.fn();
+
+		query.subscribe('qualify', qualifyCallback);
+		query.subscribe('disqualify', disqualifyCallback);
 
 		const entity = world.createEntity();
 
-		// Add the component
-		entity.addComponent(HookComponent);
-		expect(HookComponent.data.onAttachCalled[entity.index]).toBeTruthy();
-		expect(HookComponent.data.onDetachCalled[entity.index]).toBeFalsy();
+		// Add the component - should trigger qualify
+		entity.addComponent(TrackingComponent);
+		expect(qualifyCallback).toHaveBeenCalledWith(entity);
+		expect(qualifyCallback).toHaveBeenCalledTimes(1);
+		expect(disqualifyCallback).not.toHaveBeenCalled();
 
-		// Remove the component
-		entity.removeComponent(HookComponent);
-		expect(HookComponent.data.onDetachCalled[entity.index]).toBeTruthy();
+		// Remove the component - should trigger disqualify
+		entity.removeComponent(TrackingComponent);
+		expect(disqualifyCallback).toHaveBeenCalledWith(entity);
+		expect(disqualifyCallback).toHaveBeenCalledTimes(1);
+		expect(qualifyCallback).toHaveBeenCalledTimes(1);
 
-		// reset the hook data
-		HookComponent.data.onDetachCalled[entity.index] = 0;
-		entity.addComponent(HookComponent);
+		// Reset and test entity destruction
+		qualifyCallback.mockClear();
+		disqualifyCallback.mockClear();
+		entity.addComponent(TrackingComponent);
+
+		// Destroy entity - should trigger disqualify
 		entity.destroy();
-
-		// onDetach should have been called due to entity destruction
-		expect(HookComponent.data.onDetachCalled[entity.index]).toBeTruthy();
+		expect(disqualifyCallback).toHaveBeenCalledWith(entity);
+		expect(disqualifyCallback).toHaveBeenCalledTimes(1);
 	});
 });

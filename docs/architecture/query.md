@@ -95,6 +95,41 @@ unsub();
 
 The callback function receives the qualifying or disqualifying entity as an argument, allowing you to perform custom logic based on the entity's state.
 
+#### Component Lifecycle Tracking
+
+Query subscriptions are particularly useful for tracking component lifecycle events. Since components no longer have built-in lifecycle hooks, you can achieve the same functionality using queries:
+
+```ts
+// Track when entities gain a specific component
+const componentQuery = world.queryManager.registerQuery({
+	required: [MyComponent],
+});
+
+componentQuery.subscribe('qualify', (entity) => {
+	// This runs when MyComponent is added to an entity
+	console.log(`MyComponent added to entity ${entity.index}`);
+});
+
+componentQuery.subscribe('disqualify', (entity) => {
+	// This runs when MyComponent is removed from an entity
+	// or when the entity is destroyed
+	console.log(`MyComponent removed from entity ${entity.index}`);
+
+	// Perform cleanup if needed
+	const data = entity.getValue(MyComponent, 'someProperty');
+	if (data) {
+		// cleanup logic here
+	}
+});
+```
+
+This approach provides several advantages:
+
+- **Decoupled Logic**: Component lifecycle logic is separated from component definitions
+- **Multiple Listeners**: You can have multiple subscriptions for the same component events
+- **Conditional Logic**: You can create queries that track combinations of components
+- **Dynamic Enable/Disable**: Subscriptions can be added or removed at runtime
+
 ### Entity Polling
 
 If you need to access entities that match the query, you can iterate over the `query.entities` set. This set contains the entities that currently match the query and is updated automatically by the `QueryManager` as entities are added or removed:

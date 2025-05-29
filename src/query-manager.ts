@@ -43,7 +43,13 @@ export class QueryManager {
 		if (entity.bitmask.isEmpty()) {
 			// Remove entity from all query results if it has no components
 			for (const query of this.queries.values()) {
-				query.entities.delete(entity);
+				if (query.entities.delete(entity)) {
+					if (query.subscribers.disqualify.size > 0) {
+						for (const callback of query.subscribers.disqualify) {
+							callback(entity);
+						}
+					}
+				}
 			}
 			return;
 		}
