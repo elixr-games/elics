@@ -189,6 +189,35 @@ describe('Query Tests', () => {
 		expect(q2.entities).not.toContain(entity);
 	});
 
+	test('resetEntity triggers disqualify subscribers', () => {
+		const q1 = world.queryManager.registerQuery({
+			required: [PositionComponent],
+		});
+		const q2 = world.queryManager.registerQuery({
+			required: [VelocityComponent],
+		});
+
+		const disqualifyCallback1 = jest.fn();
+		const disqualifyCallback2 = jest.fn();
+
+		q1.subscribe('disqualify', disqualifyCallback1);
+		q2.subscribe('disqualify', disqualifyCallback2);
+
+		const entity = world.createEntity();
+		entity.addComponent(PositionComponent);
+		entity.addComponent(VelocityComponent);
+
+		expect(q1.entities).toContain(entity);
+		expect(q2.entities).toContain(entity);
+
+		world.queryManager.resetEntity(entity);
+
+		expect(disqualifyCallback1).toHaveBeenCalledWith(entity);
+		expect(disqualifyCallback2).toHaveBeenCalledWith(entity);
+		expect(disqualifyCallback1).toHaveBeenCalledTimes(1);
+		expect(disqualifyCallback2).toHaveBeenCalledTimes(1);
+	});
+
 	test('Query subscribers run as expected', () => {
 		const queryConfig = {
 			required: [PositionComponent, VelocityComponent],
@@ -212,6 +241,22 @@ describe('Query Tests', () => {
 		unsubQualify();
 		entity.addComponent(VelocityComponent);
 		expect(qualifyCallback).toHaveBeenCalledTimes(1);
+	});
+
+	test('Disqualify subscribers trigger on entity destroy', () => {
+		const query = world.queryManager.registerQuery({
+			required: [PositionComponent],
+		});
+		const disqualifyCallback = jest.fn();
+		query.subscribe('disqualify', disqualifyCallback);
+
+		const entity = world.createEntity();
+		entity.addComponent(PositionComponent);
+
+		// Destroying should trigger disqualify
+		entity.destroy();
+
+		expect(disqualifyCallback).toHaveBeenCalledTimes(1);
 	});
 
 	test('Registering the same query multiple times', () => {

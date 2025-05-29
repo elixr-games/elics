@@ -43,7 +43,13 @@ export class QueryManager {
 		if (entity.bitmask.isEmpty()) {
 			// Remove entity from all query results if it has no components
 			for (const query of this.queries.values()) {
-				query.entities.delete(entity);
+				if (query.entities.delete(entity)) {
+					if (query.subscribers.disqualify.size > 0) {
+						for (const callback of query.subscribers.disqualify) {
+							callback(entity);
+						}
+					}
+				}
 			}
 			return;
 		}
@@ -82,7 +88,13 @@ export class QueryManager {
 		// Fast path: remove from all queries if entity has no components
 		if (entity.bitmask.bits === 0) {
 			for (const query of this.queries.values()) {
-				query.entities.delete(entity);
+				if (query.entities.delete(entity)) {
+					if (query.subscribers.disqualify.size > 0) {
+						for (const callback of query.subscribers.disqualify) {
+							callback(entity);
+						}
+					}
+				}
 			}
 			return;
 		}
@@ -97,7 +109,13 @@ export class QueryManager {
 			if (queries) {
 				for (const query of queries) {
 					if (!processed.has(query)) {
-						query.entities.delete(entity);
+						if (query.entities.delete(entity)) {
+							if (query.subscribers.disqualify.size > 0) {
+								for (const callback of query.subscribers.disqualify) {
+									callback(entity);
+								}
+							}
+						}
 						processed.add(query);
 					}
 				}

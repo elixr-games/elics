@@ -54,7 +54,6 @@ export class Entity {
 			component,
 			initialData,
 		);
-		component.onAttach(component.data, this.index);
 		this.queryManager.updateEntity(this, component);
 		return this;
 	}
@@ -68,7 +67,6 @@ export class Entity {
 		);
 		this.bitmask.andNotInPlace(component.bitmask!);
 		this.vectorViews.delete(component);
-		component.onDetach(component.data, this.index);
 		this.queryManager.updateEntity(this, component);
 		return this;
 	}
@@ -158,14 +156,6 @@ export class Entity {
 		this.active = false;
 
 		// Batch component cleanup before query updates
-		let bits = this.bitmask.bits;
-		while (bits !== 0) {
-			const i = Math.floor(Math.log2(bits & -bits));
-			const c = this.componentManager.getComponentByTypeId(i)!;
-			c.onDetach(c.data, this.index);
-			bits &= bits - 1;
-		}
-
 		this.bitmask.bits = 0;
 		this.vectorViews.clear();
 		this.queryManager.resetEntity(this);

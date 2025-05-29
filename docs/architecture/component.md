@@ -10,7 +10,6 @@ The **Component** in EliCS is a core element of the ECS (Entity-Component-System
 
 - **Typed Data Storage**: Stores component data in `TypedArray` or similar optimized structures for efficient memory usage.
 - **Schema Definition**: Developers define a schema for each component type to enforce data structure, types, and default values.
-- **Lifecycle Hooks**: Provides `onAttach` and `onDetach` hooks for executing custom logic when components are added to or removed from entities.
 - **Separation of Data and Logic**: Component data is maintained in centralized storage rather than as individual objects, reducing overhead and improving cache performance.
 - **Flexible Data Types**: Supports various data types (numerical, vectors, strings, and objects) to suit different application needs.
 
@@ -29,7 +28,7 @@ The following examples demonstrate how to define a component, attach it to an en
 
 ### Defining a Component
 
-Define a component with the `createComponent` function by providing a schema that defines the data structure and default values, as well as optional lifecycle hooks.
+Define a component with the `createComponent` function by providing a schema that defines the data structure and default values.
 
 ```ts
 import { createComponent, Types } from 'elics';
@@ -41,14 +40,8 @@ const schema = {
 	uuid: { type: Types.String, default: '' },
 	object3D: { type: Types.Object, default: null },
 };
-const onAttach = (index: number) => {
-	console.log(`EnemyComponent attached to entity at index ${index}`);
-};
-const onDetach = (index: number) => {
-	EnemyComponent.data.object3D[index].removeFromParent();
-};
 
-const EnemyComponent = createComponent(schema, onAttach, onDetach);
+const EnemyComponent = createComponent(schema);
 ```
 
 #### Component Schema
@@ -64,17 +57,35 @@ const schema = {
 
 This example schema tells EliCS that the `EnemyComponent` has a property `isAlive` of type `Boolean` with a default value of `true`.
 
-#### Lifecycle Hooks
+#### Tracking Component Lifecycle
 
-The `onAttach` and `onDetach` hooks are optional functions that are invoked when the component is attached to or detached from an entity, respectively. These hooks take the entity's index as an argument and can be used to perform custom logic or setup tasks related to the component's lifecycle, for example:
+If you need to track when components are added to or removed from entities, you can use Query subscriptions. This provides a more flexible and decoupled approach than component-specific callbacks:
 
 ```ts
-const onDetach = (index: number) => {
-	EnemyComponent.data.object3D[index].removeFromParent();
-};
+const enemyQuery = world.queryManager.registerQuery({
+	required: [EnemyComponent],
+});
+
+// Track when entities gain the EnemyComponent
+enemyQuery.subscribe('qualify', (entity) => {
+	console.log(`EnemyComponent attached to entity ${entity.index}`);
+});
+
+// Track when entities lose the EnemyComponent
+enemyQuery.subscribe('disqualify', (entity) => {
+	const object3D = entity.getValue(EnemyComponent, 'object3D');
+	if (object3D) {
+		object3D.removeFromParent();
+	}
+});
 ```
 
-When the component is detached from an entity, we can directly access the `object3D` property from the component's data and perform cleanup operations.
+This approach allows you to:
+
+- Track multiple components with a single query
+- Have multiple listeners for the same component lifecycle events
+- Keep component definitions pure and focused on data
+- Easily enable/disable lifecycle tracking without modifying component code
 
 ### Registering a Component
 
@@ -131,20 +142,14 @@ Components are not instantiated per entity. Instead, the component object's prop
 
 ### createComponent Function
 
-Creates a new component with the specified schema and optional lifecycle hooks.
+Creates a new component with the specified schema.
 
 ```ts
-function createComponent<T extends Types>(
-	schema: TypedSchema<T>,
-	onAttach?: (index: number) => void,
-	onDetach?: (index: number) => void,
-): Component<T>;
+function createComponent<T extends Types>(schema: TypedSchema<T>): Component<T>;
 ```
 
 - **Parameters:**
   - `schema`: The schema defining the data structure and default values for the component.
-  - `onAttach` (optional): A lifecycle hook invoked when the component is attached to an entity.
-  - `onDetach` (optional): A lifecycle hook invoked when the component is detached from an entity.
 - **Returns:** A new `Component` instance based on the provided schema.
 
 ### Component.schema
@@ -164,19 +169,3 @@ readonly data: { [key: keyof schema]: TypedArray | Array<any> };
 ```
 
 the `data` property stores the component's data in optimized arrays (one for each property in the schema). Numerical and vector data are typically stored in a `TypedArray`, while strings and objects are stored in regular JavaScript arrays.
-
-### Component.onAttach
-
-A lifecycle hook invoked when the component is attached to an entity:
-
-```ts
-onAttach: (index: number) => void;
-```
-
-### Component.onDetach
-
-A lifecycle hook invoked when the component is detached from an entity:
-
-```ts
-onDetach: (index: number) => void;
-```
