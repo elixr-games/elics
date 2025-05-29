@@ -5,6 +5,48 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - "Streamliner" - May 29, 2025
+
+A focused release that streamlines the component API by removing lifecycle hooks in favor of a more flexible query subscription system.
+
+### Breaking Changes
+
+- **Removed component lifecycle hooks**: The `onAttach` and `onDetach` callbacks have been removed from the component API. Components are now pure data containers without built-in lifecycle management.
+- **Migration required**: Applications using `onAttach`/`onDetach` must migrate to query subscriptions:
+
+  ```ts
+  // Before
+  const Component = createComponent(schema, onAttach, onDetach);
+
+  // After
+  const Component = createComponent(schema);
+  const query = world.queryManager.registerQuery({ required: [Component] });
+  query.subscribe('qualify', onAttach);
+  query.subscribe('disqualify', onDetach);
+  ```
+
+### Added
+
+- **Query subscription for lifecycle tracking**: Use `query.subscribe('qualify'/'disqualify')` to track when components are added or removed from entities
+- **Multiple lifecycle listeners**: The new system supports multiple subscribers for the same component events
+- **Conditional lifecycle tracking**: Create queries that track combinations of components, not just individual ones
+
+### Fixed
+
+- Fixed missing `disqualify` callbacks when removing the last component from an entity
+
+### Changed
+
+- Simplified component API - components are now pure data structures
+- Improved separation of concerns - lifecycle logic is decoupled from component definitions
+- Enhanced flexibility - subscriptions can be dynamically added or removed at runtime
+
+### Documentation
+
+- Updated component documentation to reflect the removal of lifecycle hooks
+- Added comprehensive examples of using query subscriptions for lifecycle tracking
+- Enhanced query documentation with component lifecycle tracking patterns
+
 ## [2.2.0] - "Hyper Glide" - January 22, 2025
 
 A major release focusing on performance optimizations and comprehensive project infrastructure improvements.
