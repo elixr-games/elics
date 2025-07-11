@@ -71,6 +71,24 @@ const NegativeEnumComponent = createComponent({
 	value: { type: Types.Enum, enum: NegativeEnum, default: NegativeEnum.Zero },
 });
 
+// Define range-constrained components for testing
+const RangedHealthComponent = createComponent({
+	current: { type: Types.Float32, default: 100, min: 0, max: 100 },
+	maximum: { type: Types.Float32, default: 100, min: 1 },
+});
+
+const TemperatureComponent = createComponent({
+	celsius: { type: Types.Int16, default: 20, min: -273, max: 1000 },
+});
+
+const ScoreComponent = createComponent({
+	points: { type: Types.Int8, default: 0, max: 127 },
+});
+
+const PrecisionComponent = createComponent({
+	value: { type: Types.Float64, default: 0.0, min: -1.0, max: 1.0 },
+});
+
 describe('Entity Tests', () => {
 	let world: World;
 
@@ -87,6 +105,10 @@ describe('Entity Tests', () => {
 		world.registerComponent(SeasonComponent);
 		world.registerComponent(LargeEnumComponent);
 		world.registerComponent(NegativeEnumComponent);
+		world.registerComponent(RangedHealthComponent);
+		world.registerComponent(TemperatureComponent);
+		world.registerComponent(ScoreComponent);
+		world.registerComponent(PrecisionComponent);
 	});
 
 	test('Entity creation', () => {
@@ -450,6 +472,176 @@ describe('Entity Tests', () => {
 			expect(() => entity.addComponent(InvalidDefaultComponent)).toThrow(
 				'Invalid enum value',
 			);
+		});
+
+		describe('Range validation tests', () => {
+			test('Range component with default values', () => {
+				const entity = world.createEntity();
+				entity.addComponent(RangedHealthComponent);
+
+				expect(entity.getValue(RangedHealthComponent, 'current')).toBe(100);
+				expect(entity.getValue(RangedHealthComponent, 'maximum')).toBe(100);
+			});
+
+			test('Range component with valid initial values', () => {
+				const entity = world.createEntity();
+				entity.addComponent(RangedHealthComponent, {
+					current: 50,
+					maximum: 150,
+				});
+
+				expect(entity.getValue(RangedHealthComponent, 'current')).toBe(50);
+				expect(entity.getValue(RangedHealthComponent, 'maximum')).toBe(150);
+			});
+
+			test('Setting values within range works', () => {
+				const entity = world.createEntity();
+				entity.addComponent(RangedHealthComponent);
+
+				// Valid range operations
+				entity.setValue(RangedHealthComponent, 'current', 75);
+				expect(entity.getValue(RangedHealthComponent, 'current')).toBe(75);
+
+				entity.setValue(RangedHealthComponent, 'current', 0); // Min boundary
+				expect(entity.getValue(RangedHealthComponent, 'current')).toBe(0);
+
+				entity.setValue(RangedHealthComponent, 'current', 100); // Max boundary
+				expect(entity.getValue(RangedHealthComponent, 'current')).toBe(100);
+			});
+
+			test('Setting values below minimum throws error', () => {
+				const entity = world.createEntity();
+				entity.addComponent(RangedHealthComponent);
+
+				// Below minimum
+				expect(() =>
+					entity.setValue(RangedHealthComponent, 'current', -1),
+				).toThrow('Value out of range');
+
+				expect(() =>
+					entity.setValue(RangedHealthComponent, 'maximum', 0),
+				).toThrow('Value out of range');
+			});
+
+			test('Setting values above maximum throws error', () => {
+				const entity = world.createEntity();
+				entity.addComponent(RangedHealthComponent);
+
+				// Above maximum
+				expect(() =>
+					entity.setValue(RangedHealthComponent, 'current', 101),
+				).toThrow('Value out of range');
+			});
+
+			test('Invalid initial values throw error', () => {
+				const entity = world.createEntity();
+
+				// Invalid initial values
+				expect(() =>
+					entity.addComponent(RangedHealthComponent, { current: -5 }),
+				).toThrow('Value out of range');
+
+				expect(() =>
+					entity.addComponent(RangedHealthComponent, { current: 150 }),
+				).toThrow('Value out of range');
+			});
+
+			test('Temperature component with negative ranges', () => {
+				const entity = world.createEntity();
+				entity.addComponent(TemperatureComponent);
+
+				// Valid temperature values
+				entity.setValue(TemperatureComponent, 'celsius', -100);
+				expect(entity.getValue(TemperatureComponent, 'celsius')).toBe(-100);
+
+				entity.setValue(TemperatureComponent, 'celsius', 500);
+				expect(entity.getValue(TemperatureComponent, 'celsius')).toBe(500);
+
+				// Invalid temperature values
+				expect(() =>
+					entity.setValue(TemperatureComponent, 'celsius', -274),
+				).toThrow('Value out of range');
+
+				expect(() =>
+					entity.setValue(TemperatureComponent, 'celsius', 1001),
+				).toThrow('Value out of range');
+			});
+
+			test('Score component with max-only constraint', () => {
+				const entity = world.createEntity();
+				entity.addComponent(ScoreComponent);
+
+				// Valid scores (no minimum constraint)
+				entity.setValue(ScoreComponent, 'points', -100);
+				expect(entity.getValue(ScoreComponent, 'points')).toBe(-100);
+
+				entity.setValue(ScoreComponent, 'points', 127);
+				expect(entity.getValue(ScoreComponent, 'points')).toBe(127);
+
+				// Invalid score (above maximum)
+				expect(() => entity.setValue(ScoreComponent, 'points', 128)).toThrow(
+					'Value out of range',
+				);
+			});
+
+			test('Precision component with float64 ranges', () => {
+				const entity = world.createEntity();
+				entity.addComponent(PrecisionComponent);
+
+				// Valid precision values
+				entity.setValue(PrecisionComponent, 'value', 0.5);
+				expect(entity.getValue(PrecisionComponent, 'value')).toBe(0.5);
+
+				entity.setValue(PrecisionComponent, 'value', -0.999);
+				expect(entity.getValue(PrecisionComponent, 'value')).toBe(-0.999);
+
+				// Invalid precision values
+				expect(() => entity.setValue(PrecisionComponent, 'value', 1.1)).toThrow(
+					'Value out of range',
+				);
+
+				expect(() =>
+					entity.setValue(PrecisionComponent, 'value', -1.1),
+				).toThrow('Value out of range');
+			});
+
+			test('Range validation with checks off', () => {
+				const entity = world.createEntity();
+				entity.addComponent(RangedHealthComponent);
+
+				// Turn off checks
+				const noChecksWorld = new World({ checksOn: false });
+				noChecksWorld.registerComponent(RangedHealthComponent);
+				const entityNoChecks = noChecksWorld.createEntity();
+				entityNoChecks.addComponent(RangedHealthComponent);
+
+				// Invalid values should not throw with checks off
+				expect(() =>
+					entityNoChecks.setValue(RangedHealthComponent, 'current', -50),
+				).not.toThrow();
+				expect(entityNoChecks.getValue(RangedHealthComponent, 'current')).toBe(
+					-50,
+				);
+
+				expect(() =>
+					entityNoChecks.setValue(RangedHealthComponent, 'current', 200),
+				).not.toThrow();
+				expect(entityNoChecks.getValue(RangedHealthComponent, 'current')).toBe(
+					200,
+				);
+			});
+
+			test('Components without range constraints work normally', () => {
+				const entity = world.createEntity();
+				entity.addComponent(PositionComponent);
+
+				// Should work with any valid number (no range constraints)
+				entity.setValue(PositionComponent, 'x', -1000);
+				expect(entity.getValue(PositionComponent, 'x')).toBe(-1000);
+
+				entity.setValue(PositionComponent, 'x', 1000);
+				expect(entity.getValue(PositionComponent, 'x')).toBe(1000);
+			});
 		});
 	});
 });

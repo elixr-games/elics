@@ -50,7 +50,10 @@ enum AIState {
 const schema = {
 	isAlive: { type: Types.Boolean, default: true },
 	position: { type: Types.Vec3, default: [0, 0, 0] },
-	health: { type: Types.Float32, default: 100 },
+	health: { type: Types.Float32, default: 100, min: 0, max: 100 },
+	shield: { type: Types.Float32, default: 0, min: 0 },
+	damage: { type: Types.Int16, default: 10, min: 1, max: 999 },
+	temperature: { type: Types.Int8, default: 20, min: -50, max: 50 },
 	uuid: { type: Types.String, default: '' },
 	object3D: { type: Types.Object, default: null },
 	enemyType: { type: Types.Enum, enum: EnemyType, default: EnemyType.Grunt },
@@ -121,7 +124,10 @@ Attach the component to an entity using the `addComponent` method. You can optio
 entity.addComponent(EnemyComponent, {
 	isAlive: 1,
 	position: [10, 20, 30],
-	health: 50,
+	health: 75, // Valid: within 0-100 range
+	shield: 25, // Valid: above minimum 0
+	damage: 50, // Valid: within 1-999 range
+	temperature: 35, // Valid: within -50 to 50 range
 	uuid: 'abc123',
 	object3D: someObject3D,
 	enemyType: EnemyType.Elite,
@@ -157,9 +163,21 @@ EnemyComponent.data['aiState'][index] = AIState.Attack; // Change AI state
 entity.setValue(EnemyComponent, 'enemyType', EnemyType.Boss);
 entity.setValue(EnemyComponent, 'aiState', AIState.Chase);
 
+// Range-validated operations
+entity.setValue(EnemyComponent, 'health', 85); // Valid: within 0-100
+entity.setValue(EnemyComponent, 'damage', 200); // Valid: within 1-999
+entity.setValue(EnemyComponent, 'temperature', 0); // Valid: within -50 to 50
+
+// These would throw errors when checks are enabled:
+// entity.setValue(EnemyComponent, 'health', -5);     // Below minimum
+// entity.setValue(EnemyComponent, 'health', 150);    // Above maximum
+// entity.setValue(EnemyComponent, 'damage', 0);      // Below minimum
+// entity.setValue(EnemyComponent, 'temperature', 60); // Above maximum
+
 // Getting values with type safety
 const currentType = entity.getValue(EnemyComponent, 'enemyType'); // Returns number
 const currentState = entity.getValue(EnemyComponent, 'aiState'); // Returns number
+const currentHealth = entity.getValue(EnemyComponent, 'health'); // Returns number (0-100)
 ```
 
 ## API Documentation

@@ -113,9 +113,16 @@ export type SchemaField<T extends DataType> = T extends 'Enum'
 			default: TypeValueToType<T>;
 			enum: EnumType;
 		}
-	: {
-			type: T;
-			default: TypeValueToType<T>;
-		};
+	: T extends 'Int8' | 'Int16' | 'Float32' | 'Float64'
+		? {
+				type: T;
+				default: TypeValueToType<T>;
+				min?: number;
+				max?: number;
+			}
+		: {
+				type: T;
+				default: TypeValueToType<T>;
+			};
 
 export type TypedSchema<T extends DataType> = Record<string, SchemaField<T>>;

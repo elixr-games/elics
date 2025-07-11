@@ -10,6 +10,7 @@ import {
 	ErrorMessages,
 	assertCondition,
 	assertValidEnumValue,
+	assertValidRangeValue,
 } from './checks.js';
 
 import BitSet from './bit-set.js';
@@ -96,6 +97,16 @@ export function assignInitialComponentData<
 				break;
 			case Types.Enum:
 				assertValidEnumValue(input, schemaField.enum, key);
+				dataRef[index] = input;
+				break;
+			case Types.Int8:
+			case Types.Int16:
+			case Types.Float32:
+			case Types.Float64:
+				// For numeric types, validate range constraints if present
+				if ('min' in schemaField || 'max' in schemaField) {
+					assertValidRangeValue(input, schemaField.min, schemaField.max, key);
+				}
 				dataRef[index] = input;
 				break;
 			case Types.String:

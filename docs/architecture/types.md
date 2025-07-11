@@ -125,6 +125,88 @@ entity.setValue(TaskComponent, 'priority', Priority.Critical);
 entity.setValue(TaskComponent, 'priority', 999);
 ```
 
+## Range Constraints
+
+For numeric types (`Int8`, `Int16`, `Float32`, `Float64`), you can add optional `min` and `max` constraints to validate values within specific ranges.
+
+### Key Features
+
+- **Optional Constraints**: Add `min` and/or `max` properties to numeric field schemas
+- **Runtime Validation**: Validates values during setValue operations and component initialization when checks are enabled
+- **Flexible Bounds**: Support independent minimum and maximum constraints, or use either one alone
+- **Type Support**: Works with all numeric types including integers and floating-point numbers
+
+### Schema Definition
+
+```ts
+const StatsComponent = createComponent({
+	health: { type: Types.Float32, default: 100, min: 0, max: 100 },
+	experience: { type: Types.Int32, default: 0, min: 0 }, // No maximum
+	temperature: { type: Types.Int16, default: 20, min: -273, max: 1000 },
+	precision: { type: Types.Float64, default: 0.5, min: 0.0, max: 1.0 },
+});
+```
+
+### Usage Examples
+
+```ts
+// Register component
+world.registerComponent(StatsComponent);
+
+// Create entity with valid values
+const entity = world.createEntity();
+entity.addComponent(StatsComponent, {
+	health: 75,
+	experience: 1500,
+	temperature: 25,
+});
+
+// Valid value changes
+entity.setValue(StatsComponent, 'health', 50); // Within range
+entity.setValue(StatsComponent, 'temperature', -100); // Within range
+
+// These will throw errors when checks are enabled:
+// entity.setValue(StatsComponent, 'health', -10); // Below minimum
+// entity.setValue(StatsComponent, 'health', 150); // Above maximum
+// entity.setValue(StatsComponent, 'experience', -5); // Below minimum
+```
+
+### Validation Behavior
+
+When `CHECKS_ON` is true, EliCS validates that:
+
+- Values are not below the specified minimum (if `min` is defined)
+- Values are not above the specified maximum (if `max` is defined)
+- Both default values and runtime assignments respect the constraints
+
+```ts
+// Component with temperature constraints
+const WeatherComponent = createComponent({
+	celsius: { type: Types.Int16, default: 20, min: -273, max: 100 },
+});
+
+world.registerComponent(WeatherComponent);
+const entity = world.createEntity();
+entity.addComponent(WeatherComponent);
+
+// Valid operations
+entity.setValue(WeatherComponent, 'celsius', -200); // Valid
+entity.setValue(WeatherComponent, 'celsius', 50); // Valid
+
+// Invalid operations (throw errors)
+try {
+	entity.setValue(WeatherComponent, 'celsius', -300); // Below absolute zero
+} catch (error) {
+	console.log(error.message); // "Value out of range: -300 is below minimum -273 for field celsius"
+}
+
+try {
+	entity.setValue(WeatherComponent, 'celsius', 150); // Above boiling point
+} catch (error) {
+	console.log(error.message); // "Value out of range: 150 is above maximum 100 for field celsius"
+}
+```
+
 ## TypedSchema Interface
 
 The **TypedSchema** interface is used to define the structure of component data or system configuration data. It consists of key-value pairs where the key is the property name and the value is an object containing the property type and default value:

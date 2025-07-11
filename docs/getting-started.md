@@ -79,7 +79,9 @@ const Health = createComponent({
 const Unit = createComponent({
 	type: { type: Types.Enum, enum: UnitType, default: UnitType.Infantry },
 	state: { type: Types.Enum, enum: CombatState, default: CombatState.Idle },
-	damage: { type: Types.Float32, default: 10 },
+	damage: { type: Types.Float32, default: 10, min: 1, max: 100 },
+	armor: { type: Types.Int16, default: 0, min: 0, max: 50 },
+	morale: { type: Types.Float32, default: 1.0, min: 0.0, max: 1.0 },
 });
 ```
 
@@ -106,7 +108,9 @@ infantryUnit.addComponent(Health);
 infantryUnit.addComponent(Unit, {
 	type: UnitType.Infantry,
 	state: CombatState.Moving,
-	damage: 15,
+	damage: 15, // Valid: within 1-100 range
+	armor: 20, // Valid: within 0-50 range
+	morale: 0.8, // Valid: within 0.0-1.0 range
 });
 
 const archerUnit = world.createEntity();
@@ -115,7 +119,9 @@ archerUnit.addComponent(Health, { value: 80 });
 archerUnit.addComponent(Unit, {
 	type: UnitType.Archer,
 	state: CombatState.Defending,
-	damage: 25,
+	damage: 25, // Valid: within 1-100 range
+	armor: 5, // Valid: within 0-50 range
+	morale: 0.9, // Valid: within 0.0-1.0 range
 });
 ```
 

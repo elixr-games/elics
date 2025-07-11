@@ -11,6 +11,7 @@ import {
 	ErrorMessages,
 	assertCondition,
 	assertValidEnumValue,
+	assertValidRangeValue,
 } from './checks.js';
 
 import BitSet from './bit-set.js';
@@ -131,6 +132,21 @@ export class Entity {
 			case Types.Enum:
 				// enum property is guaranteed to exist due to initialization validation
 				assertValidEnumValue(value as number, schemaField.enum, key as string);
+				componentData[this.index] = value as any;
+				break;
+			case Types.Int8:
+			case Types.Int16:
+			case Types.Float32:
+			case Types.Float64:
+				// For numeric types, validate range constraints if present
+				if ('min' in schemaField || 'max' in schemaField) {
+					assertValidRangeValue(
+						value as number,
+						schemaField.min,
+						schemaField.max,
+						key as string,
+					);
+				}
 				componentData[this.index] = value as any;
 				break;
 			case Types.Entity:

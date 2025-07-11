@@ -13,6 +13,7 @@ export enum ErrorMessages {
 	ComponentAlreadyRegistered = 'Component already registered',
 	InvalidDefaultValue = 'Invalid default value',
 	InvalidEnumValue = 'Invalid enum value',
+	InvalidRangeValue = 'Value out of range',
 }
 
 export function assertCondition(
@@ -41,6 +42,29 @@ export function assertValidEnumValue(
 	if (!enumValues.includes(value)) {
 		throw new Error(
 			`${ErrorMessages.InvalidEnumValue}: ${value} is not a valid value for enum ${fieldName}`,
+		);
+	}
+}
+
+export function assertValidRangeValue(
+	value: number,
+	min: number | undefined,
+	max: number | undefined,
+	fieldName: string,
+): void {
+	if (!CHECKS_ON) {
+		return;
+	}
+
+	if (min !== undefined && value < min) {
+		throw new Error(
+			`${ErrorMessages.InvalidRangeValue}: ${value} is below minimum ${min} for field ${fieldName}`,
+		);
+	}
+
+	if (max !== undefined && value > max) {
+		throw new Error(
+			`${ErrorMessages.InvalidRangeValue}: ${value} is above maximum ${max} for field ${fieldName}`,
 		);
 	}
 }
