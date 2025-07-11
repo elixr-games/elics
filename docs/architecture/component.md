@@ -33,12 +33,28 @@ Define a component with the `createComponent` function by providing a schema tha
 ```ts
 import { createComponent, Types } from 'elics';
 
+// Define enums for type safety
+enum EnemyType {
+	Grunt = 1,
+	Elite = 2,
+	Boss = 3,
+}
+
+enum AIState {
+	Idle = 10,
+	Patrol = 20,
+	Chase = 30,
+	Attack = 40,
+}
+
 const schema = {
 	isAlive: { type: Types.Boolean, default: true },
 	position: { type: Types.Vec3, default: [0, 0, 0] },
 	health: { type: Types.Float32, default: 100 },
 	uuid: { type: Types.String, default: '' },
 	object3D: { type: Types.Object, default: null },
+	enemyType: { type: Types.Enum, enum: EnemyType, default: EnemyType.Grunt },
+	aiState: { type: Types.Enum, enum: AIState, default: AIState.Idle },
 };
 
 const EnemyComponent = createComponent(schema);
@@ -108,6 +124,8 @@ entity.addComponent(EnemyComponent, {
 	health: 50,
 	uuid: 'abc123',
 	object3D: someObject3D,
+	enemyType: EnemyType.Elite,
+	aiState: AIState.Patrol,
 });
 ```
 
@@ -125,11 +143,23 @@ const position = EnemyComponent.data['position'].subarray(
 	index * 3 + 3,
 );
 const health = EnemyComponent.data['health'][index];
+const enemyType = EnemyComponent.data['enemyType'][index]; // Returns number (e.g., 2 for Elite)
+const aiState = EnemyComponent.data['aiState'][index]; // Returns number (e.g., 20 for Patrol)
 
 // Modifying values
 EnemyComponent.data['health'][index] = 75;
 EnemyComponent.data['position'].set([5, 10, 15], index * 3);
 EnemyComponent.data['isAlive'][index] = 0; // Mark as not alive
+EnemyComponent.data['enemyType'][index] = EnemyType.Boss; // Change to boss type
+EnemyComponent.data['aiState'][index] = AIState.Attack; // Change AI state
+
+// For better type safety, use entity methods instead of direct access
+entity.setValue(EnemyComponent, 'enemyType', EnemyType.Boss);
+entity.setValue(EnemyComponent, 'aiState', AIState.Chase);
+
+// Getting values with type safety
+const currentType = entity.getValue(EnemyComponent, 'enemyType'); // Returns number
+const currentState = entity.getValue(EnemyComponent, 'aiState'); // Returns number
 ```
 
 ## API Documentation

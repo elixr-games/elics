@@ -48,6 +48,22 @@ const world = new World();
 Components are data containers that define entity properties.
 
 ```typescript
+import { createComponent, Types } from 'elics';
+
+// Define enums for type-safe state management
+enum UnitType {
+	Infantry = 1,
+	Cavalry = 2,
+	Archer = 3,
+}
+
+enum CombatState {
+	Idle = 10,
+	Moving = 20,
+	Attacking = 30,
+	Defending = 40,
+}
+
 const Position = createComponent({
 	value: { type: Types.Vec3, default: [0, 0, 0] },
 });
@@ -59,6 +75,12 @@ const Velocity = createComponent({
 const Health = createComponent({
 	value: { type: Types.Float32, default: 100 },
 });
+
+const Unit = createComponent({
+	type: { type: Types.Enum, enum: UnitType, default: UnitType.Infantry },
+	state: { type: Types.Enum, enum: CombatState, default: CombatState.Idle },
+	damage: { type: Types.Float32, default: 10 },
+});
 ```
 
 Register these components:
@@ -67,7 +89,8 @@ Register these components:
 world
 	.registerComponent(Position)
 	.registerComponent(Velocity)
-	.registerComponent(Health);
+	.registerComponent(Health)
+	.registerComponent(Unit);
 ```
 
 ## Creating Entities
@@ -75,10 +98,25 @@ world
 Instantiate entities and attach components:
 
 ```typescript
-const entity = world.createEntity();
-entity.addComponent(Position, { value: [10, 20, 30] });
-entity.addComponent(Velocity);
-entity.addComponent(Health);
+// Create different types of units with enum values
+const infantryUnit = world.createEntity();
+infantryUnit.addComponent(Position, { value: [10, 20, 30] });
+infantryUnit.addComponent(Velocity);
+infantryUnit.addComponent(Health);
+infantryUnit.addComponent(Unit, {
+	type: UnitType.Infantry,
+	state: CombatState.Moving,
+	damage: 15,
+});
+
+const archerUnit = world.createEntity();
+archerUnit.addComponent(Position, { value: [50, 0, 100] });
+archerUnit.addComponent(Health, { value: 80 });
+archerUnit.addComponent(Unit, {
+	type: UnitType.Archer,
+	state: CombatState.Defending,
+	damage: 25,
+});
 ```
 
 ## Creating Systems
@@ -90,6 +128,7 @@ import { createSystem } from 'elics';
 
 const queryConfig = {
 	movables: { required: [Position, Velocity] },
+	combatUnits: { required: [Unit, Health] },
 };
 
 class MovementSystem extends createSystem(queryConfig) {
@@ -104,7 +143,52 @@ class MovementSystem extends createSystem(queryConfig) {
 	}
 }
 
+class CombatSystem extends createSystem(queryConfig) {
+	update(delta, time) {
+		this.queries.combatUnits.entities.forEach((entity) => {
+			const unitState = entity.getValue(Unit, 'state');
+			const unitType = entity.getValue(Unit, 'type');
+
+			// Process units based on their state
+			switch (unitState) {
+				case CombatState.Attacking:
+					this.handleAttack(entity, unitType);
+					break;
+				case CombatState.Defending:
+					this.handleDefense(entity, unitType);
+					break;
+				case CombatState.Moving:
+					// Units continue moving
+					break;
+			}
+		});
+	}
+
+	handleAttack(entity, unitType) {
+		const damage = entity.getValue(Unit, 'damage');
+		// Different unit types have different attack behaviors
+		if (unitType === UnitType.Archer) {
+			// Ranged attack logic
+			console.log(`Archer attacks with ${damage} damage`);
+		} else if (unitType === UnitType.Infantry) {
+			// Melee attack logic
+			console.log(`Infantry attacks with ${damage} damage`);
+		}
+
+		// Change state back to idle after attacking
+		entity.setValue(Unit, 'state', CombatState.Idle);
+	}
+
+	handleDefense(entity, unitType) {
+		// Defense logic based on unit type
+		console.log(
+			`${unitType === UnitType.Archer ? 'Archer' : 'Infantry'} is defending`,
+		);
+	}
+}
+
 world.registerSystem(MovementSystem);
+world.registerSystem(CombatSystem);
 ```
 
 ## Updating the World

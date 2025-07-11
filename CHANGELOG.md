@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.0] - "Enumerator" - July 11, 2025
+
+A significant feature release that adds comprehensive enum support for type-safe component properties with automatic storage optimization.
+
+### Added
+
+- **Enum Type Support**: New `Types.Enum` for defining enumerated component properties with numeric constants
+- **Automatic Storage Optimization**: Smart selection between Int8Array and Int16Array based on enum value ranges
+- **Runtime Validation**: Validates enum values during setValue operations and component initialization when checks are enabled
+- **TypeScript Integration**: Full TypeScript support with proper type inference for enum properties
+- **Schema Validation**: Validates that enum fields include required `enum` property during component registration
+
+### Performance Improvements
+
+- **Switch Statement Optimization**: Converted if/else chains to switch statements for better performance in component and entity operations
+- **Conditional Validation**: Enum validation logic only executes when `CHECKS_ON` is true, improving runtime performance
+- **Early Validation**: Enum property existence is validated once during component initialization rather than on every operation
+
+### Breaking Changes
+
+- **Schema Interface**: `TypedSchema` now supports conditional field types - enum fields require an additional `enum` property
+
+### Documentation
+
+- **Comprehensive Enum Documentation**: Added detailed enum usage examples and API documentation
+- **Updated Getting Started Guide**: Enhanced with enum examples showing type-safe state management
+- **Component Documentation**: Added enum examples demonstrating storage optimization and validation
+
+### Internal Improvements
+
+- **Enhanced Error Messages**: Added specific error message for invalid enum values
+- **Validation Functions**: New `assertValidEnumValue` function for consistent enum validation
+- **Type Safety**: Improved TypeScript definitions for enum schema fields
+
 ## [2.3.0] - "Streamliner" - May 29, 2025
 
 A focused release that streamlines the component API by removing lifecycle hooks in favor of a more flexible query subscription system.
