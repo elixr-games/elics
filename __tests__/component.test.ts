@@ -1,6 +1,6 @@
+import { Types } from '../src/types';
 import { World } from '../src/world';
 import { createComponent } from '../src/component';
-import { Types } from '../src/types';
 
 // Define components for testing
 const PositionComponent = createComponent({
@@ -96,5 +96,63 @@ describe('Component Tests', () => {
 		entity.destroy();
 		expect(disqualifyCallback).toHaveBeenCalledWith(entity);
 		expect(disqualifyCallback).toHaveBeenCalledTimes(1);
+	});
+
+	test('Enum component initialization', () => {
+		enum Direction {
+			North = 1,
+			East = 2,
+			South = 3,
+			West = 4,
+		}
+
+		const DirectionComponent = createComponent({
+			facing: { type: Types.Enum, enum: Direction, default: Direction.North },
+		});
+
+		world.registerComponent(DirectionComponent);
+
+		// Check that the component was initialized with the correct array type
+		expect(DirectionComponent.data.facing).toBeDefined();
+		expect(DirectionComponent.data.facing instanceof Int8Array).toBe(true);
+
+		// Create entity and check default
+		const entity = world.createEntity();
+		entity.addComponent(DirectionComponent);
+		expect(entity.getValue(DirectionComponent, 'facing')).toBe(Direction.North);
+	});
+
+	test('Enum component with values requiring Int16Array', () => {
+		enum BigNumbers {
+			Small = 100,
+			Medium = 500,
+			Large = 1000,
+		}
+
+		const BigNumberComponent = createComponent({
+			value: { type: Types.Enum, enum: BigNumbers, default: BigNumbers.Small },
+		});
+
+		world.registerComponent(BigNumberComponent);
+
+		// Check that it uses Int16Array for large values
+		expect(BigNumberComponent.data.value instanceof Int16Array).toBe(true);
+	});
+
+	test('Enum component without enum property throws error', () => {
+		// Create a component with invalid enum schema (missing enum property)
+		const InvalidEnumComponent = {
+			schema: {
+				value: { type: Types.Enum, default: 1 }, // Missing enum property
+			},
+			data: {} as any,
+			bitmask: null,
+			typeId: -1,
+		};
+
+		// Should throw when trying to register component with missing enum property
+		expect(() => world.registerComponent(InvalidEnumComponent)).toThrow(
+			'Invalid default value',
+		);
 	});
 });

@@ -12,6 +12,7 @@ export enum ErrorMessages {
 	SystemAlreadyRegistered = 'System already registered',
 	ComponentAlreadyRegistered = 'Component already registered',
 	InvalidDefaultValue = 'Invalid default value',
+	InvalidEnumValue = 'Invalid enum value',
 }
 
 export function assertCondition(
@@ -21,5 +22,25 @@ export function assertCondition(
 ): void {
 	if (CHECKS_ON && !condition) {
 		throw new Error(`${message}: ${object}`);
+	}
+}
+
+export function assertValidEnumValue(
+	value: number,
+	enumObject: { [key: string]: any },
+	fieldName: string,
+): void {
+	if (!CHECKS_ON) {
+		return;
+	}
+
+	const enumValues = Object.values(enumObject).filter(
+		(v) => typeof v === 'number',
+	) as number[];
+
+	if (!enumValues.includes(value)) {
+		throw new Error(
+			`${ErrorMessages.InvalidEnumValue}: ${value} is not a valid value for enum ${fieldName}`,
+		);
 	}
 }

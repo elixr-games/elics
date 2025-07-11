@@ -1,6 +1,6 @@
+import { Types } from '../src/types';
 import { World } from '../src/world';
 import { createComponent } from '../src/component';
-import { Types } from '../src/types';
 
 // Define components for testing
 const PositionComponent = createComponent({
@@ -36,6 +36,41 @@ const ReferenceComponent = createComponent({
 	target: { type: Types.Entity, default: null as any },
 });
 
+// Define enum test components
+enum Season {
+	Spring = 1,
+	Summer = 2,
+	Fall = 3,
+	Winter = 4,
+}
+
+enum LargeEnum {
+	Value1 = 1,
+	Value2 = 100,
+	Value3 = 200,
+	Value4 = 300,
+}
+
+enum NegativeEnum {
+	NegLarge = -200,
+	NegSmall = -50,
+	Zero = 0,
+	PosSmall = 50,
+	PosLarge = 100,
+}
+
+const SeasonComponent = createComponent({
+	season: { type: Types.Enum, enum: Season, default: Season.Spring },
+});
+
+const LargeEnumComponent = createComponent({
+	value: { type: Types.Enum, enum: LargeEnum, default: LargeEnum.Value1 },
+});
+
+const NegativeEnumComponent = createComponent({
+	value: { type: Types.Enum, enum: NegativeEnum, default: NegativeEnum.Zero },
+});
+
 describe('Entity Tests', () => {
 	let world: World;
 
@@ -49,6 +84,9 @@ describe('Entity Tests', () => {
 		world.registerComponent(CustomDataComponent);
 		world.registerComponent(ReferenceComponent);
 		world.registerComponent(BoolComponent);
+		world.registerComponent(SeasonComponent);
+		world.registerComponent(LargeEnumComponent);
+		world.registerComponent(NegativeEnumComponent);
 	});
 
 	test('Entity creation', () => {
@@ -233,5 +271,185 @@ describe('Entity Tests', () => {
 
 		last.addComponent(RefComp, { ref: last });
 		expect(last.getValue(RefComp, 'ref')).toBe(last);
+	});
+
+	describe('Enum component tests', () => {
+		test('Enum component with default value', () => {
+			const entity = world.createEntity();
+			entity.addComponent(SeasonComponent);
+
+			expect(entity.getValue(SeasonComponent, 'season')).toBe(Season.Spring);
+		});
+
+		test('Enum component with initial value', () => {
+			const entity = world.createEntity();
+			entity.addComponent(SeasonComponent, { season: Season.Summer });
+
+			expect(entity.getValue(SeasonComponent, 'season')).toBe(Season.Summer);
+		});
+
+		test('Setting and getting enum values', () => {
+			const entity = world.createEntity();
+			entity.addComponent(SeasonComponent);
+
+			entity.setValue(SeasonComponent, 'season', Season.Winter);
+			expect(entity.getValue(SeasonComponent, 'season')).toBe(Season.Winter);
+
+			entity.setValue(SeasonComponent, 'season', Season.Fall);
+			expect(entity.getValue(SeasonComponent, 'season')).toBe(Season.Fall);
+		});
+
+		test('Enum validation with invalid value throws error', () => {
+			const entity = world.createEntity();
+			entity.addComponent(SeasonComponent);
+
+			// Valid values should work
+			expect(() =>
+				entity.setValue(SeasonComponent, 'season', Season.Summer),
+			).not.toThrow();
+
+			// Invalid values should throw
+			expect(() => entity.setValue(SeasonComponent, 'season', 5)).toThrow(
+				'Invalid enum value',
+			);
+			expect(() => entity.setValue(SeasonComponent, 'season', 0)).toThrow(
+				'Invalid enum value',
+			);
+			expect(() => entity.setValue(SeasonComponent, 'season', -1)).toThrow(
+				'Invalid enum value',
+			);
+		});
+
+		test('Enum validation with checks off', () => {
+			const entity = world.createEntity();
+			entity.addComponent(SeasonComponent);
+
+			// Turn off checks
+			const originalWorld = new World({ checksOn: false });
+			originalWorld.registerComponent(SeasonComponent);
+			const entityNoChecks = originalWorld.createEntity();
+			entityNoChecks.addComponent(SeasonComponent);
+
+			// Invalid values should not throw with checks off
+			// Note: Using 99 instead of 999 to avoid Int8Array overflow
+			expect(() =>
+				entityNoChecks.setValue(SeasonComponent, 'season', 99),
+			).not.toThrow();
+			expect(entityNoChecks.getValue(SeasonComponent, 'season')).toBe(99);
+		});
+
+		test('Large enum values use Int16Array', () => {
+			const entity = world.createEntity();
+			entity.addComponent(LargeEnumComponent);
+
+			// Check that it uses Int16Array for large values
+			const data = LargeEnumComponent.data.value;
+			expect(data instanceof Int16Array).toBe(true);
+
+			// Test setting and getting large values
+			entity.setValue(LargeEnumComponent, 'value', LargeEnum.Value4);
+			expect(entity.getValue(LargeEnumComponent, 'value')).toBe(
+				LargeEnum.Value4,
+			);
+		});
+
+		test('Small enum values use Int8Array', () => {
+			const entity = world.createEntity();
+			entity.addComponent(SeasonComponent);
+
+			// Check that it uses Int8Array for small values
+			const data = SeasonComponent.data.season;
+			expect(data instanceof Int8Array).toBe(true);
+		});
+
+		test('Negative enum values work correctly', () => {
+			const entity = world.createEntity();
+			entity.addComponent(NegativeEnumComponent);
+
+			// Check that it uses Int16Array for values outside Int8 range
+			const data = NegativeEnumComponent.data.value;
+			expect(data instanceof Int16Array).toBe(true);
+
+			// Test negative values
+			entity.setValue(NegativeEnumComponent, 'value', NegativeEnum.NegLarge);
+			expect(entity.getValue(NegativeEnumComponent, 'value')).toBe(
+				NegativeEnum.NegLarge,
+			);
+
+			entity.setValue(NegativeEnumComponent, 'value', NegativeEnum.NegSmall);
+			expect(entity.getValue(NegativeEnumComponent, 'value')).toBe(
+				NegativeEnum.NegSmall,
+			);
+		});
+
+		test('Multiple enum fields in same component', () => {
+			enum Priority {
+				Low = 1,
+				Medium = 2,
+				High = 3,
+			}
+
+			enum Status {
+				Pending = 10,
+				InProgress = 20,
+				Completed = 30,
+			}
+
+			const TaskComponent = createComponent({
+				priority: { type: Types.Enum, enum: Priority, default: Priority.Low },
+				status: { type: Types.Enum, enum: Status, default: Status.Pending },
+			});
+
+			world.registerComponent(TaskComponent);
+			const entity = world.createEntity();
+			entity.addComponent(TaskComponent, {
+				priority: Priority.High,
+				status: Status.InProgress,
+			});
+
+			expect(entity.getValue(TaskComponent, 'priority')).toBe(Priority.High);
+			expect(entity.getValue(TaskComponent, 'status')).toBe(Status.InProgress);
+
+			entity.setValue(TaskComponent, 'priority', Priority.Medium);
+			entity.setValue(TaskComponent, 'status', Status.Completed);
+
+			expect(entity.getValue(TaskComponent, 'priority')).toBe(Priority.Medium);
+			expect(entity.getValue(TaskComponent, 'status')).toBe(Status.Completed);
+		});
+
+		test('Enum getValue returns number type', () => {
+			const entity = world.createEntity();
+			entity.addComponent(SeasonComponent);
+
+			const value = entity.getValue(SeasonComponent, 'season');
+			expect(typeof value).toBe('number');
+			expect(value).toBe(1); // Season.Spring = 1
+		});
+
+		test('Invalid enum value in initial data throws error', () => {
+			const entity = world.createEntity();
+
+			// Invalid initial value should throw
+			expect(() =>
+				entity.addComponent(SeasonComponent, { season: 99 }),
+			).toThrow('Invalid enum value');
+		});
+
+		test('Invalid enum default value throws error', () => {
+			// This test ensures that invalid default values would be caught
+			// We can't easily test this without creating a component with an invalid default,
+			// but the validation logic is the same as for initial values
+			const InvalidDefaultComponent = createComponent({
+				value: { type: Types.Enum, enum: Season, default: 99 }, // Invalid default
+			});
+
+			world.registerComponent(InvalidDefaultComponent);
+			const entity = world.createEntity();
+
+			// Should throw when trying to add component with invalid default
+			expect(() => entity.addComponent(InvalidDefaultComponent)).toThrow(
+				'Invalid enum value',
+			);
+		});
 	});
 });

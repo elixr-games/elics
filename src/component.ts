@@ -6,7 +6,11 @@ import {
 	TypedSchema,
 	Types,
 } from './types.js';
-import { ErrorMessages, assertCondition } from './checks.js';
+import {
+	ErrorMessages,
+	assertCondition,
+	assertValidEnumValue,
+} from './checks.js';
 
 import BitSet from './bit-set.js';
 
@@ -37,8 +41,30 @@ export function initializeComponentStorage<
 	const s = component.schema;
 	component.data = {} as { [K in keyof S]: DataArrayToType<S[K]['type']> };
 	for (const key in s) {
-		const { type, default: defaultValue } = s[key];
-		const { arrayConstructor, length } = TypedArrayMap[type];
+		const schemaField = s[key];
+		const { type, default: defaultValue } = schemaField;
+		let { arrayConstructor, length } = TypedArrayMap[type];
+
+		// For Enum types, validate enum property exists and determine array type
+		if (type === Types.Enum) {
+			assertCondition(
+				'enum' in schemaField,
+				ErrorMessages.InvalidDefaultValue,
+				`Enum type requires 'enum' property for field ${key}`,
+			);
+			const enumValues = Object.values(schemaField.enum).filter(
+				(v) => typeof v === 'number',
+			) as number[];
+			const maxValue = Math.max(...enumValues);
+			const minValue = Math.min(...enumValues);
+
+			if (minValue >= -128 && maxValue <= 127) {
+				arrayConstructor = Int8Array;
+			} else {
+				arrayConstructor = Int16Array;
+			}
+		}
+
 		assertCondition(!!arrayConstructor, ErrorMessages.TypeNotSupported, type);
 		component.data[key] = new arrayConstructor(entityCapacity * length) as any;
 		assertCondition(
@@ -59,16 +85,30 @@ export function assignInitialComponentData<
 ): void {
 	const s = component.schema;
 	for (const key in s) {
-		const { type, default: defaultValue } = s[key];
+		const schemaField = s[key];
+		const { type, default: defaultValue } = schemaField;
 		const length = TypedArrayMap[type].length;
 		const dataRef = component.data[key];
 		const input = initialData[key] ?? defaultValue;
-		if (type === Types.Entity) {
-			dataRef[index] = input ? input.index : -1;
-		} else if (length === 1 || type === Types.String || type === Types.Object) {
-			dataRef[index] = input;
-		} else {
-			(dataRef as TypedArray).set(input, index * length);
+		switch (type) {
+			case Types.Entity:
+				dataRef[index] = input ? input.index : -1;
+				break;
+			case Types.Enum:
+				assertValidEnumValue(input, schemaField.enum, key);
+				dataRef[index] = input;
+				break;
+			case Types.String:
+			case Types.Object:
+				dataRef[index] = input;
+				break;
+			default:
+				if (length === 1) {
+					dataRef[index] = input;
+				} else {
+					(dataRef as TypedArray).set(input, index * length);
+				}
+				break;
 		}
 	}
 }

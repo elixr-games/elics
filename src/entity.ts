@@ -1,18 +1,22 @@
 import type { Component, ComponentMask } from './component.js';
+import {
+	DataArrayToType,
+	DataType,
+	TypeValueToType,
+	TypedArray,
+	TypedArrayMap,
+	Types,
+} from './types.js';
+import {
+	ErrorMessages,
+	assertCondition,
+	assertValidEnumValue,
+} from './checks.js';
 
 import BitSet from './bit-set.js';
 import type { ComponentManager } from './component-manager.js';
 import type { EntityManager } from './entity-manager.js';
 import type { QueryManager } from './query-manager.js';
-import {
-	DataArrayToType,
-	DataType,
-	TypeValueToType,
-	type TypedArray,
-	TypedArrayMap,
-	Types,
-} from './types.js';
-import { ErrorMessages, assertCondition } from './checks.js';
 
 export type VectorKeys<C extends Component<any>> = {
 	[K in keyof C['schema']]: DataArrayToType<
@@ -102,17 +106,16 @@ export class Entity {
 		const data = (component.data as any)[key]?.[this.index];
 		const type = schemaEntry.type as DataType;
 
-		if (type === Types.Boolean) {
-			return Boolean(data) as TypeValueToType<C['schema'][K]['type']>;
+		switch (type) {
+			case Types.Boolean:
+				return Boolean(data) as TypeValueToType<C['schema'][K]['type']>;
+			case Types.Entity:
+				return this.entityManager.getEntityByIndex(data) as TypeValueToType<
+					C['schema'][K]['type']
+				>;
+			default:
+				return data as TypeValueToType<C['schema'][K]['type']>;
 		}
-
-		if (type === Types.Entity) {
-			return this.entityManager.getEntityByIndex(data) as TypeValueToType<
-				C['schema'][K]['type']
-			>;
-		}
-
-		return data as TypeValueToType<C['schema'][K]['type']>;
 	}
 
 	setValue<C extends Component<any>, K extends keyof C['schema']>(
@@ -121,11 +124,21 @@ export class Entity {
 		value: TypeValueToType<C['schema'][K]['type']>,
 	): void {
 		const componentData = component.data[key];
-		const type = component.schema[key].type as DataType;
-		if (type === Types.Entity) {
-			componentData[this.index] = (value as any as Entity).index;
-		} else {
-			componentData[this.index] = value as any;
+		const schemaField = component.schema[key];
+		const type = schemaField.type as DataType;
+
+		switch (type) {
+			case Types.Enum:
+				// enum property is guaranteed to exist due to initialization validation
+				assertValidEnumValue(value as number, schemaField.enum, key as string);
+				componentData[this.index] = value as any;
+				break;
+			case Types.Entity:
+				componentData[this.index] = (value as any as Entity).index;
+				break;
+			default:
+				componentData[this.index] = value as any;
+				break;
 		}
 	}
 

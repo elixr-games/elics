@@ -9,7 +9,8 @@ export type DataType =
 	| 'Object'
 	| 'Vec2'
 	| 'Vec3'
-	| 'Vec4';
+	| 'Vec4'
+	| 'Enum';
 
 export enum Types {
 	Int8 = 'Int8',
@@ -23,6 +24,7 @@ export enum Types {
 	Vec2 = 'Vec2',
 	Vec3 = 'Vec3',
 	Vec4 = 'Vec4',
+	Enum = 'Enum',
 }
 
 export type TypedArray =
@@ -58,6 +60,7 @@ export const TypedArrayMap: {
 	Vec2: { arrayConstructor: Float32Array, length: 2 },
 	Vec3: { arrayConstructor: Float32Array, length: 3 },
 	Vec4: { arrayConstructor: Float32Array, length: 4 },
+	Enum: { arrayConstructor: Int8Array, length: 1 }, // Default, will be overridden based on enum size
 };
 
 export type TypeValueToType<T extends DataType> = T extends
@@ -65,6 +68,7 @@ export type TypeValueToType<T extends DataType> = T extends
 	| 'Int16'
 	| 'Float32'
 	| 'Float64'
+	| 'Enum'
 	? number
 	: T extends 'Boolean'
 		? boolean
@@ -90,6 +94,7 @@ export type DataArrayToType<T extends DataType> = T extends
 	| 'Vec2'
 	| 'Vec3'
 	| 'Vec4'
+	| 'Enum'
 	? TypedArray
 	: T extends 'String'
 		? Array<string>
@@ -97,10 +102,20 @@ export type DataArrayToType<T extends DataType> = T extends
 			? any[]
 			: never;
 
-export type TypedSchema<T extends DataType> = Record<
-	string,
-	{
-		type: T;
-		default: TypeValueToType<T>;
-	}
->;
+export type EnumType<T extends number = number> = {
+	[key: string]: T | string;
+	[key: number]: string;
+};
+
+export type SchemaField<T extends DataType> = T extends 'Enum'
+	? {
+			type: T;
+			default: TypeValueToType<T>;
+			enum: EnumType;
+		}
+	: {
+			type: T;
+			default: TypeValueToType<T>;
+		};
+
+export type TypedSchema<T extends DataType> = Record<string, SchemaField<T>>;
