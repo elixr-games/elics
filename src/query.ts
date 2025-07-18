@@ -2,7 +2,6 @@ import type { Component, ComponentMask } from './component.js';
 
 import BitSet from './bit-set.js';
 import { Entity } from './entity.js';
-import { ErrorMessages, assertCondition } from './checks.js';
 
 export type QueryConfig = {
 	required: Component<any>[];
@@ -55,20 +54,10 @@ export class Query {
 		const requiredMask = new BitSet();
 		const excludedMask = new BitSet();
 		for (const c of queryConfig.required) {
-			assertCondition(
-				c.bitmask !== null,
-				ErrorMessages.ComponentNotRegistered,
-				c,
-			);
 			requiredMask.orInPlace(c.bitmask!);
 		}
 		if (queryConfig.excluded) {
 			for (const c of queryConfig.excluded) {
-				assertCondition(
-					c.bitmask !== null,
-					ErrorMessages.ComponentNotRegistered,
-					c,
-				);
 				excludedMask.orInPlace(c.bitmask!);
 			}
 		}

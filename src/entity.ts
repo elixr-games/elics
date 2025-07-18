@@ -41,6 +41,12 @@ export class Entity {
 		public readonly index: number,
 	) {}
 
+	private ensureComponentRegistered(component: Component<any>): void {
+		if (component.bitmask === null) {
+			this.componentManager.registerComponent(component);
+		}
+	}
+
 	addComponent<C extends Component<any>>(
 		component: C,
 		initialData: Partial<{
@@ -48,11 +54,7 @@ export class Entity {
 		}> = {},
 	): this {
 		assertCondition(this.active, ErrorMessages.ModifyDestroyedEntity, this);
-		assertCondition(
-			component.bitmask !== null,
-			ErrorMessages.ComponentNotRegistered,
-			component,
-		);
+		this.ensureComponentRegistered(component);
 		this.bitmask.orInPlace(component.bitmask!);
 		this.componentManager.attachComponentToEntity(
 			this.index,
@@ -65,11 +67,7 @@ export class Entity {
 
 	removeComponent(component: Component<any>): this {
 		assertCondition(this.active, ErrorMessages.ModifyDestroyedEntity, this);
-		assertCondition(
-			component.bitmask !== null,
-			ErrorMessages.ComponentNotRegistered,
-			component,
-		);
+		this.ensureComponentRegistered(component);
 		this.bitmask.andNotInPlace(component.bitmask!);
 		this.vectorViews.delete(component);
 		this.queryManager.updateEntity(this, component);
@@ -77,11 +75,7 @@ export class Entity {
 	}
 
 	hasComponent(component: Component<any>): boolean {
-		assertCondition(
-			component.bitmask !== null,
-			ErrorMessages.ComponentNotRegistered,
-			component,
-		);
+		this.ensureComponentRegistered(component);
 		return this.bitmask.intersects(component.bitmask!);
 	}
 

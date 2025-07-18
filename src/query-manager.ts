@@ -14,6 +14,20 @@ export class QueryManager {
 	constructor(private componentManager: ComponentManager) {}
 
 	registerQuery(query: QueryConfig): Query {
+		// Auto-register any unregistered components
+		for (const component of query.required) {
+			if (component.bitmask === null) {
+				this.componentManager.registerComponent(component);
+			}
+		}
+		if (query.excluded) {
+			for (const component of query.excluded) {
+				if (component.bitmask === null) {
+					this.componentManager.registerComponent(component);
+				}
+			}
+		}
+
 		const { requiredMask, excludedMask, queryId } =
 			Query.generateQueryInfo(query);
 		if (!this.queries.has(queryId)) {

@@ -271,18 +271,46 @@ describe('Query Tests', () => {
 		expect(query1).toBe(query2);
 	});
 
-	test('Registering query with unregistered component throws error', () => {
+	test('Registering query with unregistered component auto-registers it', () => {
 		const UnregisteredComponent = createComponent({
 			value: { type: Types.Int16, default: 0 },
 		});
+
+		// Component should not be registered initially
+		expect(world.hasComponent(UnregisteredComponent)).toBe(false);
 
 		const queryConfig = {
 			required: [UnregisteredComponent],
 		};
 
-		expect(() => {
-			world.queryManager.registerQuery(queryConfig);
-		}).toThrow();
+		// Should not throw and should auto-register the component
+		const query = world.queryManager.registerQuery(queryConfig);
+		expect(query).toBeDefined();
+		expect(world.hasComponent(UnregisteredComponent)).toBe(true);
+	});
+
+	test('Registering query with unregistered excluded component auto-registers it', () => {
+		const UnregisteredRequiredComponent = createComponent({
+			value: { type: Types.Int16, default: 0 },
+		});
+		const UnregisteredExcludedComponent = createComponent({
+			flag: { type: Types.Boolean, default: false },
+		});
+
+		// Components should not be registered initially
+		expect(world.hasComponent(UnregisteredRequiredComponent)).toBe(false);
+		expect(world.hasComponent(UnregisteredExcludedComponent)).toBe(false);
+
+		const queryConfig = {
+			required: [UnregisteredRequiredComponent],
+			excluded: [UnregisteredExcludedComponent],
+		};
+
+		// Should not throw and should auto-register both components
+		const query = world.queryManager.registerQuery(queryConfig);
+		expect(query).toBeDefined();
+		expect(world.hasComponent(UnregisteredRequiredComponent)).toBe(true);
+		expect(world.hasComponent(UnregisteredExcludedComponent)).toBe(true);
 	});
 
 	test('Query results from unregistered query', () => {

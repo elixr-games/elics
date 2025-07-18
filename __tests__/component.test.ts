@@ -179,4 +179,21 @@ describe('Component Tests', () => {
 
 		expect(world.hasComponent(UnregisteredComponent)).toBe(false);
 	});
+
+	test('Using unregistered component auto-registers it', () => {
+		const UnregisteredComponent = createComponent({
+			value: { type: Types.Boolean, default: true },
+		});
+
+		// Component should not be registered initially
+		expect(world.hasComponent(UnregisteredComponent)).toBe(false);
+
+		// Adding component to entity should auto-register it
+		const entity = world.createEntity();
+		entity.addComponent(UnregisteredComponent);
+
+		expect(world.hasComponent(UnregisteredComponent)).toBe(true);
+		expect(entity.hasComponent(UnregisteredComponent)).toBe(true);
+		expect(entity.getValue(UnregisteredComponent, 'value')).toBe(true);
+	});
 });
