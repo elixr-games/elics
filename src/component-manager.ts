@@ -12,7 +12,17 @@ export class ComponentManager {
 
 	constructor(private entityCapacity: number) {}
 
+	hasComponent(component: Component<any>): boolean {
+		return (
+			component.typeId !== -1 &&
+			this.componentsByTypeId[component.typeId] === component
+		);
+	}
+
 	registerComponent(component: Component<any>): void {
+		if (this.hasComponent(component)) {
+			return;
+		}
 		const typeId = this.nextComponentTypeId++;
 		component.bitmask = new BitSet();
 		component.bitmask.set(typeId, 1);

@@ -1,6 +1,7 @@
 import { DataType, TypeValueToType } from './types.js';
 import { Query, QueryConfig } from './query.js';
 
+import { Entity } from './entity.js';
 import { QueryManager } from './query-manager.js';
 import { World } from './world.js';
 import { Signal, signal } from '@preact/signals-core';
@@ -32,6 +33,7 @@ export interface System<
 	destroy(): void;
 	play(): void;
 	stop(): void;
+	createEntity(): Entity;
 }
 
 export interface SpecialSystem<
@@ -85,6 +87,10 @@ export function createSystem<
 
 		get globals() {
 			return this.world.globals;
+		}
+
+		createEntity(): Entity {
+			return this.world.createEntity();
 		}
 
 		init(): void {}

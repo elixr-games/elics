@@ -230,4 +230,21 @@ describe('System Tests', () => {
 		world.update(0, 0);
 		world.unregisterSystem(DefaultSystem);
 	});
+
+	test('Systems can create entities', () => {
+		class EntityCreatorSystem extends createSystem() {
+			public createdEntity: any = null;
+
+			init(): void {
+				this.createdEntity = this.createEntity();
+			}
+		}
+
+		world.registerSystem(EntityCreatorSystem);
+		const system = world.getSystem(EntityCreatorSystem) as EntityCreatorSystem;
+
+		expect(system.createdEntity).toBeDefined();
+		expect(system.createdEntity.index).toBeGreaterThanOrEqual(0);
+		expect(system.createdEntity.active).toBe(true);
+	});
 });

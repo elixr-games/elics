@@ -155,4 +155,28 @@ describe('Component Tests', () => {
 			'Invalid default value',
 		);
 	});
+
+	test('Registering the same component multiple times is idempotent', () => {
+		const TestComponent = createComponent({
+			value: { type: Types.Int16, default: 42 },
+		});
+
+		// Register component first time
+		world.registerComponent(TestComponent);
+		expect(world.hasComponent(TestComponent)).toBe(true);
+		const firstTypeId = TestComponent.typeId;
+
+		// Register the same component again - should be no-op
+		world.registerComponent(TestComponent);
+		expect(world.hasComponent(TestComponent)).toBe(true);
+		expect(TestComponent.typeId).toBe(firstTypeId); // TypeId should not change
+	});
+
+	test('hasComponent returns false for unregistered components', () => {
+		const UnregisteredComponent = createComponent({
+			value: { type: Types.Boolean, default: false },
+		});
+
+		expect(world.hasComponent(UnregisteredComponent)).toBe(false);
+	});
 });

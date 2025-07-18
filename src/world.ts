@@ -53,6 +53,10 @@ export class World {
 		return this;
 	}
 
+	hasComponent(component: Component<any>): boolean {
+		return this.componentManager.hasComponent(component);
+	}
+
 	createEntity(): Entity {
 		return this.entityManager.requestEntityInstance();
 	}
