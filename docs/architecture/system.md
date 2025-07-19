@@ -169,6 +169,146 @@ Determines the system's execution order. Higher values indicate higher priority,
 priority: number;
 ```
 
+### System.config
+
+A mapping of configuration property names to reactive signals containing the system's configuration data. Each configuration property is a signal that can be read, written, and subscribed to for reactive updates.
+
+::: info Signal Implementation
+EliCS uses `@preact/signals-core` for reactive configuration. Signals provide automatic dependency tracking and efficient updates when values change.
+:::
+
+```ts
+config: Record<keyof SystemSchema, Signal<any>>;
+```
+
+**Reading Configuration Values:**
+
+```ts
+class HealthSystem extends createSystem(queries, {
+	healthDecreaseRate: { type: Types.Float32, default: 10 },
+	regenerationEnabled: { type: Types.Boolean, default: false },
+}) {
+	update(delta: number): void {
+		const rate = this.config.healthDecreaseRate.value;
+		const regenEnabled = this.config.regenerationEnabled.value;
+		// Use configuration values in system logic
+	}
+}
+```
+
+**Subscribing to Configuration Changes:**
+You can subscribe to configuration changes to react dynamically when values are updated at runtime:
+
+```ts
+class AdaptiveHealthSystem extends createSystem(queries, {
+	healthDecreaseRate: { type: Types.Float32, default: 10 },
+	difficultyMultiplier: { type: Types.Float32, default: 1.0 },
+}) {
+	private effectiveRate = 10;
+
+	init(): void {
+		// Subscribe to configuration changes
+		this.config.healthDecreaseRate.subscribe((newRate) => {
+			console.log(`Health decrease rate changed to: ${newRate}`);
+			this.recalculateEffectiveRate();
+		});
+
+		this.config.difficultyMultiplier.subscribe((newMultiplier) => {
+			console.log(`Difficulty multiplier changed to: ${newMultiplier}`);
+			this.recalculateEffectiveRate();
+		});
+
+		// Initial calculation
+		this.recalculateEffectiveRate();
+	}
+
+	private recalculateEffectiveRate(): void {
+		this.effectiveRate =
+			this.config.healthDecreaseRate.value *
+			this.config.difficultyMultiplier.value;
+	}
+
+	update(delta: number): void {
+		// Use the pre-calculated effective rate
+		this.queries.entities.entities.forEach((entity) => {
+			const currentHealth = entity.getValue(HealthComponent, 'value');
+			entity.setValue(
+				HealthComponent,
+				'value',
+				currentHealth - this.effectiveRate * delta,
+			);
+		});
+	}
+}
+```
+
+**Updating Configuration at Runtime:**
+Configuration can be updated externally, triggering subscribed reactions:
+
+```ts
+// In your game logic or UI
+const healthSystem = world.getSystem(AdaptiveHealthSystem);
+
+// Change difficulty dynamically
+healthSystem.config.difficultyMultiplier.value = 2.0; // Triggers subscription
+
+// Temporarily boost health decrease rate
+healthSystem.config.healthDecreaseRate.value = 25; // Triggers subscription
+```
+
+**Computed Reactions:**
+You can create computed values that automatically update when dependencies change:
+
+```ts
+class WeatherSystem extends createSystem(queries, {
+	temperature: { type: Types.Float32, default: 20 },
+	humidity: { type: Types.Float32, default: 50 },
+}) {
+	private comfortIndex = 0;
+
+	init(): void {
+		// Create a computed reaction that updates when either temperature or humidity changes
+		const updateComfortIndex = () => {
+			const temp = this.config.temperature.value;
+			const humid = this.config.humidity.value;
+			this.comfortIndex = temp - humid * 0.1;
+			console.log(`Comfort index updated to: ${this.comfortIndex}`);
+		};
+
+		// Subscribe to both config changes
+		this.config.temperature.subscribe(updateComfortIndex);
+		this.config.humidity.subscribe(updateComfortIndex);
+
+		// Initial calculation
+		updateComfortIndex();
+	}
+}
+```
+
+### System.globals
+
+Provides access to the world's global state object for cross-system communication.
+
+```ts
+readonly globals: Record<string, any>;
+```
+
+**Example:**
+
+```ts
+class GameSystem extends createSystem() {
+	init(): void {
+		this.globals.gameState = 'running';
+	}
+
+	update(): void {
+		if (this.globals.gameState === 'paused') {
+			return; // Skip update when paused
+		}
+	}
+}
+```
+
 ### System.init
 
 Called once immediately after the system is registered with the `World`. Override this method to include any initialization logic.
@@ -199,4 +339,52 @@ Pauses the system's execution.
 
 ```ts
 stop(): void;
+```
+
+### System.createEntity
+
+Creates a new entity through the system's world instance. This is a convenience method equivalent to calling `this.world.createEntity()`.
+
+```ts
+createEntity(): Entity;
+```
+
+- **Returns:** A newly created entity instance.
+
+**Example:**
+
+```ts
+class SpawnerSystem extends createSystem(queries) {
+	update(delta: number): void {
+		// Spawn a new enemy entity
+		const enemy = this.createEntity();
+		enemy.addComponent(PositionComponent, { x: 100, y: 50 });
+		enemy.addComponent(EnemyComponent);
+	}
+}
+```
+
+### System.destroy
+
+Called when the system is unregistered from the world. Override this method to include cleanup logic.
+
+```ts
+destroy(): void;
+```
+
+**Example:**
+
+```ts
+class NetworkSystem extends createSystem() {
+	private connection: WebSocket;
+
+	init(): void {
+		this.connection = new WebSocket('ws://localhost:8080');
+	}
+
+	destroy(): void {
+		this.connection.close();
+		console.log('NetworkSystem cleaned up');
+	}
+}
 ```

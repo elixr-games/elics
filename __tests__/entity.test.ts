@@ -181,11 +181,23 @@ describe('Entity Tests', () => {
 		expect(newEntity.active).toBe(true);
 	});
 
-	test('Modifying destroyed entity throws error', () => {
+	test('Modifying destroyed entity logs warning and no-ops', () => {
 		const entity = world.createEntity();
 		entity.destroy();
 
-		expect(() => entity.addComponent(PositionComponent)).toThrow();
+		const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+
+		entity.addComponent(PositionComponent);
+		expect(consoleSpy).toHaveBeenCalledWith(
+			expect.stringContaining('Entity 0 is destroyed, cannot add component'),
+		);
+
+		entity.removeComponent(PositionComponent);
+		expect(consoleSpy).toHaveBeenCalledWith(
+			expect.stringContaining('Entity 0 is destroyed, cannot remove component'),
+		);
+
+		consoleSpy.mockRestore();
 	});
 
 	test('Entity index lookup updates on destroy', () => {

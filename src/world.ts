@@ -1,5 +1,4 @@
 import { DataType, TypeValueToType } from './types.js';
-import { ErrorMessages, assertCondition, toggleChecks } from './checks.js';
 import { Query, QueryConfig } from './query.js';
 import {
 	System,
@@ -13,6 +12,7 @@ import { ComponentManager } from './component-manager.js';
 import { Entity } from './entity.js';
 import { EntityManager } from './entity-manager.js';
 import { QueryManager } from './query-manager.js';
+import { toggleChecks } from './checks.js';
 
 export interface WorldOptions {
 	entityCapacity: number;
@@ -70,11 +70,12 @@ export class World {
 		systemClass: SystemConstructor<T, S, Q, typeof this, Sys>,
 		options: Partial<SystemOptions<T, S>> = {},
 	): this {
-		assertCondition(
-			!this.systems.some((system) => system instanceof systemClass),
-			ErrorMessages.SystemAlreadyRegistered,
-			systemClass,
-		);
+		if (this.hasSystem(systemClass)) {
+			console.warn(
+				`System ${systemClass.name} is already registered, skipping registration.`,
+			);
+			return this;
+		}
 
 		const {
 			configData = {} as Record<keyof S, TypeValueToType<T>>,
@@ -160,5 +161,14 @@ export class World {
 
 	getSystems<T extends System<any, any, any> = System<any, any, any>>(): T[] {
 		return this.systems as T[];
+	}
+
+	hasSystem<
+		T extends DataType,
+		S extends SystemSchema<T>,
+		Q extends SystemQueries,
+		Sys extends System<T, S, Q>,
+	>(systemClass: SystemConstructor<T, S, Q, typeof this, Sys>): boolean {
+		return this.systems.some((system) => system instanceof systemClass);
 	}
 }

@@ -247,4 +247,29 @@ describe('System Tests', () => {
 		expect(system.createdEntity.index).toBeGreaterThanOrEqual(0);
 		expect(system.createdEntity.active).toBe(true);
 	});
+
+	test('Registering duplicate system logs warning and skips registration', () => {
+		class DuplicateTestSystem extends createSystem() {}
+
+		const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+
+		// Register the system first time
+		world.registerSystem(DuplicateTestSystem);
+		expect(world.hasSystem(DuplicateTestSystem)).toBe(true);
+
+		// Try to register the same system again
+		world.registerSystem(DuplicateTestSystem);
+
+		// Should have logged a warning
+		expect(consoleSpy).toHaveBeenCalledWith(
+			'System DuplicateTestSystem is already registered, skipping registration.',
+		);
+
+		// Should still only have one instance
+		expect(
+			world.getSystems().filter((s) => s instanceof DuplicateTestSystem),
+		).toHaveLength(1);
+
+		consoleSpy.mockRestore();
+	});
 });

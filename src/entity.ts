@@ -7,12 +7,7 @@ import {
 	TypedArrayMap,
 	Types,
 } from './types.js';
-import {
-	ErrorMessages,
-	assertCondition,
-	assertValidEnumValue,
-	assertValidRangeValue,
-} from './checks.js';
+import { assertValidEnumValue, assertValidRangeValue } from './checks.js';
 
 import BitSet from './bit-set.js';
 import type { ComponentManager } from './component-manager.js';
@@ -41,41 +36,45 @@ export class Entity {
 		public readonly index: number,
 	) {}
 
-	private ensureComponentRegistered(component: Component<any>): void {
-		if (component.bitmask === null) {
-			this.componentManager.registerComponent(component);
-		}
-	}
-
 	addComponent<C extends Component<any>>(
 		component: C,
 		initialData: Partial<{
 			[K in keyof C['schema']]: TypeValueToType<C['schema'][K]['type']>;
 		}> = {},
 	): this {
-		assertCondition(this.active, ErrorMessages.ModifyDestroyedEntity, this);
-		this.ensureComponentRegistered(component);
-		this.bitmask.orInPlace(component.bitmask!);
-		this.componentManager.attachComponentToEntity(
-			this.index,
-			component,
-			initialData,
-		);
-		this.queryManager.updateEntity(this, component);
+		if (!this.active) {
+			console.warn(
+				`Entity ${this.index} is destroyed, cannot add component ${component.schema}`,
+			);
+		} else {
+			if (component.bitmask === null) {
+				this.componentManager.registerComponent(component);
+			}
+			this.bitmask.orInPlace(component.bitmask!);
+			this.componentManager.attachComponentToEntity(
+				this.index,
+				component,
+				initialData,
+			);
+			this.queryManager.updateEntity(this, component);
+		}
 		return this;
 	}
 
 	removeComponent(component: Component<any>): this {
-		assertCondition(this.active, ErrorMessages.ModifyDestroyedEntity, this);
-		this.ensureComponentRegistered(component);
-		this.bitmask.andNotInPlace(component.bitmask!);
-		this.vectorViews.delete(component);
-		this.queryManager.updateEntity(this, component);
+		if (!this.active) {
+			console.warn(
+				`Entity ${this.index} is destroyed, cannot remove component ${component.schema}`,
+			);
+		} else if (component.bitmask) {
+			this.bitmask.andNotInPlace(component.bitmask!);
+			this.vectorViews.delete(component);
+			this.queryManager.updateEntity(this, component);
+		}
 		return this;
 	}
 
 	hasComponent(component: Component<any>): boolean {
-		this.ensureComponentRegistered(component);
 		return this.bitmask.intersects(component.bitmask!);
 	}
 
@@ -175,14 +174,13 @@ export class Entity {
 	}
 
 	destroy(): void {
-		assertCondition(this.active, ErrorMessages.ModifyDestroyedEntity, this);
-		this.active = false;
-
-		// Batch component cleanup before query updates
-		this.bitmask.bits = 0;
-		this.vectorViews.clear();
-		this.queryManager.resetEntity(this);
-		this.entityManager.releaseEntityInstance(this);
+		if (this.active) {
+			this.active = false;
+			this.bitmask.bits = 0;
+			this.vectorViews.clear();
+			this.queryManager.resetEntity(this);
+			this.entityManager.releaseEntityInstance(this);
+		}
 	}
 }
 

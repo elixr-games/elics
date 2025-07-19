@@ -75,9 +75,9 @@ An interface that defines the configuration options for the **World** class.
 
 ```ts
 interface WorldOptions {
-        entityCapacity: number;
-        checksOn: boolean;
-        deferredEntityUpdates: boolean;
+	entityCapacity: number;
+	checksOn: boolean;
+	deferredEntityUpdates: boolean;
 }
 ```
 
@@ -117,6 +117,28 @@ registerComponent(component: Component): this;
 - **Parameters:**
   - `component`: The component instance to register.
 - **Returns:** The **World** instance for method chaining.
+
+### World.hasComponent
+
+Checks if a component type is registered with the world.
+
+```ts
+hasComponent(component: Component): boolean;
+```
+
+- **Parameters:**
+  - `component`: The component instance to check.
+- **Returns:** `true` if the component is registered; otherwise, `false`.
+
+**Example:**
+
+```ts
+if (world.hasComponent(PositionComponent)) {
+	console.log('PositionComponent is registered');
+} else {
+	world.registerComponent(PositionComponent);
+}
+```
 
 ### World.registerSystem
 
@@ -175,6 +197,28 @@ getSystems(): System[];
 ```
 
 - **Returns:** An array of system instances.
+
+### World.hasSystem
+
+Checks if a system type is registered with the world.
+
+```ts
+hasSystem<T extends System>(systemClass: SystemConstructor<T>): boolean;
+```
+
+- **Parameters:**
+  - `systemClass`: The system constructor to check.
+- **Returns:** `true` if the system is registered; otherwise, `false`.
+
+**Example:**
+
+```ts
+if (world.hasSystem(MovementSystem)) {
+	console.log('MovementSystem is already registered');
+} else {
+	world.registerSystem(MovementSystem);
+}
+```
 
 ### World.update
 

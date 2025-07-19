@@ -95,7 +95,7 @@ const TaskComponent = createComponent({
 	description: { type: Types.String, default: '' },
 });
 
-// Register component
+// Register component (optional - will auto-register if not done manually)
 world.registerComponent(TaskComponent);
 
 // Create entity and set enum values
@@ -150,7 +150,7 @@ const StatsComponent = createComponent({
 ### Usage Examples
 
 ```ts
-// Register component
+// Register component (optional - will auto-register if not done manually)
 world.registerComponent(StatsComponent);
 
 // Create entity with valid values
@@ -185,7 +185,7 @@ const WeatherComponent = createComponent({
 	celsius: { type: Types.Int16, default: 20, min: -273, max: 100 },
 });
 
-world.registerComponent(WeatherComponent);
+world.registerComponent(WeatherComponent); // Optional
 const entity = world.createEntity();
 entity.addComponent(WeatherComponent);
 

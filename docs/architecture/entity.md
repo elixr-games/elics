@@ -76,6 +76,17 @@ When an entity is no longer needed, destroy it to free up resources:
 entity.destroy();
 ```
 
+::: warning Operations on Destroyed Entities
+After an entity is destroyed, operations like `addComponent()` and `removeComponent()` will log warnings to the console and perform no action instead of throwing errors. This design provides resilient behavior in applications where component management might occur asynchronously.
+
+```ts
+entity.destroy();
+entity.addComponent(SomeComponent); // Logs warning, no-op
+entity.removeComponent(SomeComponent); // Logs warning, no-op
+```
+
+:::
+
 ## API Documentation
 
 This section documents the API of the **Entity** class, including its properties and methods.

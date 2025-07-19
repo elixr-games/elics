@@ -85,9 +85,10 @@ const Unit = createComponent({
 });
 ```
 
-Register these components:
+Optionally register these components for explicit control (or they will be automatically registered when first used):
 
 ```typescript
+// Optional manual registration
 world
 	.registerComponent(Position)
 	.registerComponent(Velocity)

@@ -5,11 +5,7 @@ export function toggleChecks(value: boolean): void {
 }
 
 export enum ErrorMessages {
-	ModifyDestroyedEntity = 'Cannot modify destroyed entity',
-	QueryNotRegistered = 'Query not registered',
 	TypeNotSupported = 'Type not supported',
-	SystemAlreadyRegistered = 'System already registered',
-	ComponentAlreadyRegistered = 'Component already registered',
 	InvalidDefaultValue = 'Invalid default value',
 	InvalidEnumValue = 'Invalid enum value',
 	InvalidRangeValue = 'Value out of range',

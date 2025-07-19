@@ -108,13 +108,25 @@ This approach allows you to:
 
 ### Registering a Component
 
-Before using a component with entities or queries, it must be registered with the `World` instance.
+Components can be registered manually with the `World` instance for explicit control, or they will be automatically registered when first used with entities or queries.
 
 ```ts
+// Manual registration (optional)
 world.registerComponent(EnemyComponent);
 ```
 
-The registration process initializes the component's data storage based on the defined schema. If the component has not been registered, attaching it to an entity or using it to form queries will result in an error.
+The registration process initializes the component's data storage based on the defined schema. **Automatic registration** occurs when:
+
+- A component is added to an entity via `addComponent()`
+- A component is used in a query registration
+
+::: tip Automatic vs Manual Registration
+While components are automatically registered when needed, manual registration can be beneficial for:
+
+- **Performance**: Avoiding registration overhead during gameplay
+- **Explicit control**: Ensuring all components are initialized upfront
+- **Error detection**: Catching schema validation issues early in development
+  :::
 
 ### Attaching Components to an Entity
 
