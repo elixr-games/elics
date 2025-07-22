@@ -7,7 +7,7 @@ export class EntityManager {
 
 	private entityIndex = 0;
 
-	private indexLookup: (Entity | undefined)[] = [];
+	private indexLookup: (Entity | null)[] = [];
 
 	private poolSize = 0;
 
@@ -36,11 +36,14 @@ export class EntityManager {
 	}
 
 	releaseEntityInstance(entity: Entity): void {
-		this.indexLookup[entity.index] = undefined;
+		this.indexLookup[entity.index] = null;
 		this.pool[this.poolSize++] = entity;
 	}
 
-	getEntityByIndex(index: number): Entity | undefined {
-		return this.indexLookup[index];
+	getEntityByIndex(index: number): Entity | null {
+		if (index === -1) {
+			return null;
+		}
+		return this.indexLookup[index] ?? null;
 	}
 }

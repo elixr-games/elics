@@ -32,8 +32,8 @@ class MovementSystem extends createSystem({
 	update(delta: number): void {
 		for (const entity of this.queries.movingEntities.entities) {
 			// Use getValue and getVectorView methods
-			const posX = entity.getValue(PositionComponent, 'x');
-			const posY = entity.getValue(PositionComponent, 'y');
+			const posX = entity.getValue(PositionComponent, 'x')!;
+			const posY = entity.getValue(PositionComponent, 'y')!;
 
 			const velocity = entity.getVectorView(VelocityComponent, 'velocity');
 
@@ -56,11 +56,11 @@ class HealthSystem extends createSystem(
 ) {
 	update(delta: number): void {
 		for (const entity of this.queries.entitiesWithHealth.entities) {
-			const healthValue = entity.getValue(HealthComponent, 'value');
+			const healthValue: number = entity.getValue(HealthComponent, 'value')!;
 			entity.setValue(
 				HealthComponent,
 				'value',
-				healthValue - this.config.healthDecreaseRate.value * delta,
+				healthValue - (this.config.healthDecreaseRate.value as number) * delta,
 			);
 		}
 	}

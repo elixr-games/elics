@@ -1,6 +1,6 @@
 import { Query, QueryConfig } from './query.js';
-import type { Component } from './component.js';
 import type { ComponentManager } from './component-manager.js';
+import type { AnyComponent } from './types.js';
 
 import { Entity } from './entity.js';
 
@@ -9,7 +9,7 @@ export class QueryManager {
 
 	private trackedEntities: Set<Entity> = new Set();
 
-	private queriesByComponent: Map<Component<any>, Set<Query>> = new Map();
+	private queriesByComponent: Map<AnyComponent, Set<Query>> = new Map();
 
 	constructor(private componentManager: ComponentManager) {}
 
@@ -52,7 +52,7 @@ export class QueryManager {
 		return this.queries.get(queryId)!;
 	}
 
-	updateEntity(entity: Entity, changedComponent?: Component<any>): void {
+	updateEntity(entity: Entity, changedComponent?: AnyComponent): void {
 		this.trackedEntities.add(entity);
 		if (entity.bitmask.isEmpty()) {
 			// Remove entity from all query results if it has no components

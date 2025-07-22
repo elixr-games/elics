@@ -1,10 +1,10 @@
 import { DataType, TypeValueToType } from './types.js';
 import { Query, QueryConfig } from './query.js';
+import { Signal, signal } from '@preact/signals-core';
 
 import { Entity } from './entity.js';
 import { QueryManager } from './query-manager.js';
 import { World } from './world.js';
-import { Signal, signal } from '@preact/signals-core';
 
 export type SystemSchema<T extends DataType> = Record<
 	string,
@@ -27,7 +27,7 @@ export interface System<
 	world: World;
 	queryManager: QueryManager;
 	priority: number;
-	globals: Record<string, any>;
+	globals: { [key: string]: unknown };
 	init(): void;
 	update(delta: number, time: number): void;
 	destroy(): void;

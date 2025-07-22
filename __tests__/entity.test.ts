@@ -28,12 +28,37 @@ const CustomDataComponent = createComponent({
 	data: { type: Types.Object, default: null },
 });
 
+// Test various Object types
+const FlexibleObjectComponent = createComponent({
+	plainObject: {
+		type: Types.Object,
+		default: { key: 'value', nested: { deep: true } },
+	},
+	arrayData: { type: Types.Object, default: [1, 2, 3, 'mixed', true] },
+	classInstance: { type: Types.Object, default: new Date() },
+	functionData: { type: Types.Object, default: () => 'hello' },
+	numberData: { type: Types.Object, default: 42 },
+	stringData: { type: Types.Object, default: 'just a string' },
+	booleanData: { type: Types.Object, default: true },
+	complexNested: {
+		type: Types.Object,
+		default: {
+			metadata: { version: '1.0', tags: ['test', 'object'] },
+			config: { enabled: true, threshold: 0.5 },
+			handlers: {
+				onClick: () => console.log('clicked'),
+				onHover: (data: any) => (data.highlight = true),
+			},
+		},
+	},
+});
+
 const BoolComponent = createComponent({
 	flag: { type: Types.Boolean, default: false },
 });
 
 const ReferenceComponent = createComponent({
-	target: { type: Types.Entity, default: null as any },
+	target: { type: Types.Entity, default: null },
 });
 
 // Define enum test components
@@ -163,9 +188,7 @@ describe('Entity Tests', () => {
 	test('Getting component value with invalid key', () => {
 		const entity = world.createEntity();
 		entity.addComponent(PositionComponent);
-		expect(
-			entity.getValue(PositionComponent, 'invalidKey' as any),
-		).toBeUndefined();
+		expect(entity.getValue(PositionComponent, 'invalidKey' as any)).toBeNull();
 	});
 
 	test('Entity destruction and reuse', () => {
@@ -286,8 +309,78 @@ describe('Entity Tests', () => {
 	test('Entity reference default value', () => {
 		const e = world.createEntity();
 		e.addComponent(ReferenceComponent);
-		expect(e.getValue(ReferenceComponent, 'target')).toBeUndefined();
+		expect(e.getValue(ReferenceComponent, 'target')).toBeNull();
 		expect(ReferenceComponent.data.target[e.index]).toBe(-1);
+	});
+
+	test('Object type can handle various data types', () => {
+		const entity = world.createEntity();
+		entity.addComponent(FlexibleObjectComponent);
+
+		// Test that defaults were set correctly
+		expect(entity.getValue(FlexibleObjectComponent, 'plainObject')).toEqual({
+			key: 'value',
+			nested: { deep: true },
+		});
+		expect(entity.getValue(FlexibleObjectComponent, 'arrayData')).toEqual([
+			1,
+			2,
+			3,
+			'mixed',
+			true,
+		]);
+		expect(
+			entity.getValue(FlexibleObjectComponent, 'classInstance'),
+		).toBeInstanceOf(Date);
+		expect(entity.getValue(FlexibleObjectComponent, 'numberData')).toBe(42);
+		expect(entity.getValue(FlexibleObjectComponent, 'stringData')).toBe(
+			'just a string',
+		);
+		expect(entity.getValue(FlexibleObjectComponent, 'booleanData')).toBe(true);
+
+		const complexData = entity.getValue(
+			FlexibleObjectComponent,
+			'complexNested',
+		);
+		expect(complexData).toHaveProperty('metadata.version', '1.0');
+		expect(complexData).toHaveProperty('config.enabled', true);
+		expect(complexData).toHaveProperty('handlers.onClick');
+
+		// Test function execution
+		const functionValue = entity.getValue(
+			FlexibleObjectComponent,
+			'functionData',
+		) as () => string;
+		expect(typeof functionValue).toBe('function');
+		expect(functionValue()).toBe('hello');
+
+		// Test setting various types
+		entity.setValue(
+			FlexibleObjectComponent,
+			'plainObject',
+			"now it's a string",
+		);
+		expect(entity.getValue(FlexibleObjectComponent, 'plainObject')).toBe(
+			"now it's a string",
+		);
+
+		entity.setValue(FlexibleObjectComponent, 'numberData', {
+			converted: 'to object',
+		});
+		expect(entity.getValue(FlexibleObjectComponent, 'numberData')).toEqual({
+			converted: 'to object',
+		});
+
+		entity.setValue(FlexibleObjectComponent, 'stringData', [1, 2, 3]);
+		expect(entity.getValue(FlexibleObjectComponent, 'stringData')).toEqual([
+			1, 2, 3,
+		]);
+
+		// Test setting null
+		entity.setValue(FlexibleObjectComponent, 'complexNested', null);
+		expect(
+			entity.getValue(FlexibleObjectComponent, 'complexNested'),
+		).toBeNull();
 	});
 
 	test('entity references work beyond Int16 range', () => {
@@ -655,5 +748,29 @@ describe('Entity Tests', () => {
 				expect(entity.getValue(PositionComponent, 'x')).toBe(1000);
 			});
 		});
+	});
+
+	test('EntityManager getEntityByIndex with invalid index returns null', () => {
+		// Test the uncovered line in entity-manager.ts:45
+		expect(world.entityManager.getEntityByIndex(-1)).toBeNull();
+
+		// Test undefined case (line 47) - index that doesn't exist yet
+		expect(world.entityManager.getEntityByIndex(9999)).toBeNull();
+	});
+
+	test('ComponentManager getComponentByTypeId with invalid typeId returns null', () => {
+		// Test the uncovered line in component-manager.ts:43
+		expect(world.componentManager.getComponentByTypeId(999)).toBeNull();
+	});
+
+	test('Entity setValue with null entity value', () => {
+		// Test the uncovered branch in entity.ts:148 (null case)
+		const entity = world.createEntity();
+		entity.addComponent(ReferenceComponent);
+
+		// Set to null to test the null branch
+		entity.setValue(ReferenceComponent, 'target', null);
+		expect(entity.getValue(ReferenceComponent, 'target')).toBeNull();
+		expect(ReferenceComponent.data.target[entity.index]).toBe(-1);
 	});
 });

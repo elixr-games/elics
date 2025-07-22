@@ -67,9 +67,12 @@ export function initializeComponentStorage<
 		}
 
 		assertCondition(!!arrayConstructor, ErrorMessages.TypeNotSupported, type);
-		component.data[key] = new arrayConstructor(entityCapacity * length) as any;
+		component.data[key] = new arrayConstructor(
+			entityCapacity * length,
+		) as DataArrayToType<T>;
 		assertCondition(
-			length === 1 || (defaultValue as any[]).length === length,
+			length === 1 ||
+				(Array.isArray(defaultValue) && defaultValue.length === length),
 			ErrorMessages.InvalidDefaultValue,
 			key,
 		);

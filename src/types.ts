@@ -81,8 +81,10 @@ export type TypeValueToType<T extends DataType> = T extends
 					: T extends 'Vec4'
 						? [number, number, number, number]
 						: T extends 'Entity'
-							? import('./entity.js').Entity
-							: any;
+							? import('./entity.js').Entity | null
+							: T extends 'Object'
+								? unknown
+								: never;
 
 export type DataArrayToType<T extends DataType> = T extends
 	| 'Int8'
@@ -99,7 +101,7 @@ export type DataArrayToType<T extends DataType> = T extends
 	: T extends 'String'
 		? Array<string>
 		: T extends 'Object'
-			? any[]
+			? Array<unknown>
 			: never;
 
 export type EnumType<T extends number = number> = {
@@ -120,9 +122,55 @@ export type SchemaField<T extends DataType> = T extends 'Enum'
 				min?: number;
 				max?: number;
 			}
-		: {
-				type: T;
-				default: TypeValueToType<T>;
-			};
+		: T extends 'Entity'
+			? {
+					type: T;
+					default: import('./entity.js').Entity | null;
+				}
+			: T extends 'Object'
+				? {
+						type: T;
+						default: unknown;
+					}
+				: T extends 'Boolean'
+					? {
+							type: T;
+							default: boolean;
+						}
+					: T extends 'String'
+						? {
+								type: T;
+								default: string;
+							}
+						: T extends 'Vec2'
+							? {
+									type: T;
+									default: [number, number];
+								}
+							: T extends 'Vec3'
+								? {
+										type: T;
+										default: [number, number, number];
+									}
+								: T extends 'Vec4'
+									? {
+											type: T;
+											default: [number, number, number, number];
+										}
+									: never;
 
 export type TypedSchema<T extends DataType> = Record<string, SchemaField<T>>;
+
+// Utility types for better type safety
+export type AnySchema = TypedSchema<DataType>;
+export type AnyComponent = import('./component.js').Component<AnySchema>;
+export type AnySystem = import('./system.js').System<
+	DataType,
+	import('./system.js').SystemSchema<DataType>,
+	import('./system.js').SystemQueries
+>;
+
+// Type for initial component data with proper constraints
+export type ComponentInitialData<C extends AnyComponent> = Partial<{
+	[K in keyof C['schema']]: TypeValueToType<C['schema'][K]['type']>;
+}>;

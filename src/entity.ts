@@ -1,5 +1,5 @@
-import type { Component, ComponentMask } from './component.js';
 import {
+	AnyComponent,
 	DataArrayToType,
 	DataType,
 	TypeValueToType,
@@ -11,10 +11,11 @@ import { assertValidEnumValue, assertValidRangeValue } from './checks.js';
 
 import BitSet from './bit-set.js';
 import type { ComponentManager } from './component-manager.js';
+import type { ComponentMask } from './component.js';
 import type { EntityManager } from './entity-manager.js';
 import type { QueryManager } from './query-manager.js';
 
-export type VectorKeys<C extends Component<any>> = {
+export type VectorKeys<C extends AnyComponent> = {
 	[K in keyof C['schema']]: DataArrayToType<
 		C['schema'][K]['type']
 	> extends TypedArray
@@ -27,7 +28,7 @@ export class Entity {
 
 	public active = true;
 
-	private vectorViews: Map<Component<any>, Map<string, TypedArray>> = new Map();
+	private vectorViews: Map<AnyComponent, Map<string, TypedArray>> = new Map();
 
 	constructor(
 		protected entityManager: EntityManager,
@@ -36,7 +37,7 @@ export class Entity {
 		public readonly index: number,
 	) {}
 
-	addComponent<C extends Component<any>>(
+	addComponent<C extends AnyComponent>(
 		component: C,
 		initialData: Partial<{
 			[K in keyof C['schema']]: TypeValueToType<C['schema'][K]['type']>;
@@ -61,7 +62,7 @@ export class Entity {
 		return this;
 	}
 
-	removeComponent(component: Component<any>): this {
+	removeComponent(component: AnyComponent): this {
 		if (!this.active) {
 			console.warn(
 				`Entity ${this.index} is destroyed, cannot remove component ${component.schema}`,
@@ -74,27 +75,25 @@ export class Entity {
 		return this;
 	}
 
-	hasComponent(component: Component<any>): boolean {
+	hasComponent(component: AnyComponent): boolean {
 		return this.bitmask.intersects(component.bitmask!);
 	}
 
-	getComponents(): Component<any>[] {
+	getComponents(): AnyComponent[] {
 		const bitArray = this.bitmask.toArray();
 		return bitArray.map(
 			(typeId) => this.componentManager.getComponentByTypeId(typeId)!,
 		);
 	}
 
-	getValue<C extends Component<any>, K extends keyof C['schema']>(
+	getValue<C extends AnyComponent, K extends keyof C['schema']>(
 		component: C,
 		key: K,
-	): C['schema'][K]['type'] extends 'Entity'
-		? Entity | undefined
-		: TypeValueToType<C['schema'][K]['type']> {
-		// allow runtime access with invalid keys, return undefined
-		const schemaEntry = (component.schema as any)[key as string];
+	): TypeValueToType<C['schema'][K]['type']> | null {
+		// allow runtime access with invalid keys, return null
+		const schemaEntry = component.schema[key as string];
 		if (!schemaEntry) {
-			return undefined as TypeValueToType<C['schema'][K]['type']>;
+			return null;
 		}
 
 		const data = (component.data as any)[key]?.[this.index];
@@ -104,28 +103,30 @@ export class Entity {
 			case Types.Boolean:
 				return Boolean(data) as TypeValueToType<C['schema'][K]['type']>;
 			case Types.Entity:
-				return this.entityManager.getEntityByIndex(data) as TypeValueToType<
-					C['schema'][K]['type']
-				>;
+				return data === -1
+					? null
+					: (this.entityManager.getEntityByIndex(data) as TypeValueToType<
+							C['schema'][K]['type']
+						>);
 			default:
 				return data as TypeValueToType<C['schema'][K]['type']>;
 		}
 	}
 
-	setValue<C extends Component<any>, K extends keyof C['schema']>(
+	setValue<C extends AnyComponent, K extends keyof C['schema']>(
 		component: C,
 		key: K,
 		value: TypeValueToType<C['schema'][K]['type']>,
 	): void {
-		const componentData = component.data[key];
-		const schemaField = component.schema[key];
+		const componentData = (component.data as any)[key];
+		const schemaField = (component.schema as any)[key];
 		const type = schemaField.type as DataType;
 
 		switch (type) {
 			case Types.Enum:
 				// enum property is guaranteed to exist due to initialization validation
 				assertValidEnumValue(value as number, schemaField.enum, key as string);
-				componentData[this.index] = value as any;
+				componentData[this.index] = value as number;
 				break;
 			case Types.Int8:
 			case Types.Int16:
@@ -140,18 +141,19 @@ export class Entity {
 						key as string,
 					);
 				}
-				componentData[this.index] = value as any;
+				componentData[this.index] = value as number;
 				break;
 			case Types.Entity:
-				componentData[this.index] = (value as any as Entity).index;
+				componentData[this.index] =
+					value === null ? -1 : (value as Entity).index;
 				break;
 			default:
-				componentData[this.index] = value as any;
+				componentData[this.index] = value;
 				break;
 		}
 	}
 
-	getVectorView<C extends Component<any>, K extends VectorKeys<C>>(
+	getVectorView<C extends AnyComponent, K extends VectorKeys<C>>(
 		component: C,
 		key: K,
 	): DataArrayToType<C['schema'][K]['type']> {

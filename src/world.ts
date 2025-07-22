@@ -7,7 +7,7 @@ import {
 	SystemSchema,
 } from './system.js';
 
-import { Component } from './component.js';
+import { AnySystem, AnyComponent } from './types.js';
 import { ComponentManager } from './component-manager.js';
 import { Entity } from './entity.js';
 import { EntityManager } from './entity-manager.js';
@@ -31,9 +31,9 @@ export class World {
 
 	public componentManager!: ComponentManager;
 
-	private systems: System<any, any, any>[] = [];
+	private systems: AnySystem[] = [];
 
-	readonly globals: { [key: string]: any } = {};
+	readonly globals: { [key: string]: unknown } = {};
 
 	constructor({
 		entityCapacity = 1000,
@@ -48,12 +48,12 @@ export class World {
 		toggleChecks(checksOn);
 	}
 
-	registerComponent(component: Component<any>): this {
+	registerComponent(component: AnyComponent): this {
 		this.componentManager.registerComponent(component);
 		return this;
 	}
 
-	hasComponent(component: Component<any>): boolean {
+	hasComponent(component: AnyComponent): boolean {
 		return this.componentManager.hasComponent(component);
 	}
 
@@ -159,7 +159,7 @@ export class World {
 		return undefined;
 	}
 
-	getSystems<T extends System<any, any, any> = System<any, any, any>>(): T[] {
+	getSystems<T extends AnySystem = AnySystem>(): T[] {
 		return this.systems as T[];
 	}
 

@@ -148,7 +148,7 @@ describe('Component Tests', () => {
 			data: {} as any,
 			bitmask: null,
 			typeId: -1,
-		};
+		} as any; // Type assertion needed for intentionally invalid component
 
 		// Should throw when trying to register component with missing enum property
 		expect(() => world.registerComponent(InvalidEnumComponent)).toThrow(

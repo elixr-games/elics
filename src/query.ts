@@ -1,11 +1,12 @@
-import type { Component, ComponentMask } from './component.js';
+import type { ComponentMask } from './component.js';
+import type { AnyComponent } from './types.js';
 
 import BitSet from './bit-set.js';
 import { Entity } from './entity.js';
 
 export type QueryConfig = {
-	required: Component<any>[];
-	excluded?: Component<any>[];
+	required: AnyComponent[];
+	excluded?: AnyComponent[];
 };
 
 export class Query {

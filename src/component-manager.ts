@@ -1,25 +1,26 @@
-import BitSet from './bit-set.js';
 import {
-	type Component,
 	assignInitialComponentData,
 	initializeComponentStorage,
 } from './component.js';
 
+import type { AnyComponent } from './types.js';
+import BitSet from './bit-set.js';
+
 export class ComponentManager {
 	private nextComponentTypeId = 0;
 
-	private componentsByTypeId: Component<any>[] = [];
+	private componentsByTypeId: AnyComponent[] = [];
 
 	constructor(private entityCapacity: number) {}
 
-	hasComponent(component: Component<any>): boolean {
+	hasComponent(component: AnyComponent): boolean {
 		return (
 			component.typeId !== -1 &&
 			this.componentsByTypeId[component.typeId] === component
 		);
 	}
 
-	registerComponent(component: Component<any>): void {
+	registerComponent(component: AnyComponent): void {
 		if (this.hasComponent(component)) {
 			return;
 		}
@@ -33,13 +34,13 @@ export class ComponentManager {
 
 	attachComponentToEntity(
 		entityIndex: number,
-		component: Component<any>,
-		initialData: { [key: string]: any },
+		component: AnyComponent,
+		initialData: { [key: string]: unknown },
 	): void {
 		assignInitialComponentData(component, entityIndex, initialData);
 	}
 
-	getComponentByTypeId(typeId: number): Component<any> | undefined {
-		return this.componentsByTypeId[typeId];
+	getComponentByTypeId(typeId: number): AnyComponent | null {
+		return this.componentsByTypeId[typeId] ?? null;
 	}
 }
