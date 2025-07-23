@@ -14,6 +14,7 @@ export class EntityManager {
 	constructor(
 		private queryManager: QueryManager,
 		private componentManager: ComponentManager,
+		private entityReleaseCallback?: (entity: Entity) => void,
 	) {}
 
 	requestEntityInstance(): Entity {
@@ -36,6 +37,7 @@ export class EntityManager {
 	}
 
 	releaseEntityInstance(entity: Entity): void {
+		this.entityReleaseCallback?.(entity);
 		this.indexLookup[entity.index] = null;
 		this.pool[this.poolSize++] = entity;
 	}

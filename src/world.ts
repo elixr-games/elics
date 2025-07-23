@@ -17,6 +17,7 @@ import { toggleChecks } from './checks.js';
 export interface WorldOptions {
 	entityCapacity: number;
 	checksOn: boolean;
+	entityReleaseCallback?: (entity: Entity) => void;
 }
 
 export interface SystemOptions<T extends DataType, S extends SystemSchema<T>> {
@@ -38,12 +39,14 @@ export class World {
 	constructor({
 		entityCapacity = 1000,
 		checksOn = true,
+		entityReleaseCallback,
 	}: Partial<WorldOptions> = {}) {
 		this.componentManager = new ComponentManager(entityCapacity);
 		this.queryManager = new QueryManager(this.componentManager);
 		this.entityManager = new EntityManager(
 			this.queryManager,
 			this.componentManager,
+			entityReleaseCallback,
 		);
 		toggleChecks(checksOn);
 	}
