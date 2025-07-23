@@ -11,11 +11,21 @@ console.warn = () => {};
 
 export function packedIteration() {
 	const world = new EliWorld({ entityCapacity: 1000, checksOn: false });
-	const A = createComponent({ value: { type: Types.Float32, default: 1 } });
-	const B = createComponent({ value: { type: Types.Float32, default: 1 } });
-	const C = createComponent({ value: { type: Types.Float32, default: 1 } });
-	const D = createComponent({ value: { type: Types.Float32, default: 1 } });
-	const E = createComponent({ value: { type: Types.Float32, default: 1 } });
+	const A = createComponent('A', {
+		value: { type: Types.Float32, default: 1 },
+	});
+	const B = createComponent('B', {
+		value: { type: Types.Float32, default: 1 },
+	});
+	const C = createComponent('C', {
+		value: { type: Types.Float32, default: 1 },
+	});
+	const D = createComponent('D', {
+		value: { type: Types.Float32, default: 1 },
+	});
+	const E = createComponent('E', {
+		value: { type: Types.Float32, default: 1 },
+	});
 
 	class PackedSystem extends createSystem({
 		a: { required: [A] },
@@ -73,11 +83,21 @@ export function packedIteration() {
 
 export function simpleIteration() {
 	const world = new EliWorld({ entityCapacity: 5000, checksOn: false });
-	const A = createComponent({ value: { type: Types.Float32, default: 0 } });
-	const B = createComponent({ value: { type: Types.Float32, default: 0 } });
-	const C = createComponent({ value: { type: Types.Float32, default: 0 } });
-	const D = createComponent({ value: { type: Types.Float32, default: 0 } });
-	const E = createComponent({ value: { type: Types.Float32, default: 0 } });
+	const A = createComponent('A', {
+		value: { type: Types.Float32, default: 0 },
+	});
+	const B = createComponent('B', {
+		value: { type: Types.Float32, default: 0 },
+	});
+	const C = createComponent('C', {
+		value: { type: Types.Float32, default: 0 },
+	});
+	const D = createComponent('D', {
+		value: { type: Types.Float32, default: 0 },
+	});
+	const E = createComponent('E', {
+		value: { type: Types.Float32, default: 0 },
+	});
 
 	class SystemAB extends createSystem({ q: { required: [A, B] } }) {
 		update() {
@@ -150,10 +170,14 @@ export function simpleIteration() {
 
 export function fragmentedIteration() {
 	const world = new EliWorld({ entityCapacity: 3000, checksOn: false });
-	const Data = createComponent({ value: { type: Types.Float32, default: 0 } });
+	const Data = createComponent('Data', {
+		value: { type: Types.Float32, default: 0 },
+	});
 	const comps = [];
 	for (let i = 0; i < 26; i++) {
-		comps[i] = createComponent({ value: { type: Types.Float32, default: 0 } });
+		comps[i] = createComponent(`Comp${i}`, {
+			value: { type: Types.Float32, default: 0 },
+		});
 		world.registerComponent(comps[i]);
 	}
 	world.registerComponent(Data);
@@ -189,8 +213,12 @@ export function fragmentedIteration() {
 
 export function entityCycle() {
 	const world = new EliWorld({ entityCapacity: 2000, checksOn: false });
-	const A = createComponent({ value: { type: Types.Float32, default: 0 } });
-	const B = createComponent({ value: { type: Types.Float32, default: 0 } });
+	const A = createComponent('A', {
+		value: { type: Types.Float32, default: 0 },
+	});
+	const B = createComponent('B', {
+		value: { type: Types.Float32, default: 0 },
+	});
 
 	class CycleSystem extends createSystem({
 		as: { required: [A] },
@@ -218,8 +246,12 @@ export function addRemove() {
 		entityCapacity: 1000,
 		checksOn: false,
 	});
-	const A = createComponent({ value: { type: Types.Float32, default: 0 } });
-	const B = createComponent({ value: { type: Types.Float32, default: 0 } });
+	const A = createComponent('A', {
+		value: { type: Types.Float32, default: 0 },
+	});
+	const B = createComponent('B', {
+		value: { type: Types.Float32, default: 0 },
+	});
 
 	class AddRemoveSystem extends createSystem({
 		as: { required: [A] },

@@ -5,20 +5,20 @@ import { createComponent } from '../src/component';
 import { Types } from '../src/types';
 
 // Define components for testing
-const PositionComponent = createComponent({
+const PositionComponent = createComponent('Position', {
 	x: { type: Types.Float32, default: 0 },
 	y: { type: Types.Float32, default: 0 },
 });
 
-const VelocityComponent = createComponent({
+const VelocityComponent = createComponent('Velocity', {
 	velocity: { type: Types.Vec2, default: [0, 0] },
 });
 
-const HealthComponent = createComponent({
+const HealthComponent = createComponent('Health', {
 	value: { type: Types.Int16, default: 100 },
 });
 
-const SimpleComponent = createComponent({
+const SimpleComponent = createComponent('Simple', {
 	value: { type: Types.Int8, default: 0 },
 });
 
@@ -272,7 +272,7 @@ describe('Query Tests', () => {
 	});
 
 	test('Registering query with unregistered component auto-registers it', () => {
-		const UnregisteredComponent = createComponent({
+		const UnregisteredComponent = createComponent('Unregistered', {
 			value: { type: Types.Int16, default: 0 },
 		});
 
@@ -290,12 +290,18 @@ describe('Query Tests', () => {
 	});
 
 	test('Registering query with unregistered excluded component auto-registers it', () => {
-		const UnregisteredRequiredComponent = createComponent({
-			value: { type: Types.Int16, default: 0 },
-		});
-		const UnregisteredExcludedComponent = createComponent({
-			flag: { type: Types.Boolean, default: false },
-		});
+		const UnregisteredRequiredComponent = createComponent(
+			'UnregisteredRequired',
+			{
+				value: { type: Types.Int16, default: 0 },
+			},
+		);
+		const UnregisteredExcludedComponent = createComponent(
+			'UnregisteredExcluded',
+			{
+				flag: { type: Types.Boolean, default: false },
+			},
+		);
 
 		// Components should not be registered initially
 		expect(world.hasComponent(UnregisteredRequiredComponent)).toBe(false);

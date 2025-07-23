@@ -4,20 +4,20 @@ import { createSystem } from '../src/system';
 import { Types } from '../src/types';
 
 // Define components for testing
-const PositionComponent = createComponent({
+const PositionComponent = createComponent('Position', {
 	x: { type: Types.Float32, default: 0 },
 	y: { type: Types.Float32, default: 0 },
 });
 
-const VelocityComponent = createComponent({
+const VelocityComponent = createComponent('Velocity', {
 	velocity: { type: Types.Vec2, default: [0, 0] },
 });
 
-const HealthComponent = createComponent({
+const HealthComponent = createComponent('Health', {
 	value: { type: Types.Int16, default: 100 },
 });
 
-const VectorComponent = createComponent({
+const VectorComponent = createComponent('Vector', {
 	position: { type: Types.Vec3, default: [0, 0, 0] },
 });
 
@@ -143,5 +143,64 @@ describe('EliCS Integration Tests', () => {
 		expect(positionVec3[0]).toBe(4.0);
 		expect(positionVec3[1]).toBe(4.0);
 		expect(positionVec3[2]).toBe(1.0);
+	});
+
+	test('entityReleaseCallback is called when entity is released', () => {
+		const releasedEntities: number[] = [];
+		const releaseCallback = jest.fn((entity) => {
+			releasedEntities.push(entity.index);
+		});
+
+		const world = new World({
+			checksOn: false,
+			entityReleaseCallback: releaseCallback,
+		});
+
+		world.registerComponent(PositionComponent);
+
+		// Create and configure entities
+		const entity1 = world.createEntity();
+		entity1.addComponent(PositionComponent, { x: 10, y: 20 });
+
+		const entity2 = world.createEntity();
+		entity2.addComponent(PositionComponent, { x: 30, y: 40 });
+
+		// Store entity indices for verification
+		const entity1Index = entity1.index;
+		const entity2Index = entity2.index;
+
+		// Release first entity
+		entity1.destroy();
+
+		// Verify callback was called for entity1
+		expect(releaseCallback).toHaveBeenCalledTimes(1);
+		expect(releaseCallback).toHaveBeenCalledWith(entity1);
+		expect(releasedEntities).toContain(entity1Index);
+
+		// Release second entity
+		entity2.destroy();
+
+		// Verify callback was called for entity2
+		expect(releaseCallback).toHaveBeenCalledTimes(2);
+		expect(releaseCallback).toHaveBeenCalledWith(entity2);
+		expect(releasedEntities).toContain(entity2Index);
+		expect(releasedEntities).toEqual([entity1Index, entity2Index]);
+	});
+
+	test('entityReleaseCallback is optional and world works without it', () => {
+		const world = new World({
+			checksOn: false,
+			// No entityReleaseCallback provided
+		});
+
+		world.registerComponent(PositionComponent);
+
+		const entity = world.createEntity();
+		entity.addComponent(PositionComponent, { x: 10, y: 20 });
+
+		// Should not throw when releasing entity without callback
+		expect(() => {
+			entity.destroy();
+		}).not.toThrow();
 	});
 });

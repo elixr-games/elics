@@ -3,33 +3,33 @@ import { World } from '../src/world';
 import { createComponent } from '../src/component';
 
 // Define components for testing
-const PositionComponent = createComponent({
+const PositionComponent = createComponent('Position', {
 	x: { type: Types.Float32, default: 0 },
 	y: { type: Types.Float32, default: 0 },
 });
 
-const VelocityComponent = createComponent({
+const VelocityComponent = createComponent('Velocity', {
 	velocity: { type: Types.Vec2, default: [0, 0] },
 });
 
-const HealthComponent = createComponent({
+const HealthComponent = createComponent('Health', {
 	value: { type: Types.Int16, default: 100 },
 });
 
-const VectorComponent = createComponent({
+const VectorComponent = createComponent('Vector', {
 	position: { type: Types.Vec3, default: [0, 0, 0] },
 });
 
-const NameComponent = createComponent({
+const NameComponent = createComponent('Name', {
 	name: { type: Types.String, default: '' },
 });
 
-const CustomDataComponent = createComponent({
+const CustomDataComponent = createComponent('CustomData', {
 	data: { type: Types.Object, default: null },
 });
 
 // Test various Object types
-const FlexibleObjectComponent = createComponent({
+const FlexibleObjectComponent = createComponent('FlexibleObject', {
 	plainObject: {
 		type: Types.Object,
 		default: { key: 'value', nested: { deep: true } },
@@ -53,11 +53,11 @@ const FlexibleObjectComponent = createComponent({
 	},
 });
 
-const BoolComponent = createComponent({
+const BoolComponent = createComponent('Bool', {
 	flag: { type: Types.Boolean, default: false },
 });
 
-const ReferenceComponent = createComponent({
+const ReferenceComponent = createComponent('Reference', {
 	target: { type: Types.Entity, default: null },
 });
 
@@ -84,33 +84,33 @@ enum NegativeEnum {
 	PosLarge = 100,
 }
 
-const SeasonComponent = createComponent({
+const SeasonComponent = createComponent('Season', {
 	season: { type: Types.Enum, enum: Season, default: Season.Spring },
 });
 
-const LargeEnumComponent = createComponent({
+const LargeEnumComponent = createComponent('LargeEnum', {
 	value: { type: Types.Enum, enum: LargeEnum, default: LargeEnum.Value1 },
 });
 
-const NegativeEnumComponent = createComponent({
+const NegativeEnumComponent = createComponent('NegativeEnum', {
 	value: { type: Types.Enum, enum: NegativeEnum, default: NegativeEnum.Zero },
 });
 
 // Define range-constrained components for testing
-const RangedHealthComponent = createComponent({
+const RangedHealthComponent = createComponent('RangedHealth', {
 	current: { type: Types.Float32, default: 100, min: 0, max: 100 },
 	maximum: { type: Types.Float32, default: 100, min: 1 },
 });
 
-const TemperatureComponent = createComponent({
+const TemperatureComponent = createComponent('Temperature', {
 	celsius: { type: Types.Int16, default: 20, min: -273, max: 1000 },
 });
 
-const ScoreComponent = createComponent({
+const ScoreComponent = createComponent('Score', {
 	points: { type: Types.Int8, default: 0, max: 127 },
 });
 
-const PrecisionComponent = createComponent({
+const PrecisionComponent = createComponent('Precision', {
 	value: { type: Types.Float64, default: 0.0, min: -1.0, max: 1.0 },
 });
 
@@ -385,7 +385,7 @@ describe('Entity Tests', () => {
 
 	test('entity references work beyond Int16 range', () => {
 		const world = new World({ entityCapacity: 33000 });
-		const RefComp = createComponent({
+		const RefComp = createComponent('RefComp', {
 			ref: { type: Types.Entity, default: null as any },
 		});
 		world.registerComponent(RefComp);
@@ -522,7 +522,7 @@ describe('Entity Tests', () => {
 				Completed = 30,
 			}
 
-			const TaskComponent = createComponent({
+			const TaskComponent = createComponent('Task', {
 				priority: { type: Types.Enum, enum: Priority, default: Priority.Low },
 				status: { type: Types.Enum, enum: Status, default: Status.Pending },
 			});
@@ -566,7 +566,7 @@ describe('Entity Tests', () => {
 			// This test ensures that invalid default values would be caught
 			// We can't easily test this without creating a component with an invalid default,
 			// but the validation logic is the same as for initial values
-			const InvalidDefaultComponent = createComponent({
+			const InvalidDefaultComponent = createComponent('InvalidDefault', {
 				value: { type: Types.Enum, enum: Season, default: 99 }, // Invalid default
 			});
 

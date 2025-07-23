@@ -4,16 +4,16 @@ import { createSystem } from '../src/system';
 import { Types } from '../src/types';
 
 // Define components for testing
-const PositionComponent = createComponent({
+const PositionComponent = createComponent('Position', {
 	x: { type: Types.Float32, default: 0 },
 	y: { type: Types.Float32, default: 0 },
 });
 
-const VelocityComponent = createComponent({
+const VelocityComponent = createComponent('Velocity', {
 	velocity: { type: Types.Vec2, default: [0, 0] },
 });
 
-const HealthComponent = createComponent({
+const HealthComponent = createComponent('Health', {
 	value: { type: Types.Int16, default: 100 },
 });
 
