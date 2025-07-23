@@ -18,7 +18,7 @@ EliCS provides a set of built-in types for defining component schemas, system co
 
 ### [Components](component.md)
 
-Components are pure data containers that define the properties or behaviors of entities. They are modular and can be dynamically attached to or detached from entities.
+Components are pure data containers that define the properties or behaviors of entities. They are modular and can be dynamically attached to or detached from entities. Components are automatically registered in a global ComponentRegistry that enables external tool integration and build-time analysis.
 
 ### [Systems](system.md)
 

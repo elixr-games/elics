@@ -64,28 +64,60 @@ enum CombatState {
 	Defending = 40,
 }
 
-const Position = createComponent({
-	value: { type: Types.Vec3, default: [0, 0, 0] },
-});
+const Position = createComponent(
+	'Position',
+	{
+		value: { type: Types.Vec3, default: [0, 0, 0] },
+	},
+	'3D position coordinates',
+);
 
-const Velocity = createComponent({
-	value: { type: Types.Vec3, default: [0, 0, 0] },
-});
+const Velocity = createComponent(
+	'Velocity',
+	{
+		value: { type: Types.Vec3, default: [0, 0, 0] },
+	},
+	'3D velocity vector',
+);
 
-const Health = createComponent({
-	value: { type: Types.Float32, default: 100 },
-});
+const Health = createComponent(
+	'Health',
+	{
+		value: { type: Types.Float32, default: 100 },
+	},
+	'Entity health points',
+);
 
-const Unit = createComponent({
-	type: { type: Types.Enum, enum: UnitType, default: UnitType.Infantry },
-	state: { type: Types.Enum, enum: CombatState, default: CombatState.Idle },
-	damage: { type: Types.Float32, default: 10, min: 1, max: 100 },
-	armor: { type: Types.Int16, default: 0, min: 0, max: 50 },
-	morale: { type: Types.Float32, default: 1.0, min: 0.0, max: 1.0 },
-});
+const Unit = createComponent(
+	'Unit',
+	{
+		type: { type: Types.Enum, enum: UnitType, default: UnitType.Infantry },
+		state: { type: Types.Enum, enum: CombatState, default: CombatState.Idle },
+		damage: { type: Types.Float32, default: 10, min: 1, max: 100 },
+		armor: { type: Types.Int16, default: 0, min: 0, max: 50 },
+		morale: { type: Types.Float32, default: 1.0, min: 0.0, max: 1.0 },
+	},
+	'Military unit with combat statistics',
+);
 ```
 
-Optionally register these components for explicit control (or they will be automatically registered when first used):
+Each component is assigned a unique ID and optional description, and is automatically recorded in the `ComponentRegistry` for lookup by external tools. This enables powerful integrations with build tools and external editors.
+
+```typescript
+import { ComponentRegistry } from 'elics';
+
+// Components are automatically available for lookup
+const positionComp = ComponentRegistry.getById('Position');
+const healthComp = ComponentRegistry.getById('Health');
+
+// List all recorded components
+console.log(
+	'Recorded components:',
+	ComponentRegistry.getAllComponents().length,
+);
+```
+
+Optionally register these components with the world for explicit control (or they will be automatically registered when first used):
 
 ```typescript
 // Optional manual registration

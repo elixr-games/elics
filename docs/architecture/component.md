@@ -60,7 +60,11 @@ const schema = {
 	aiState: { type: Types.Enum, enum: AIState, default: AIState.Idle },
 };
 
-const EnemyComponent = createComponent(schema);
+const EnemyComponent = createComponent(
+	'Enemy',
+	schema,
+	'Represents an enemy entity with health, position, and AI state',
+);
 ```
 
 #### Component Schema
@@ -202,15 +206,38 @@ Components are not instantiated per entity. Instead, the component object's prop
 
 ### createComponent Function
 
-Creates a new component with the specified schema.
+Creates a new component with the specified ID, schema, and optional description. The metadata from the components (id, description, schema data) are automatically recorded in the ComponentRegistry for potential integration with external tooling, more on this in the [ComponentRegistry section](#componentregistry).
 
 ```ts
-function createComponent<T extends Types>(schema: TypedSchema<T>): Component<T>;
+function createComponent<T extends Types>(
+	id: string,
+	schema: TypedSchema<T>,
+	description?: string,
+): Component<T>;
 ```
 
 - **Parameters:**
+  - `id`: A unique identifier for the component (required). Used for component lookup and external tool integration.
   - `schema`: The schema defining the data structure and default values for the component.
+  - `description`: An optional human-readable description of the component's purpose.
 - **Returns:** A new `Component` instance based on the provided schema.
+
+**Example:**
+
+```ts
+const PositionComponent = createComponent(
+	'Position',
+	{
+		x: { type: Types.Float32, default: 0 },
+		y: { type: Types.Float32, default: 0 },
+		z: { type: Types.Float32, default: 0 },
+	},
+	'3D position coordinates',
+);
+
+// Component is automatically available for lookup
+const component = ComponentRegistry.getById('Position');
+```
 
 ### Component.schema
 
@@ -229,3 +256,195 @@ readonly data: { [key: keyof schema]: TypedArray | Array<any> };
 ```
 
 the `data` property stores the component's data in optimized arrays (one for each property in the schema). Numerical and vector data are typically stored in a `TypedArray`, while strings and objects are stored in regular JavaScript arrays.
+
+## ComponentRegistry
+
+The `ComponentRegistry` is a global registry that provides component lookup capabilities for external tools and build-time analysis. All components created with `createComponent` are automatically recorded.
+
+### Features
+
+- **Automatic Recording**: Components are recorded immediately when created
+- **ID-based Lookup**: Retrieve components by their string identifier
+- **Build-tool Integration**: Supports webpack plugins and external tool discovery
+- **Framework Extensibility**: Enables advanced component management in frameworks
+
+### Usage
+
+#### Basic Component Lookup
+
+```ts
+import { createComponent, ComponentRegistry, Types } from 'elics';
+
+// Create components - they auto-record
+const HealthComponent = createComponent('Health', {
+	current: { type: Types.Float32, default: 100 },
+	maximum: { type: Types.Float32, default: 100 },
+});
+
+const PositionComponent = createComponent('Position', {
+	x: { type: Types.Float32, default: 0 },
+	y: { type: Types.Float32, default: 0 },
+	z: { type: Types.Float32, default: 0 },
+});
+
+// Lookup components by ID
+const healthComp = ComponentRegistry.getById('Health');
+const posComp = ComponentRegistry.getById('Position');
+
+// Check if component exists
+if (ComponentRegistry.has('Health')) {
+	console.log('Health component is registered');
+}
+
+// Get all recorded components
+const allComponents = ComponentRegistry.getAllComponents();
+console.log(`${allComponents.length} components registered`);
+```
+
+#### External Tool Integration
+
+The ComponentRegistry enables powerful integration with external tools like Unity, Blender, or custom editors:
+
+```ts
+// Example: Loading entity data from external tools
+interface SerializedEntity {
+	components: {
+		[componentId: string]: Record<string, any>;
+	};
+}
+
+function createEntityFromSerialized(
+	world: World,
+	data: SerializedEntity,
+): Entity {
+	const entity = world.createEntity();
+
+	// Apply components using registry lookup
+	for (const [componentId, componentData] of Object.entries(data.components)) {
+		const Component = ComponentRegistry.getById(componentId);
+		if (Component) {
+			entity.addComponent(Component, componentData);
+		} else {
+			console.warn(`Unknown component: ${componentId}`);
+		}
+	}
+
+	return entity;
+}
+
+// Example serialized data from Unity/external tool
+const serializedEntity = {
+	components: {
+		Position: { x: 10, y: 5, z: 0 },
+		Health: { current: 75, maximum: 100 },
+		Velocity: { x: 1, y: 0, z: 0 },
+	},
+};
+
+const entity = createEntityFromSerialized(world, serializedEntity);
+```
+
+#### Build-time Component Discovery
+
+While ComponentRegistry provides runtime component lookup, **build-time component discovery** requires a different approach using **AST (Abstract Syntax Tree) parsing**.
+
+**What is AST Parsing?**
+AST parsing allows build tools to analyze your source code without executing it. The build tool converts your code into a tree structure representing its syntax, then searches for `createComponent` calls to extract component definitions.
+
+**How it Works:**
+
+1. **Build tool scans source files** during compilation
+2. **Parses TypeScript/JavaScript** into an AST representation
+3. **Searches for `createComponent` function calls** in the AST
+4. **Extracts component metadata** (ID, schema, description) from function arguments
+5. **Generates external tool definitions** (Unity, Blender, etc.) from extracted data
+
+**Build Tool Support:**
+This approach works with modern build tools that support source code analysis:
+
+- **Webpack**: Via custom plugins using `@babel/parser` or TypeScript compiler API
+- **Vite**: Via Rollup plugins with AST analysis capabilities
+- **ESBuild**: Via plugins with TypeScript parsing
+- **Custom CLI tools**: Using TypeScript compiler API directly
+
+**Generated Output Example:**
+
+```json
+{
+	"components": [
+		{
+			"id": "Position",
+			"description": "3D position coordinates",
+			"fields": [
+				{
+					"name": "x",
+					"type": "Float32",
+					"default": 0,
+					"constraints": { "min": -100, "max": 100 }
+				}
+			]
+		}
+	]
+}
+```
+
+This generated metadata can then be imported into external tools like Unity, Blender, or custom editors to provide component editing interfaces.
+
+### API Reference
+
+#### ComponentRegistry.record
+
+```ts
+static record(component: AnyComponent): void
+```
+
+Records a component in the global registry. Called automatically by `createComponent`.
+
+- **Parameters:**
+  - `component`: The component instance to record
+
+#### ComponentRegistry.getById
+
+```ts
+static getById(id: string): AnyComponent | undefined
+```
+
+Retrieves a component by its ID.
+
+- **Parameters:**
+  - `id`: The component identifier
+- **Returns:** The component instance or `undefined` if not found
+
+#### ComponentRegistry.has
+
+```ts
+static has(id: string): boolean
+```
+
+Checks if a component with the given ID is registered.
+
+- **Parameters:**
+  - `id`: The component identifier
+- **Returns:** `true` if the component exists, `false` otherwise
+
+#### ComponentRegistry.getAllComponents
+
+```ts
+static getAllComponents(): AnyComponent[]
+```
+
+Returns an array of all recorded components.
+
+- **Returns:** Array of all component instances
+
+#### ComponentRegistry.clear
+
+```ts
+static clear(): void
+```
+
+Removes all components from the registry. Primarily used for testing.
+
+::: warning Development Use Only
+The `clear()` method should only be used in testing environments. Clearing the registry in production can break component references and cause runtime errors.
+:::

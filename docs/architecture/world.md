@@ -38,6 +38,28 @@ import { World } from 'elics';
 const world = new World();
 ```
 
+### Creating a World with Entity Release Callback
+
+You can provide an optional callback function that will be invoked whenever entities are destroyed, allowing for custom cleanup logic:
+
+```ts
+import { World } from 'elics';
+
+const world = new World({
+	entityCapacity: 5000,
+	checksOn: false,
+	entityReleaseCallback: (entity) => {
+		// Custom cleanup logic when entity is destroyed
+		// For example, removing associated 3D objects from scene
+		const entityObject3D = getAssociatedObject3D(entity);
+		if (entityObject3D) {
+			entityObject3D.removeFromParent();
+			removeAssociatedObject3D(entity);
+		}
+	},
+});
+```
+
 ### Registering Components and Systems
 
 After creating the world instance, you can register [components](./component.md) and [systems](./system.md) to define the application's behavior and logic.
@@ -77,13 +99,13 @@ An interface that defines the configuration options for the **World** class.
 interface WorldOptions {
 	entityCapacity: number;
 	checksOn: boolean;
-	deferredEntityUpdates: boolean;
+	entityReleaseCallback?: (entity: Entity) => void;
 }
 ```
 
 - `entityCapacity` (`number`): The maximum number of entities the world can manage (default is 1000).
 - `checksOn` (`boolean`): Enables runtime validations for debugging purposes (default is true). It's recommended to disable checks in production for better performance.
-- `deferredEntityUpdates` (`boolean`): When `true`, entity changes are batched and processed after all systems update (default is false).
+- `entityReleaseCallback` (`function`, optional): A callback function that is invoked whenever an entity is released/destroyed. Useful for custom cleanup logic, such as removing associated 3D objects or cleaning up external resources.
 
 ### World.constructor
 

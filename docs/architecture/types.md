@@ -46,7 +46,7 @@ enum Season {
 	Winter = 4,
 }
 
-const SeasonComponent = createComponent({
+const SeasonComponent = createComponent('Season', {
 	season: {
 		type: Types.Enum,
 		enum: Season,
@@ -90,7 +90,7 @@ enum Priority {
 }
 
 // Create component with enum field
-const TaskComponent = createComponent({
+const TaskComponent = createComponent('Task', {
 	priority: { type: Types.Enum, enum: Priority, default: Priority.Low },
 	description: { type: Types.String, default: '' },
 });
