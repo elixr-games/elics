@@ -1,4 +1,5 @@
 import {
+	AnyComponent,
 	DataArrayToType,
 	DataType,
 	TypedArray,
@@ -18,21 +19,59 @@ import BitSet from './bit-set.js';
 export type ComponentMask = BitSet;
 
 export interface Component<S extends TypedSchema<DataType>> {
+	id: string;
+	description?: string;
 	schema: S;
 	data: { [K in keyof S]: DataArrayToType<S[K]['type']> };
 	bitmask: ComponentMask | null;
 	typeId: number;
 }
 
+export class ComponentRegistry {
+	private static components = new Map<string, AnyComponent>();
+
+	static record(component: AnyComponent): void {
+		if (this.components.has(component.id)) {
+			throw new Error(
+				`Component with id '${component.id}' already exists. Each component must have a unique identifier.`,
+			);
+		}
+		this.components.set(component.id, component);
+	}
+
+	static getById(id: string): AnyComponent | undefined {
+		return this.components.get(id);
+	}
+
+	static getAllComponents(): AnyComponent[] {
+		return Array.from(this.components.values());
+	}
+
+	static has(id: string): boolean {
+		return this.components.has(id);
+	}
+
+	static clear(): void {
+		this.components.clear();
+	}
+}
+
 export function createComponent<T extends DataType, S extends TypedSchema<T>>(
+	id: string,
 	schema: S,
+	description?: string,
 ): Component<S> {
-	return {
+	const component = {
+		id,
+		description,
 		schema,
 		data: {} as { [K in keyof S]: DataArrayToType<S[K]['type']> },
 		bitmask: null,
 		typeId: -1,
 	};
+
+	ComponentRegistry.record(component as AnyComponent);
+	return component;
 }
 
 export function initializeComponentStorage<
