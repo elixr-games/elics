@@ -5,6 +5,75 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - "Adapter" - July 24, 2025
+
+A major release focused on framework extensibility and external tool integration, introducing component metadata, registry system, and entity lifecycle customization.
+
+### Added
+
+- **Component Metadata System**: Components now require an `id` parameter and support optional `description` for better tooling integration
+- **ComponentRegistry**: Global registry for component lookup by ID, enabling powerful external tool integration
+- **Entity Release Callbacks**: Optional `entityReleaseCallback` in WorldOptions for custom cleanup logic when entities are destroyed
+- **External Tool Integration**: Support for Unity, Blender, and custom editor integration through component metadata
+- **Build-time Component Discovery**: Documentation for AST parsing approach to extract component definitions at build time
+
+### Breaking Changes
+
+- **createComponent Signature**: Now requires an `id` parameter as the first argument:
+
+  ```ts
+  // Before
+  const Component = createComponent(schema);
+
+  // After
+  const Component = createComponent(
+  	'ComponentId',
+  	schema,
+  	'Optional description',
+  );
+  ```
+
+- **Component Interface**: All Component objects now include `id` and optional `description` fields
+- **Automatic Component Registration**: Components are automatically recorded in ComponentRegistry when created
+
+### Enhanced Features
+
+- **Lazy Component Registration**: Components are automatically registered with World when first used with entities or queries
+- **Improved TypeScript Support**: Enhanced typing for component metadata and registry operations
+- **Framework Integration**: Better support for framework-level extensions and custom ECS implementations
+
+### API Changes
+
+- **ComponentRegistry Methods**: New static methods for component lookup and management:
+  - `ComponentRegistry.record()` - Records components (called automatically)
+  - `ComponentRegistry.getById()` - Retrieves components by ID
+  - `ComponentRegistry.has()` - Checks component existence
+  - `ComponentRegistry.getAllComponents()` - Lists all components
+  - `ComponentRegistry.clear()` - Clears registry (testing only)
+
+### Documentation
+
+- **Comprehensive Component Registry Documentation**: Added detailed examples for external tool integration
+- **Entity Lifecycle Documentation**: Added entityReleaseCallback usage examples and patterns
+- **Build Tool Integration Guide**: Documentation for AST parsing and webpack/vite plugin development
+- **Updated Getting Started Guide**: Revised all examples to use new createComponent signature
+
+### Internal Improvements
+
+- **Error Handling**: ComponentRegistry throws errors for duplicate component IDs instead of warnings
+- **Release Workflow**: Simplified GitHub Actions workflow to only trigger from web interface
+- **Test Coverage**: Comprehensive tests for all new features and breaking changes
+
+### Migration Guide
+
+To upgrade from v2.x to v3.0.0:
+
+1. **Update createComponent calls** - Add unique ID as first parameter
+2. **Optional: Use ComponentRegistry** - Leverage new lookup capabilities for tooling
+3. **Optional: Add entityReleaseCallback** - Implement custom cleanup if needed
+
+This release maintains full ECS performance while significantly expanding integration capabilities for complex applications and external tooling.
+
 ## [2.4.0] - "Enumerator" - July 11, 2025
 
 A significant feature release that adds comprehensive enum support for type-safe component properties with automatic storage optimization.
