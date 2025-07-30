@@ -1,7 +1,7 @@
+import { Types } from '../src/types';
 import { World } from '../src/world';
 import { createComponent } from '../src/component';
 import { createSystem } from '../src/system';
-import { Types } from '../src/types';
 
 // Define components for testing
 const PositionComponent = createComponent('Position', {
@@ -56,7 +56,7 @@ class HealthSystem extends createSystem(
 			entity.setValue(
 				HealthComponent,
 				'value',
-				healthValue - (this.config.healthDecreaseRate.value as number) * delta,
+				healthValue - this.config.healthDecreaseRate.value * delta,
 			);
 		}
 	}

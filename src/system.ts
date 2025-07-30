@@ -1,28 +1,36 @@
-import { DataType, TypeValueToType } from './types.js';
 import { Query, QueryConfig } from './query.js';
 import { Signal, signal } from '@preact/signals-core';
 
 import { Entity } from './entity.js';
 import { QueryManager } from './query-manager.js';
+import { TypeValueToType } from './types.js';
 import { World } from './world.js';
 
-export type SystemSchema<T extends DataType> = Record<
-	string,
-	{
-		type: T;
-		default: TypeValueToType<T>;
-	}
->;
+export type SystemSchemaField =
+	| { type: 'Int8'; default: number }
+	| { type: 'Int16'; default: number }
+	| { type: 'Float32'; default: number }
+	| { type: 'Float64'; default: number }
+	| { type: 'Boolean'; default: boolean }
+	| { type: 'String'; default: string }
+	| { type: 'Vec2'; default: [number, number] }
+	| { type: 'Vec3'; default: [number, number, number] }
+	| { type: 'Vec4'; default: [number, number, number, number] }
+	| { type: 'Entity'; default: import('./entity.js').Entity | null }
+	| { type: 'Object'; default: unknown }
+	| { type: 'Enum'; default: number };
+
+export type SystemSchema = Record<string, SystemSchemaField>;
 
 export type SystemQueries = Record<string, QueryConfig>;
 
-export interface System<
-	T extends DataType,
-	S extends SystemSchema<T>,
-	Q extends SystemQueries,
-> {
+type SystemConfigSignals<S extends SystemSchema> = {
+	[K in keyof S]: Signal<TypeValueToType<S[K]['type']>>;
+};
+
+export interface System<S extends SystemSchema, Q extends SystemQueries> {
 	isPaused: boolean;
-	config: Record<keyof S, Signal<TypeValueToType<T>>>;
+	config: SystemConfigSignals<S>;
 	queries: Record<keyof Q, Query>;
 	world: World;
 	queryManager: QueryManager;
@@ -36,20 +44,16 @@ export interface System<
 	createEntity(): Entity;
 }
 
-export interface SpecialSystem<
-	T extends DataType,
-	S extends SystemSchema<T>,
-	Q extends SystemQueries,
-> extends System<T, S, Q> {
+export interface SpecialSystem<S extends SystemSchema, Q extends SystemQueries>
+	extends System<S, Q> {
 	specialProp: boolean;
 }
 
 export interface SystemConstructor<
-	T extends DataType,
-	S extends SystemSchema<T>,
+	S extends SystemSchema,
 	Q extends SystemQueries,
 	W extends World = World,
-	Sys extends System<T, S, Q> = System<T, S, Q>,
+	Sys extends System<S, Q> = System<S, Q>,
 > {
 	schema: S;
 	isSystem: boolean;
@@ -57,12 +61,11 @@ export interface SystemConstructor<
 	new (_w: W, _qm: QueryManager, _p: number): Sys;
 }
 
-export function createSystem<
-	T extends DataType,
-	S extends SystemSchema<T>,
-	Q extends SystemQueries,
->(queries: Q = {} as Q, schema: S = {} as S): SystemConstructor<T, S, Q> {
-	return class implements System<T, S, Q> {
+export function createSystem<S extends SystemSchema, Q extends SystemQueries>(
+	queries: Q = {} as Q,
+	schema: S = {} as S,
+): SystemConstructor<S, Q> {
+	return class implements System<S, Q> {
 		static schema = schema;
 
 		static isSystem = true;
@@ -73,7 +76,7 @@ export function createSystem<
 
 		public queries!: Record<keyof Q, Query>;
 
-		public config = {} as Record<keyof S, Signal<TypeValueToType<T>>>;
+		public config = {} as SystemConfigSignals<S>;
 
 		constructor(
 			public readonly world: World,
@@ -81,7 +84,7 @@ export function createSystem<
 			public priority: number,
 		) {
 			for (const key in schema) {
-				this.config[key] = signal(schema[key].default);
+				this.config[key] = signal(schema[key].default) as any;
 			}
 		}
 

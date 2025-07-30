@@ -1,4 +1,4 @@
-import { DataType, TypeValueToType } from './types.js';
+import { TypeValueToType } from './types.js';
 import { Query, QueryConfig } from './query.js';
 import {
 	System,
@@ -20,8 +20,10 @@ export interface WorldOptions {
 	entityReleaseCallback?: (entity: Entity) => void;
 }
 
-export interface SystemOptions<T extends DataType, S extends SystemSchema<T>> {
-	configData: Record<keyof S, TypeValueToType<T>>;
+export interface SystemOptions<S extends SystemSchema> {
+	configData: {
+		[K in keyof S]: TypeValueToType<S[K]['type']>;
+	};
 	priority: number;
 }
 
@@ -65,13 +67,12 @@ export class World {
 	}
 
 	registerSystem<
-		T extends DataType,
-		S extends SystemSchema<T>,
+		S extends SystemSchema,
 		Q extends SystemQueries,
-		Sys extends System<T, S, Q> = System<T, S, Q>,
+		Sys extends System<S, Q> = System<S, Q>,
 	>(
-		systemClass: SystemConstructor<T, S, Q, typeof this, Sys>,
-		options: Partial<SystemOptions<T, S>> = {},
+		systemClass: SystemConstructor<S, Q, typeof this, Sys>,
+		options: Partial<SystemOptions<S>> = {},
 	): this {
 		if (this.hasSystem(systemClass)) {
 			console.warn(
@@ -81,7 +82,9 @@ export class World {
 		}
 
 		const {
-			configData = {} as Record<keyof S, TypeValueToType<T>>,
+			configData = {} as {
+				[K in keyof S]: TypeValueToType<S[K]['type']>;
+			},
 			priority = 0,
 		} = options;
 
@@ -119,11 +122,10 @@ export class World {
 	}
 
 	unregisterSystem<
-		T extends DataType,
-		S extends SystemSchema<T>,
+		S extends SystemSchema,
 		Q extends SystemQueries,
-		Sys extends System<T, S, Q>,
-	>(systemClass: SystemConstructor<T, S, Q, typeof this, Sys>): void {
+		Sys extends System<S, Q>,
+	>(systemClass: SystemConstructor<S, Q, typeof this, Sys>): void {
 		const systemInstance = this.getSystem(systemClass);
 		if (systemInstance) {
 			systemInstance.destroy();
@@ -147,13 +149,10 @@ export class World {
 	}
 
 	getSystem<
-		T extends DataType,
-		S extends SystemSchema<T>,
+		S extends SystemSchema,
 		Q extends SystemQueries,
-		Sys extends System<T, S, Q>,
-	>(
-		systemClass: SystemConstructor<T, S, Q, typeof this, Sys>,
-	): Sys | undefined {
+		Sys extends System<S, Q>,
+	>(systemClass: SystemConstructor<S, Q, typeof this, Sys>): Sys | undefined {
 		for (const system of this.systems) {
 			if (system instanceof systemClass) {
 				return system as Sys;
@@ -167,11 +166,10 @@ export class World {
 	}
 
 	hasSystem<
-		T extends DataType,
-		S extends SystemSchema<T>,
+		S extends SystemSchema,
 		Q extends SystemQueries,
-		Sys extends System<T, S, Q>,
-	>(systemClass: SystemConstructor<T, S, Q, typeof this, Sys>): boolean {
+		Sys extends System<S, Q>,
+	>(systemClass: SystemConstructor<S, Q, typeof this, Sys>): boolean {
 		return this.systems.some((system) => system instanceof systemClass);
 	}
 }

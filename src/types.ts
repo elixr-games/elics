@@ -165,8 +165,7 @@ export type TypedSchema<T extends DataType> = Record<string, SchemaField<T>>;
 export type AnySchema = TypedSchema<DataType>;
 export type AnyComponent = import('./component.js').Component<AnySchema>;
 export type AnySystem = import('./system.js').System<
-	DataType,
-	import('./system.js').SystemSchema<DataType>,
+	import('./system.js').SystemSchema,
 	import('./system.js').SystemQueries
 >;
 
