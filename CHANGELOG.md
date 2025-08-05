@@ -5,6 +5,51 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.0] - "Modern Enums" - August 5, 2025
+
+Modernizes enum handling to align with current TypeScript best practices, replacing numeric enums with string-based const assertions.
+
+### Breaking Changes
+
+- **String-Based Enums**: Enum types now store and return string values instead of numbers
+- **Storage Change**: Enum components now use `Array<string>` instead of `Int8Array`/`Int16Array`
+- **Enum Pattern**: Traditional TypeScript enums are replaced with const object pattern:
+
+  ```ts
+  // Before (v3.0.x)
+  enum Status {
+  	Active = 1,
+  	Inactive = 2,
+  }
+
+  // After (v3.1.0)
+  const Status = {
+  	Active: 'active',
+  	Inactive: 'inactive',
+  } as const;
+  ```
+
+### Benefits
+
+- **Cleaner JavaScript**: No compiled enum artifacts, just plain objects
+- **Better Tree-Shaking**: Const objects are more optimization-friendly
+- **Type Safety Maintained**: Full TypeScript type checking preserved
+- **Modern Standards**: Aligns with current TypeScript best practices
+- **Simpler Implementation**: No need for numeric range detection
+
+### Migration Guide
+
+1. Replace traditional enums with const objects using string values
+2. Update enum component definitions to use the new pattern
+3. Enum values returned by `getValue()` are now strings instead of numbers
+
+### Internal Changes
+
+- Updated `TypeValueToType` to return `string` for Enum types
+- Modified validation to work with string enum values
+- Removed numeric range detection for enum array allocation
+- Updated all tests to use const object pattern
+
 ## [3.0.0] - "Adapter" - July 24, 2025
 
 A major release focused on framework extensibility and external tool integration, introducing component metadata, registry system, and entity lifecycle customization.
