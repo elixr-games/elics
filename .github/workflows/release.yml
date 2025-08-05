@@ -35,21 +35,3 @@ jobs:
         run: npm publish --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ github.ref_name }}
-          name: Release ${{ github.ref_name }}
-          body: |
-            ## Changes in this Release
-
-            See [CHANGELOG.md](https://github.com/elixr-games/elics/blob/main/CHANGELOG.md) for detailed release notes.
-
-            ### Quick Links
-            - 📦 [NPM Package](https://www.npmjs.com/package/elics)
-            - 📖 [Documentation](https://elixr-games.github.io/elics/)
-            - 🚀 [Getting Started](https://elixr-games.github.io/elics/getting-started.html)
-          draft: false
-          prerelease: false
-          generate_release_notes: true
