@@ -50,19 +50,19 @@ Components are data containers that define entity properties.
 ```typescript
 import { createComponent, Types } from 'elics';
 
-// Define enums for type-safe state management
-enum UnitType {
-	Infantry = 1,
-	Cavalry = 2,
-	Archer = 3,
-}
+// Define enums for type-safe state management using const assertions
+const UnitType = {
+	Infantry: 'infantry',
+	Cavalry: 'cavalry',
+	Archer: 'archer',
+} as const;
 
-enum CombatState {
-	Idle = 10,
-	Moving = 20,
-	Attacking = 30,
-	Defending = 40,
-}
+const CombatState = {
+	Idle: 'idle',
+	Moving: 'moving',
+	Attacking: 'attacking',
+	Defending: 'defending',
+} as const;
 
 const Position = createComponent(
 	'Position',

@@ -8,43 +8,44 @@ The **Types** enum in EliCS provides a set of predefined data types that can be 
 
 ## Supported Types
 
-| Type          | JavaScript Type | Description                            | Data Array Type         |
-| ------------- | --------------- | -------------------------------------- | ----------------------- |
-| Types.Int8    | number          | 8-bit integer                          | Int8Array               |
-| Types.Int16   | number          | 16-bit integer                         | Int16Array              |
-| Types.Entity  | Entity          | Reference to another entity            | Int16Array              |
-| Types.Float32 | number          | 32-bit floating point number           | Float32Array            |
-| Types.Float64 | number          | 64-bit floating point number           | Float64Array            |
-| Types.Boolean | boolean         | True/false value                       | Uint8Array              |
-| Types.String  | string          | Text string                            | Array<string\>          |
-| Types.Object  | object          | JavaScript object                      | Array<any\>             |
-| Types.Vec2    | number[]        | 2D vector                              | Float32Array            |
-| Types.Vec3    | number[]        | 3D vector                              | Float32Array            |
-| Types.Vec4    | number[]        | 4D vector or quaternion                | Float32Array            |
-| Types.Enum    | number          | Enumerated value with number constants | Int8Array or Int16Array |
+| Type          | JavaScript Type | Description                            | Data Array Type |
+| ------------- | --------------- | -------------------------------------- | --------------- |
+| Types.Int8    | number          | 8-bit integer                          | Int8Array       |
+| Types.Int16   | number          | 16-bit integer                         | Int16Array      |
+| Types.Entity  | Entity          | Reference to another entity            | Int16Array      |
+| Types.Float32 | number          | 32-bit floating point number           | Float32Array    |
+| Types.Float64 | number          | 64-bit floating point number           | Float64Array    |
+| Types.Boolean | boolean         | True/false value                       | Uint8Array      |
+| Types.String  | string          | Text string                            | Array<string\>  |
+| Types.Object  | object          | JavaScript object                      | Array<any\>     |
+| Types.Vec2    | number[]        | 2D vector                              | Float32Array    |
+| Types.Vec3    | number[]        | 3D vector                              | Float32Array    |
+| Types.Vec4    | number[]        | 4D vector or quaternion                | Float32Array    |
+| Types.Enum    | string          | Enumerated value with string constants | Array<string\>  |
 
 ## Enum Type
 
-The `Types.Enum` type allows you to define enumerated values with numeric constants, providing type safety and validation for component properties that should only accept specific predefined values.
+The `Types.Enum` type allows you to define enumerated values with string constants using modern TypeScript const assertions, providing type safety and validation for component properties that should only accept specific predefined values.
 
 ### Key Features
 
-- **Type Safety**: Only accepts valid enum values defined in the enum object
-- **Automatic Storage Optimization**: Chooses Int8Array or Int16Array based on enum value range
+- **Type Safety**: Only accepts valid enum values defined in the const object
+- **String Storage**: Uses Array<string> for clean JavaScript output
 - **Runtime Validation**: Validates enum values when `CHECKS_ON` is true
 - **TypeScript Integration**: Full TypeScript support with proper type inference
+- **Modern Pattern**: Uses const assertions instead of traditional TypeScript enums
 
 ### Schema Definition
 
-For enum types, the schema requires an additional `enum` property that specifies the allowed values:
+For enum types, the schema requires an additional `enum` property that specifies the allowed values using const assertions:
 
 ```ts
-enum Season {
-	Spring = 1,
-	Summer = 2,
-	Fall = 3,
-	Winter = 4,
-}
+const Season = {
+	Spring: 'spring',
+	Summer: 'summer',
+	Fall: 'fall',
+	Winter: 'winter',
+} as const;
 
 const SeasonComponent = createComponent('Season', {
 	season: {
@@ -55,39 +56,41 @@ const SeasonComponent = createComponent('Season', {
 });
 ```
 
-### Storage Optimization
+### String Storage
 
-EliCS automatically selects the most efficient storage based on your enum values:
+EliCS stores all enum values as strings using `Array<string>`, which provides several benefits:
 
-- **Int8Array**: Used when all enum values fit in the range [-128, 127]
-- **Int16Array**: Used when enum values exceed the Int8 range
+- **Clean JavaScript**: No compiled enum artifacts, just plain objects
+- **Better Tree-Shaking**: Const objects are more optimization-friendly
+- **Readable Values**: String values are self-documenting and easier to debug
+- **Type Safety**: Full TypeScript type checking maintained
 
 ```ts
-// Uses Int8Array (values 1-4 fit in Int8 range)
-enum Direction {
-	North = 1,
-	East = 2,
-	South = 3,
-	West = 4,
-}
+// Modern const assertion pattern
+const Direction = {
+	North: 'north',
+	East: 'east',
+	South: 'south',
+	West: 'west',
+} as const;
 
-// Uses Int16Array (value 1000 exceeds Int8 range)
-enum StatusCode {
-	Success = 200,
-	NotFound = 404,
-	Error = 1000,
-}
+// Another example with descriptive strings
+const StatusCode = {
+	Success: 'success',
+	NotFound: 'not_found',
+	Error: 'error',
+} as const;
 ```
 
 ### Usage Examples
 
 ```ts
-// Define an enum
-enum Priority {
-	Low = 1,
-	Medium = 2,
-	High = 3,
-}
+// Define an enum using const assertion
+const Priority = {
+	Low: 'low',
+	Medium: 'medium',
+	High: 'high',
+} as const;
 
 // Create component with enum field
 const TaskComponent = createComponent('Task', {
@@ -102,11 +105,11 @@ world.registerComponent(TaskComponent);
 const entity = world.createEntity();
 entity.addComponent(TaskComponent, { priority: Priority.High });
 
-// Get enum value (returns number)
-const priority = entity.getValue(TaskComponent, 'priority'); // Returns 3
+// Get enum value (returns string)
+const priority = entity.getValue(TaskComponent, 'priority'); // Returns 'high'
 
 // Set enum value
-entity.setValue(TaskComponent, 'priority', Priority.Medium); // Sets to 2
+entity.setValue(TaskComponent, 'priority', Priority.Medium); // Sets to 'medium'
 ```
 
 ### Validation
@@ -121,8 +124,8 @@ When `CHECKS_ON` is true, EliCS validates that:
 // This will throw an error if Priority.Critical doesn't exist
 entity.setValue(TaskComponent, 'priority', Priority.Critical);
 
-// This will also throw an error
-entity.setValue(TaskComponent, 'priority', 999);
+// This will also throw an error - invalid string value
+entity.setValue(TaskComponent, 'priority', 'invalid');
 ```
 
 ## Range Constraints

@@ -33,19 +33,19 @@ Define a component with the `createComponent` function by providing a schema tha
 ```ts
 import { createComponent, Types } from 'elics';
 
-// Define enums for type safety
-enum EnemyType {
-	Grunt = 1,
-	Elite = 2,
-	Boss = 3,
-}
+// Define enums for type safety using const assertions
+const EnemyType = {
+	Grunt: 'grunt',
+	Elite: 'elite',
+	Boss: 'boss',
+} as const;
 
-enum AIState {
-	Idle = 10,
-	Patrol = 20,
-	Chase = 30,
-	Attack = 40,
-}
+const AIState = {
+	Idle: 'idle',
+	Patrol: 'patrol',
+	Chase: 'chase',
+	Attack: 'attack',
+} as const;
 
 const schema = {
 	isAlive: { type: Types.Boolean, default: true },
