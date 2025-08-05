@@ -125,8 +125,8 @@ export class Entity {
 		switch (type) {
 			case Types.Enum:
 				// enum property is guaranteed to exist due to initialization validation
-				assertValidEnumValue(value as number, schemaField.enum, key as string);
-				componentData[this.index] = value as number;
+				assertValidEnumValue(value as string, schemaField.enum, key as string);
+				componentData[this.index] = value as string;
 				break;
 			case Types.Int8:
 			case Types.Int16:

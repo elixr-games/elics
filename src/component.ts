@@ -85,24 +85,13 @@ export function initializeComponentStorage<
 		const { type, default: defaultValue } = schemaField;
 		let { arrayConstructor, length } = TypedArrayMap[type];
 
-		// For Enum types, validate enum property exists and determine array type
+		// For Enum types, validate enum property exists
 		if (type === Types.Enum) {
 			assertCondition(
 				'enum' in schemaField,
 				ErrorMessages.InvalidDefaultValue,
 				`Enum type requires 'enum' property for field ${key}`,
 			);
-			const enumValues = Object.values(schemaField.enum).filter(
-				(v) => typeof v === 'number',
-			) as number[];
-			const maxValue = Math.max(...enumValues);
-			const minValue = Math.min(...enumValues);
-
-			if (minValue >= -128 && maxValue <= 127) {
-				arrayConstructor = Int8Array;
-			} else {
-				arrayConstructor = Int16Array;
-			}
 		}
 
 		assertCondition(!!arrayConstructor, ErrorMessages.TypeNotSupported, type);

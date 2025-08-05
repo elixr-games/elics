@@ -22,17 +22,15 @@ export function assertCondition(
 }
 
 export function assertValidEnumValue(
-	value: number,
-	enumObject: { [key: string]: any },
+	value: string,
+	enumObject: { [key: string]: string },
 	fieldName: string,
 ): void {
 	if (!CHECKS_ON) {
 		return;
 	}
 
-	const enumValues = Object.values(enumObject).filter(
-		(v) => typeof v === 'number',
-	) as number[];
+	const enumValues = Object.values(enumObject);
 
 	if (!enumValues.includes(value)) {
 		throw new Error(

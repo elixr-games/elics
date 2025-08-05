@@ -99,12 +99,12 @@ describe('Component Tests', () => {
 	});
 
 	test('Enum component initialization', () => {
-		enum Direction {
-			North = 1,
-			East = 2,
-			South = 3,
-			West = 4,
-		}
+		const Direction = {
+			North: 'north',
+			East: 'east',
+			South: 'south',
+			West: 'west',
+		} as const;
 
 		const DirectionComponent = createComponent('Direction', {
 			facing: { type: Types.Enum, enum: Direction, default: Direction.North },
@@ -114,7 +114,7 @@ describe('Component Tests', () => {
 
 		// Check that the component was initialized with the correct array type
 		expect(DirectionComponent.data.facing).toBeDefined();
-		expect(DirectionComponent.data.facing instanceof Int8Array).toBe(true);
+		expect(DirectionComponent.data.facing instanceof Array).toBe(true);
 
 		// Create entity and check default
 		const entity = world.createEntity();
@@ -122,28 +122,29 @@ describe('Component Tests', () => {
 		expect(entity.getValue(DirectionComponent, 'facing')).toBe(Direction.North);
 	});
 
-	test('Enum component with values requiring Int16Array', () => {
-		enum BigNumbers {
-			Small = 100,
-			Medium = 500,
-			Large = 1000,
-		}
+	test('Enum component with string values', () => {
+		const Priority = {
+			Low: 'low',
+			Medium: 'medium',
+			High: 'high',
+			Critical: 'critical',
+		} as const;
 
-		const BigNumberComponent = createComponent('BigNumber', {
-			value: { type: Types.Enum, enum: BigNumbers, default: BigNumbers.Small },
+		const PriorityComponent = createComponent('Priority', {
+			value: { type: Types.Enum, enum: Priority, default: Priority.Low },
 		});
 
-		world.registerComponent(BigNumberComponent);
+		world.registerComponent(PriorityComponent);
 
-		// Check that it uses Int16Array for large values
-		expect(BigNumberComponent.data.value instanceof Int16Array).toBe(true);
+		// Check that it uses Array for string values
+		expect(PriorityComponent.data.value instanceof Array).toBe(true);
 	});
 
 	test('Enum component without enum property throws error', () => {
 		// Create a component with invalid enum schema (missing enum property)
 		const InvalidEnumComponent = {
 			schema: {
-				value: { type: Types.Enum, default: 1 }, // Missing enum property
+				value: { type: Types.Enum, default: 'invalid' }, // Missing enum property
 			},
 			data: {} as any,
 			bitmask: null,

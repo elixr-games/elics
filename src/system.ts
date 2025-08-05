@@ -18,7 +18,7 @@ export type SystemSchemaField =
 	| { type: 'Vec4'; default: [number, number, number, number] }
 	| { type: 'Entity'; default: import('./entity.js').Entity | null }
 	| { type: 'Object'; default: unknown }
-	| { type: 'Enum'; default: number };
+	| { type: 'Enum'; default: string };
 
 export type SystemSchema = Record<string, SystemSchemaField>;
 
