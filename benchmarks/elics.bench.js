@@ -211,6 +211,48 @@ export function fragmentedIteration() {
 	});
 }
 
+export function fragmentedIteration256() {
+	const world = new EliWorld({ entityCapacity: 30000, checksOn: false });
+	const Data = createComponent('Data', {
+		value: { type: Types.Float32, default: 0 },
+	});
+	const comps = [];
+	for (let i = 0; i < 256; i++) {
+		comps[i] = createComponent(`Comp${i}`, {
+			value: { type: Types.Float32, default: 0 },
+		});
+		world.registerComponent(comps[i]);
+	}
+	world.registerComponent(Data);
+
+	class FragSystem extends createSystem({
+		data: { required: [Data] },
+		hi: { required: [comps[255]] },
+	}) {
+		update() {
+			for (const e of this.queries.data.entities) {
+				const idx = e.index;
+				Data.data.value[idx] *= 2;
+			}
+			for (const e of this.queries.hi.entities) {
+				const idx = e.index;
+				comps[255].data.value[idx] *= 2;
+			}
+		}
+	}
+
+	world.registerSystem(FragSystem);
+	for (let i = 0; i < 256; i++) {
+		for (let j = 0; j < 100; j++) {
+			world.createEntity().addComponent(comps[i]).addComponent(Data);
+		}
+	}
+
+	return time(() => {
+		for (let i = 0; i < ITERATIONS; i++) world.update(0, 0);
+	});
+}
+
 export function entityCycle() {
 	const world = new EliWorld({ entityCapacity: 2000, checksOn: false });
 	const A = createComponent('A', {

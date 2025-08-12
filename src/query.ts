@@ -24,17 +24,15 @@ export class Query {
 	) {}
 
 	matches(entity: Entity): boolean {
-		const entityBits = entity.bitmask.bits;
-		const requiredBits = this.requiredMask.bits;
-		const excludedBits = this.excludedMask.bits;
-
-		// Check excluded first as it's often faster to fail early
-		if (excludedBits && (entityBits & excludedBits) !== 0) {
+		// Excluded: if any excluded bit is present on entity -> no match
+		if (
+			!this.excludedMask.isEmpty() &&
+			this.excludedMask.intersects(entity.bitmask)
+		) {
 			return false;
 		}
-
-		// Check if entity has all required components
-		return (entityBits & requiredBits) === requiredBits;
+		// Required: entity must contain all required bits
+		return entity.bitmask.contains(this.requiredMask);
 	}
 
 	subscribe(

@@ -182,6 +182,43 @@ export function fragmentedIteration() {
 	return result;
 }
 
+export function fragmentedIteration256() {
+	const world = createWorld();
+	const Data = defineComponent({ value: Types.f32 });
+	const comps = [];
+	for (let i = 0; i < 256; i++)
+		comps[i] = defineComponent({ value: Types.f32 });
+
+	const qData = defineQuery([Data]);
+	const qHi = defineQuery([comps[255]]);
+
+	for (let i = 0; i < 256; i++) {
+		for (let j = 0; j < 100; j++) {
+			const eid = addEntity(world);
+			addComponent(world, comps[i], eid);
+			addComponent(world, Data, eid);
+		}
+	}
+
+	const result = time(() => {
+		for (let i = 0; i < ITERATIONS; i++) {
+			const data = qData(world);
+			for (let j = 0; j < data.length; j++) {
+				const id = data[j];
+				Data.value[id] *= 2;
+			}
+			const hi = qHi(world);
+			for (let j = 0; j < hi.length; j++) {
+				const id = hi[j];
+				comps[255].value[id] *= 2;
+			}
+		}
+	});
+
+	deleteWorld(world);
+	return result;
+}
+
 export function entityCycle() {
 	const world = createWorld();
 	const A = defineComponent({ value: Types.f32 });

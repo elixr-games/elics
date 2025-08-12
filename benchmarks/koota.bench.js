@@ -139,6 +139,38 @@ export function fragmentedIteration() {
 	});
 }
 
+export function fragmentedIteration256() {
+	const world = createWorld();
+	const Data = trait({ value: 0 });
+	const comps = [];
+	for (let i = 0; i < 256; i++) comps[i] = trait({ value: 0 });
+
+	for (let i = 0; i < 256; i++) {
+		for (let j = 0; j < 100; j++) world.spawn(comps[i], Data);
+	}
+
+	const qData = cacheQuery(Data);
+	const qHi = cacheQuery(comps[255]);
+
+	return time(() => {
+		for (let i = 0; i < ITERATIONS; i++) {
+			world.query(qData).useStores(([d], entities) => {
+				for (let j = 0; j < entities.length; j++) {
+					const id = entities[j].id();
+					d.value[id] *= 2;
+				}
+			});
+			world.query(qHi).useStores(([z], entities) => {
+				for (let j = 0; j < entities.length; j++) {
+					const id = entities[j].id();
+					z.value[id] *= 2;
+				}
+			});
+		}
+		world.destroy();
+	});
+}
+
 export function entityCycle() {
 	const world = createWorld();
 	const A = trait({ value: 0 });

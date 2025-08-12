@@ -100,7 +100,7 @@ export class QueryManager {
 		this.trackedEntities.delete(entity);
 
 		// Fast path: remove from all queries if entity has no components
-		if (entity.bitmask.bits === 0) {
+		if (entity.bitmask.isEmpty()) {
 			for (const query of this.queries.values()) {
 				if (query.entities.delete(entity)) {
 					if (query.subscribers.disqualify.size > 0) {
@@ -115,9 +115,7 @@ export class QueryManager {
 
 		// Remove entity from relevant queries based on components
 		const processed = new Set<Query>();
-		let bits = entity.bitmask.bits;
-		while (bits !== 0) {
-			const i = Math.floor(Math.log2(bits & -bits));
+		for (const i of entity.bitmask.toArray()) {
 			const component = this.componentManager.getComponentByTypeId(i)!;
 			const queries = this.queriesByComponent.get(component);
 			if (queries) {
@@ -134,7 +132,6 @@ export class QueryManager {
 					}
 				}
 			}
-			bits &= bits - 1;
 		}
 	}
 }

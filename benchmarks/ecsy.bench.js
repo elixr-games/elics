@@ -209,6 +209,43 @@ export function fragmentedIteration() {
 	});
 }
 
+export function fragmentedIteration256() {
+	const world = new EcsyWorld();
+	const Data = getDataComponent();
+	const comps = createLetterComponentsEcsy(256, 'fragmented256');
+
+	class FragSystem extends EcsySystem {
+		execute() {
+			this.queries.data.results.forEach((e) => {
+				const c = e.getMutableComponent(Data);
+				c.value *= 2;
+			});
+			this.queries.hi.results.forEach((e) => {
+				const c = e.getMutableComponent(comps[255]);
+				c.value *= 2;
+			});
+		}
+	}
+	FragSystem.queries = {
+		data: { components: [Data] },
+		hi: { components: [comps[255]] },
+	};
+
+	world.registerComponent(Data);
+	comps.forEach((c) => world.registerComponent(c));
+	world.registerSystem(FragSystem);
+
+	for (let i = 0; i < 256; i++) {
+		for (let j = 0; j < 100; j++) {
+			world.createEntity().addComponent(comps[i]).addComponent(Data);
+		}
+	}
+
+	return time(() => {
+		for (let i = 0; i < ITERATIONS; i++) world.execute(0);
+	});
+}
+
 export function entityCycle() {
 	const world = new EcsyWorld();
 	const [A, B] = createLetterComponentsEcsy(2, 'cycle');

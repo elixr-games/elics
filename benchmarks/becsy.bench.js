@@ -167,6 +167,36 @@ export async function fragmentedIteration() {
 	return result;
 }
 
+export async function fragmentedIteration256() {
+	const DataF = getDataFComponent();
+	const comps = getLetterComponentsBecsy(256, 'fragmented256');
+
+	class FragSystem extends BecsySystem {
+		data = this.query((q) => q.current.with(DataF).write);
+
+		hi = this.query((q) => q.current.with(comps[255]).write);
+
+		execute() {
+			for (const ent of this.data.current) ent.write(DataF).value *= 2;
+			for (const ent of this.hi.current) ent.write(comps[255]).value *= 2;
+		}
+	}
+
+	const world = await BecsyWorld.create({
+		defs: [DataF, ...comps, FragSystem],
+	});
+	world.build((s) => {
+		for (let i = 0; i < 256; i++) {
+			for (let j = 0; j < 100; j++) s.createEntity(comps[i], DataF);
+		}
+	});
+	const result = await timeAsync(async () => {
+		for (let i = 0; i < ITERATIONS; i++) await world.execute(0);
+	});
+	await world.terminate();
+	return result;
+}
+
 export async function entityCycle() {
 	const [A3, B3] = getLetterComponentsBecsy(2, 'cycle');
 

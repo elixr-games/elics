@@ -178,7 +178,7 @@ export class Entity {
 	destroy(): void {
 		if (this.active) {
 			this.active = false;
-			this.bitmask.bits = 0;
+			this.bitmask.clear();
 			this.vectorViews.clear();
 			this.queryManager.resetEntity(this);
 			this.entityManager.releaseEntityInstance(this);

@@ -41,6 +41,12 @@ const suites = [
 		fn: 'fragmentedIteration',
 	},
 	{
+		name: 'Fragmented Iteration (256 comps)',
+		description:
+			'Like Fragmented Iteration but with 256 distinct component types and a high-index query (Comp255). Stresses multiword bitmasks and query matching across 8 words while keeping sparse archetypes (100 entities per component). Useful to compare scaling beyond 32 components across engines.',
+		fn: 'fragmentedIteration256',
+	},
+	{
 		name: 'Entity Cycle',
 		description:
 			'Benchmarks dynamic entity lifecycle management by repeatedly creating and destroying entities. Starting with 1,000 entities containing component A, each iteration spawns new entities with component B for every A entity, then destroys all B entities. Tests entity creation/destruction performance, memory pool efficiency, and query invalidation overhead. Simulates high-frequency spawning scenarios like bullet systems, particle effects, or temporary game objects, stressing memory allocation/deallocation and archetype table management.',
