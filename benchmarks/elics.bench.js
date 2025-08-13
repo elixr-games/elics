@@ -253,6 +253,59 @@ export function fragmentedIteration256() {
 	});
 }
 
+export function valueFilterManual() {
+	const COUNT = 5000;
+	const world = new EliWorld({ entityCapacity: COUNT + 100, checksOn: false });
+	const Value = createComponent('Value', {
+		value: { type: Types.Float32, default: 0 },
+	});
+
+	world.registerComponent(Value);
+
+	for (let i = 0; i < COUNT; i++) {
+		world.createEntity().addComponent(Value, { value: i % 10 });
+	}
+
+	const eqVal = 5;
+	const ltVal = 5;
+	const leVal = 5;
+	const gtVal = 5;
+	const geVal = 5;
+	const inSet = new Set([1, 3, 5, 7, 9]);
+
+	class ValueFilterSystem extends createSystem({ q: { required: [Value] } }) {
+		update() {
+			let eq = 0,
+				ne = 0,
+				lt = 0,
+				le = 0,
+				gt = 0,
+				ge = 0,
+				ischk = 0,
+				nischk = 0;
+			for (const e of this.queries.q.entities) {
+				const v = Value.data.value[e.index];
+				if (v === eqVal) eq++;
+				if (v !== eqVal) ne++;
+				if (v < ltVal) lt++;
+				if (v <= leVal) le++;
+				if (v > gtVal) gt++;
+				if (v >= geVal) ge++;
+				if (inSet.has(v)) ischk++;
+				if (!inSet.has(v)) nischk++;
+			}
+			// prevent V8 from optimizing away counters
+			Value._lastCounts = eq + ne + lt + le + gt + ge + ischk + nischk;
+		}
+	}
+
+	world.registerSystem(ValueFilterSystem);
+
+	return time(() => {
+		for (let i = 0; i < ITERATIONS; i++) world.update(0, 0);
+	});
+}
+
 export function entityCycle() {
 	const world = new EliWorld({ entityCapacity: 2000, checksOn: false });
 	const A = createComponent('A', {

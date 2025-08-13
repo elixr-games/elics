@@ -246,6 +246,54 @@ export function fragmentedIteration256() {
 	});
 }
 
+export function valueFilterManual() {
+	const world = new EcsyWorld();
+	const Value = ValueCompEcsy;
+
+	class ValueFilterSystem extends EcsySystem {
+		execute() {
+			let eq = 0,
+				ne = 0,
+				lt = 0,
+				le = 0,
+				gt = 0,
+				ge = 0,
+				ischk = 0,
+				nischk = 0;
+			const eqVal = 5,
+				ltVal = 5,
+				leVal = 5,
+				gtVal = 5,
+				geVal = 5;
+			const inSet = new Set([1, 3, 5, 7, 9]);
+			this.queries.q.results.forEach((e) => {
+				const v = e.getComponent(Value).value;
+				if (v === eqVal) eq++;
+				if (v !== eqVal) ne++;
+				if (v < ltVal) lt++;
+				if (v <= leVal) le++;
+				if (v > gtVal) gt++;
+				if (v >= geVal) ge++;
+				if (inSet.has(v)) ischk++;
+				if (!inSet.has(v)) nischk++;
+			});
+			Value._lastCounts = eq + ne + lt + le + gt + ge + ischk + nischk;
+		}
+	}
+	ValueFilterSystem.queries = { q: { components: [Value] } };
+
+	world.registerComponent(Value).registerSystem(ValueFilterSystem);
+
+	for (let i = 0; i < 5000; i++) {
+		const e = world.createEntity();
+		e.addComponent(Value, { value: i % 10 });
+	}
+
+	return time(() => {
+		for (let i = 0; i < ITERATIONS; i++) world.execute(0);
+	});
+}
+
 export function entityCycle() {
 	const world = new EcsyWorld();
 	const [A, B] = createLetterComponentsEcsy(2, 'cycle');

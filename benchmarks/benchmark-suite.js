@@ -47,6 +47,12 @@ const suites = [
 		fn: 'fragmentedIteration256',
 	},
 	{
+		name: 'Value Filter (manual, all ops)',
+		description:
+			'Measures the cost of manually filtering component values during iteration across engines. Uses a single numeric component on ~5k entities with values patterned as i % 10, and runs all operators (eq, ne, lt, le, gt, ge, in, nin) each iteration. Compares raw iteration + value access + predicate evaluation performance without engine-specific predicate features.',
+		fn: 'valueFilterManual',
+	},
+	{
 		name: 'Entity Cycle',
 		description:
 			'Benchmarks dynamic entity lifecycle management by repeatedly creating and destroying entities. Starting with 1,000 entities containing component A, each iteration spawns new entities with component B for every A entity, then destroys all B entities. Tests entity creation/destruction performance, memory pool efficiency, and query invalidation overhead. Simulates high-frequency spawning scenarios like bullet systems, particle effects, or temporary game objects, stressing memory allocation/deallocation and archetype table management.',

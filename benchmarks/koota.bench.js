@@ -171,6 +171,55 @@ export function fragmentedIteration256() {
 	});
 }
 
+export function valueFilterManual() {
+	const world = createWorld();
+	const Value = trait({ value: 0 });
+
+	for (let i = 0; i < 5000; i++) world.spawn(Value);
+
+	// initialize patterned values via a single query pass
+	world.query(Value).useStores(([v], entities) => {
+		for (let j = 0; j < entities.length; j++) {
+			const id = entities[j].id();
+			v.value[id] = j % 10;
+		}
+	});
+
+	const qV = cacheQuery(Value);
+	const inSet = new Set([1, 3, 5, 7, 9]);
+
+	const result = time(() => {
+		for (let i = 0; i < ITERATIONS; i++) {
+			let eq = 0,
+				ne = 0,
+				lt = 0,
+				le = 0,
+				gt = 0,
+				ge = 0,
+				ischk = 0,
+				nischk = 0;
+			world.query(qV).useStores(([v], entities) => {
+				for (let j = 0; j < entities.length; j++) {
+					const id = entities[j].id();
+					const val = v.value[id];
+					if (val === 5) eq++;
+					if (val !== 5) ne++;
+					if (val < 5) lt++;
+					if (val <= 5) le++;
+					if (val > 5) gt++;
+					if (val >= 5) ge++;
+					if (inSet.has(val)) ischk++;
+					if (!inSet.has(val)) nischk++;
+				}
+			});
+			Value._lastCounts = eq + ne + lt + le + gt + ge + ischk + nischk;
+		}
+		world.destroy();
+	});
+
+	return result;
+}
+
 export function entityCycle() {
 	const world = createWorld();
 	const A = trait({ value: 0 });

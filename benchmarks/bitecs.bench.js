@@ -219,6 +219,50 @@ export function fragmentedIteration256() {
 	return result;
 }
 
+export function valueFilterManual() {
+	const world = createWorld();
+	const Value = defineComponent({ value: Types.f32 });
+	const qV = defineQuery([Value]);
+
+	for (let i = 0; i < 5000; i++) {
+		const eid = addEntity(world);
+		addComponent(world, Value, eid);
+		Value.value[eid] = i % 10;
+	}
+
+	const inSet = new Set([1, 3, 5, 7, 9]);
+
+	const result = time(() => {
+		for (let i = 0; i < ITERATIONS; i++) {
+			let eq = 0,
+				ne = 0,
+				lt = 0,
+				le = 0,
+				gt = 0,
+				ge = 0,
+				ischk = 0,
+				nischk = 0;
+			const ents = qV(world);
+			for (let j = 0; j < ents.length; j++) {
+				const id = ents[j];
+				const v = Value.value[id];
+				if (v === 5) eq++;
+				if (v !== 5) ne++;
+				if (v < 5) lt++;
+				if (v <= 5) le++;
+				if (v > 5) gt++;
+				if (v >= 5) ge++;
+				if (inSet.has(v)) ischk++;
+				if (!inSet.has(v)) nischk++;
+			}
+			Value._lastCounts = eq + ne + lt + le + gt + ge + ischk + nischk;
+		}
+	});
+
+	deleteWorld(world);
+	return result;
+}
+
 export function entityCycle() {
 	const world = createWorld();
 	const A = defineComponent({ value: Types.f32 });

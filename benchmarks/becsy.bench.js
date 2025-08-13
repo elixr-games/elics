@@ -197,6 +197,59 @@ export async function fragmentedIteration256() {
 	return result;
 }
 
+export async function valueFilterManual() {
+	class ValueF {}
+	becsyField.float32(ValueF.prototype, 'value');
+	becsyComponent(ValueF);
+
+	class ValueFilterSystem extends BecsySystem {
+		q = this.query((q) => q.current.with(ValueF));
+
+		execute() {
+			let eq = 0,
+				ne = 0,
+				lt = 0,
+				le = 0,
+				gt = 0,
+				ge = 0,
+				ischk = 0,
+				nischk = 0;
+			const eqVal = 5,
+				ltVal = 5,
+				leVal = 5,
+				gtVal = 5,
+				geVal = 5;
+			const inSet = new Set([1, 3, 5, 7, 9]);
+			for (const ent of this.q.current) {
+				const v = ent.read(ValueF).value;
+				if (v === eqVal) eq++;
+				if (v !== eqVal) ne++;
+				if (v < ltVal) lt++;
+				if (v <= leVal) le++;
+				if (v > gtVal) gt++;
+				if (v >= geVal) ge++;
+				if (inSet.has(v)) ischk++;
+				if (!inSet.has(v)) nischk++;
+			}
+			ValueF._lastCounts = eq + ne + lt + le + gt + ge + ischk + nischk;
+		}
+	}
+
+	const world = await BecsyWorld.create({ defs: [ValueF, ValueFilterSystem] });
+	world.build((s) => {
+		for (let i = 0; i < 5000; i++) {
+			const e = s.createEntity(ValueF);
+			e.write(ValueF).value = i % 10;
+		}
+	});
+
+	const result = await timeAsync(async () => {
+		for (let i = 0; i < ITERATIONS; i++) await world.execute(0);
+	});
+	await world.terminate();
+	return result;
+}
+
 export async function entityCycle() {
 	const [A3, B3] = getLetterComponentsBecsy(2, 'cycle');
 
