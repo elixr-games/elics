@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.0] - "Predicate Power" - August 13, 2025
+
+A performance-focused release that scales component masks beyond 32 types, adds ergonomic and fast value predicates, and introduces a cross-engine micro-benchmark for value filtering.
+
+### Added
+
+- Multiword BitSet: Scalable bitmasks that support arbitrarily many component types (>32), with efficient operations (`set`, `clear`, `or/and/andNot`, `contains`, `intersects`, `toArray`).
+- Value Predicates: Query `where` predicates for value-based filtering with operators `eq`, `ne`, `lt`, `le`, `gt`, `ge`, `in`, and `nin`.
+- Typed Helper APIs: `eq`, `ne`, `lt`, `le`, `gt`, `ge`, `isin`, `nin` in `query-helpers` for type-safe, ergonomic predicate building.
+- Benchmarks: New cross-engine "Value Filter (manual, all ops)" micro-benchmark across EliCS, Bitecs, Koota, Becsy, and Ecsy.
+- Public API: Re-export predicate helpers from `index.ts` for first-class usage.
+
+### Changed
+
+- QueryManager: Added targeted value-change evaluation path (`updateEntityValue`) and `queriesByValueComponent` index to minimize re-evaluation scope.
+- Entity: `setValue` now notifies QueryManager via the value-update path for precise predicate rechecks.
+
+### Performance
+
+- ≤32 component types: No regressions observed; performance parity maintained.
+- 256 components: Strong results with multiword BitSet; cross-engine suite shows competitive scaling.
+- Value filtering: In manual, per-entity filtering, EliCS leads or ties for fastest across engines in the new micro-benchmark.
+
+### Tests
+
+- Maintained 100% coverage. Added tests for multiword BitSet (>32 components), predicate correctness and validation, early-return branches in value update paths, and auto-registration of predicate components.
+
+### Documentation
+
+- Added Value Predicates section to the query architecture docs, demonstrating helper-based usage only, examples for all operators, and performance notes.
+- Benchmarks page updated to include the new value-filter scenario and fresh results.
+- Updated enum examples to string-based const assertions; fixed `types.md` details and aligned component docs and getting started where relevant.
+
+### Migration
+
+- No breaking API changes. Predicate usage is encouraged via helper APIs; direct construction of predicate objects is not required.
+
 ## [3.1.0] - "Modern Enums" - August 5, 2025
 
 Modernizes enum handling to align with current TypeScript best practices, replacing numeric enums with string-based const assertions.
