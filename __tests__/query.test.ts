@@ -3,6 +3,8 @@ import { Query } from '../src/query';
 import { World } from '../src/world';
 import { createComponent } from '../src/component';
 import { Types } from '../src/types';
+import { eq, ge, gt, isin, le, lt, ne, nin } from '../src/query-helpers';
+// no built-in Name helper; predicates operate directly on component fields
 
 // Define components for testing
 const PositionComponent = createComponent('Position', {
@@ -218,6 +220,32 @@ describe('Query Tests', () => {
 		expect(disqualifyCallback2).toHaveBeenCalledTimes(1);
 	});
 
+	test('resetEntity handles components with no queries and avoids duplicate notifications', () => {
+		const A = createComponent('A_only', {
+			x: { type: Types.Int8, default: 0 },
+		});
+		const B = createComponent('B_only', {
+			y: { type: Types.Int8, default: 0 },
+		});
+		world.registerComponent(A).registerComponent(B);
+		// Register a query that watches both A and B
+		const q = world.queryManager.registerQuery({ required: [A, B] });
+		const disq = jest.fn();
+		q.subscribe('disqualify', disq);
+		const e = world.createEntity();
+		e.addComponent(A).addComponent(B);
+		expect(q.entities).toContain(e);
+		// Add a component that no query cares about
+		const C = createComponent('C_unused', {
+			z: { type: Types.Int8, default: 0 },
+		});
+		world.registerComponent(C);
+		e.addComponent(C);
+		// Now resetEntity; should disqualify once (processed set prevents duplicates)
+		world.queryManager.resetEntity(e);
+		expect(disq).toHaveBeenCalledTimes(1);
+	});
+
 	test('Query subscribers run as expected', () => {
 		const queryConfig = {
 			required: [PositionComponent, VelocityComponent],
@@ -399,4 +427,220 @@ describe('Query Tests', () => {
 		// Entity should be back in the query
 		expect(query.entities).toContain(entity);
 	});
+
+	test('Query with value predicate matches specific entity and reacts to changes', () => {
+		const localWorld = new World({ checksOn: false });
+		const Panel = createComponent('Panel', {
+			id: { type: Types.String, default: '' },
+		});
+		localWorld.registerComponent(Panel);
+		const e1 = localWorld.createEntity().addComponent(Panel, { id: 'panel1' });
+		const e2 = localWorld.createEntity().addComponent(Panel, { id: 'panel2' });
+		localWorld.createEntity().addComponent(Panel, { id: 'panel3' });
+
+		const qSpecific = localWorld.queryManager.registerQuery({
+			required: [Panel],
+			where: [eq(Panel, 'id', 'panel2')],
+		});
+		expect(qSpecific.entities.size).toBe(1);
+		expect([...qSpecific.entities][0]).toBe(e2);
+
+		// Change e1 to match, expect it to qualify (value-path only)
+		const qualify = jest.fn();
+		qSpecific.subscribe('qualify', qualify);
+		e1.setValue(Panel, 'id', 'panel2');
+		expect(qualify).toHaveBeenCalledWith(e1);
+		expect(qSpecific.entities).toContain(e1);
+
+		// Additional numeric predicate checks on a simple numeric component
+		const Num = createComponent('Num', {
+			v: { type: Types.Float32, default: 0 },
+		});
+		localWorld.registerComponent(Num);
+		const n1 = localWorld.createEntity().addComponent(Num, { v: 10 });
+		const n2 = localWorld.createEntity().addComponent(Num, { v: 5 });
+		const qGt = localWorld.queryManager.registerQuery({
+			required: [Num],
+			where: [{ component: Num, key: 'v', op: 'gt', value: 7 }],
+		});
+		expect(qGt.entities.has(n1)).toBe(true);
+		expect(qGt.entities.has(n2)).toBe(false);
+		// Update value to cross boundary and trigger qualify
+		const qLe = localWorld.queryManager.registerQuery({
+			required: [Num],
+			where: [{ component: Num, key: 'v', op: 'le', value: 5 }],
+		});
+
+		const qLeQualify = jest.fn();
+		qLe.subscribe('qualify', qLeQualify);
+		n1.setValue(Num, 'v', 5);
+		expect(qLeQualify).toHaveBeenCalledWith(n1);
+		// ge: create query, then raise value to trigger qualify
+		const qGe = localWorld.queryManager.registerQuery({
+			required: [Num],
+			where: [{ component: Num, key: 'v', op: 'ge', value: 10 }],
+		});
+		const geQualify = jest.fn();
+		qGe.subscribe('qualify', geQualify);
+		expect(qGe.entities.has(n1)).toBe(false);
+		n1.setValue(Num, 'v', 10);
+		expect(geQualify).toHaveBeenCalledWith(n1);
+		expect(qGe.entities.has(n1)).toBe(true);
+	});
+});
+
+test('Value predicates support ne and in/nin and validate errors', () => {
+	const w = new World({ checksOn: false });
+	const Panel = createComponent('P2', {
+		id: { type: Types.String, default: '' },
+	});
+	const Tag = createComponent('Tag', {
+		t: { type: Types.String, default: '' },
+	});
+	w.registerComponent(Panel).registerComponent(Tag);
+	const a = w
+		.createEntity()
+		.addComponent(Panel, { id: 'panel1' })
+		.addComponent(Tag, { t: 'a' });
+	const b = w
+		.createEntity()
+		.addComponent(Panel, { id: 'panel2' })
+		.addComponent(Tag, { t: 'b' });
+	const c = w
+		.createEntity()
+		.addComponent(Panel, { id: 'panel3' })
+		.addComponent(Tag, { t: 'c' });
+
+	// ne
+	const qNe = w.queryManager.registerQuery({
+		required: [Panel],
+		where: [ne(Panel, 'id', 'panel2')],
+	});
+	expect(qNe.entities.has(b)).toBe(false);
+	expect(qNe.entities.has(a)).toBe(true);
+	expect(qNe.entities.has(c)).toBe(true);
+
+	// in
+	const qIn = w.queryManager.registerQuery({
+		required: [Tag],
+		where: [isin(Tag, 't', ['a', 'x'])],
+	});
+	expect(qIn.entities.has(a)).toBe(true);
+	expect(qIn.entities.has(b)).toBe(false);
+	// nin
+	const qNin = w.queryManager.registerQuery({
+		required: [Tag],
+		where: [{ component: Tag, key: 't', op: 'nin', value: ['b'] }],
+	});
+	expect(qNin.entities.has(a)).toBe(true);
+	expect(qNin.entities.has(b)).toBe(false);
+	// update value triggers re-eval on nin
+	const disq = jest.fn();
+	qNin.subscribe('disqualify', disq);
+	a.setValue(Tag, 't', 'b');
+	expect(disq).toHaveBeenCalledWith(a);
+	expect(qNin.entities.has(a)).toBe(false);
+
+	// validation: bad key
+	expect(() =>
+		w.queryManager.registerQuery({
+			required: [Panel],
+			where: [
+				{ component: Panel, key: 'missing', op: 'eq', value: 'x' },
+			] as any,
+		}),
+	).toThrow();
+	// validation: invalid op on non-numeric
+	expect(() =>
+		w.queryManager.registerQuery({
+			required: [Panel],
+			where: [{ component: Panel, key: 'id', op: 'lt', value: 'x' }] as any,
+		}),
+	).toThrow();
+	// validation: 'in' requires array value
+	expect(() =>
+		w.queryManager.registerQuery({
+			required: [Tag],
+			where: [{ component: Tag, key: 't', op: 'in', value: 'x' as any }],
+		}),
+	).toThrow();
+});
+
+test('builder helpers produce correct predicates', () => {
+	const w = new World({ checksOn: false });
+	const Num = createComponent('NumB', {
+		v: { type: Types.Float32, default: 0 },
+	});
+	w.registerComponent(Num);
+	const eA = w.createEntity().addComponent(Num, { v: 1 });
+	const eB = w.createEntity().addComponent(Num, { v: 10 });
+
+	const qLt = w.queryManager.registerQuery({
+		required: [Num],
+		where: [lt(Num, 'v', 5)],
+	});
+	expect(qLt.entities.has(eA)).toBe(true);
+	expect(qLt.entities.has(eB)).toBe(false);
+
+	const qLe = w.queryManager.registerQuery({
+		required: [Num],
+		where: [le(Num, 'v', 1)],
+	});
+	expect(qLe.entities.has(eA)).toBe(true);
+	expect(qLe.entities.has(eB)).toBe(false);
+
+	const qGt = w.queryManager.registerQuery({
+		required: [Num],
+		where: [gt(Num, 'v', 5)],
+	});
+	expect(qGt.entities.has(eA)).toBe(false);
+	expect(qGt.entities.has(eB)).toBe(true);
+
+	const qGe = w.queryManager.registerQuery({
+		required: [Num],
+		where: [ge(Num, 'v', 10)],
+	});
+	expect(qGe.entities.has(eA)).toBe(false);
+	expect(qGe.entities.has(eB)).toBe(true);
+
+	const Str = createComponent('StrB', {
+		s: { type: Types.String, default: '' },
+	});
+	w.registerComponent(Str);
+	const s1 = w.createEntity().addComponent(Str, { s: 'x' });
+	const s2 = w.createEntity().addComponent(Str, { s: 'y' });
+	const qNin = w.queryManager.registerQuery({
+		required: [Str],
+		where: [nin(Str, 's', ['x'])],
+	});
+	expect(qNin.entities.has(s1)).toBe(false);
+	expect(qNin.entities.has(s2)).toBe(true);
+});
+
+test('updateEntityValue early return path when no value-queries exist', () => {
+	const w = new World({ checksOn: false });
+	const C = createComponent('C_only', { v: { type: Types.Int8, default: 0 } });
+	w.registerComponent(C);
+	const e = w.createEntity().addComponent(C, { v: 1 });
+	// No queries registered that reference C in where
+	// Changing value should not throw and should not affect any queries
+	expect(() => e.setValue(C, 'v', 2)).not.toThrow();
+});
+
+test('Registering query auto-registers unregistered predicate component', () => {
+	const w = new World({ checksOn: false });
+	const A = createComponent('AutoPredA', {
+		x: { type: Types.Int8, default: 0 },
+	});
+	const Pred = createComponent('AutoPred', {
+		k: { type: Types.String, default: '' },
+	});
+	w.registerComponent(A);
+	expect(w.hasComponent(Pred)).toBe(false);
+	const q = w.queryManager.registerQuery({
+		required: [A],
+		where: [eq(Pred, 'k', 'v')],
+	});
+	expect(q).toBeDefined();
+	expect(w.hasComponent(Pred)).toBe(true);
 });

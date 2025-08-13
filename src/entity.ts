@@ -151,6 +151,9 @@ export class Entity {
 				componentData[this.index] = value;
 				break;
 		}
+
+		// Notify only queries that depend on this component's values
+		(this.queryManager as any).updateEntityValue(this, component as any);
 	}
 
 	getVectorView<C extends AnyComponent, K extends VectorKeys<C>>(

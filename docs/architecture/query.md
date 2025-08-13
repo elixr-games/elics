@@ -12,6 +12,7 @@ The **Query** class in EliCS is a fundamental tool in the ECS architecture, enab
 - **Dynamic Updates**: Automatically reflects changes as entities add or remove components.
 - **Flexible Configuration**: Supports filtering based on both required and excluded components.
 - **Optimized for Scale**: Minimizes overhead with bitwise operations, ideal for applications with many entities and frequent component updates.
+- **Value Predicates**: Filter by component field values using type‑safe helpers (e.g., eq, lt, in), with reactive updates when values change.
 
 ## Implementation Overview
 
@@ -146,6 +147,62 @@ update(): void {
 ::: warning
 Because polling usually happens during the update loop, EliCS exposes the `query.entities` set (source of truth for entities that match the query) directly, instead of creating a copy for performance reasons. As such, you should treat this set as read-only and avoid directly modifying it.
 :::
+
+## Value Predicates
+
+In addition to structural filtering (required/excluded components), queries can filter by component field values. EliCS provides type‑safe builder helpers that generate value predicates; these are validated against the component schema at compile time and registration time.
+
+Supported operators
+
+- `eq`, `ne`: equality/inequality
+- `lt`, `le`, `gt`, `ge`: numeric comparisons (only for numeric fields)
+- `isin`, `nin`: membership/not‑in (array values only)
+
+Usage with helpers
+
+```ts
+import { eq, le, isin } from 'elics';
+
+// Example components
+const Panel = createComponent('Panel', {
+	id: { type: Types.String, default: '' },
+});
+const Health = createComponent('Health', {
+	value: { type: Types.Float32, default: 100 },
+});
+const Status = createComponent('Status', {
+	state: { type: Types.String, default: 'idle' },
+});
+
+// Match a specific panel by id
+const panelById = world.queryManager.registerQuery({
+	required: [Panel],
+	where: [eq(Panel, 'id', 'panel-2')],
+});
+
+// Match entities with health <= 0
+const dead = world.queryManager.registerQuery({
+	required: [Health],
+	where: [le(Health, 'value', 0)],
+});
+
+// Match entities whose status is one of a set
+const active = world.queryManager.registerQuery({
+	required: [Status],
+	where: [isin(Status, 'state', ['active', 'combat'])],
+});
+```
+
+Performance notes
+
+- Structural masks are checked first; value checks run only if masks match.
+- Value changes notify only relevant queries (those that declare a predicate on that component’s field). This avoids waking unrelated queries on `setValue`.
+- Predicates add a constant‑time check per membership change; `isin`/`nin` are precompiled to a Set for O(1) membership.
+
+Best practices
+
+- Prefer helpers (eq/le/isin, etc.) rather than constructing raw predicate objects; helpers ensure correct key names, operator compatibility, and value types.
+- Keep predicates focused and few per query; combine multiple queries in your systems if you need complex logic.
 
 ## API Documentation
 

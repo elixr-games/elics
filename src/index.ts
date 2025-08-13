@@ -5,3 +5,4 @@ export * from './component.js';
 export * from './system.js';
 export * from './types.js';
 export * from './version.js';
+export * from './query-helpers.js';
