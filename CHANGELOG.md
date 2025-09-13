@@ -1,5 +1,56 @@
 # Changelog
 
+## [3.3.0] - "Prologue" - September 13, 2025
+
+A polish release setting the stage for next week’s unveil. It adds a Color type, opt‑in replay for existing query matches, stricter typing, and consistent vector access semantics — all while keeping performance crisp and coverage at 100%.
+
+### Added
+
+- Color type: `Types.Color` (RGBA), stored as `Float32Array[4]`, defaulting to `[1, 1, 1, 1]`. Initialization clamps channels to `[0, 1]` and warns when clamping occurs (under checks).
+- Query subscription replay: `Query.subscribe(event, callback, replayExisting?)` can now replay existing matches when subscribing to `'qualify'`.
+
+### Changed
+
+- Systems: `World.registerSystem` now accepts partial `configData` (you can provide only the keys you care about).
+- Typing/lint: Tightened internal typings and banned explicit `any` in `src/`; enabled `curly` rule to require braces for control statements.
+
+### Fixed
+
+- Vector access correctness: `Entity.getValue`/`setValue` now throw for vector‑like fields (`Types.Vec2`, `Types.Vec3`, `Types.Vec4`, and `Types.Color`). Previously, these calls could lead to partial or incorrect reads/writes (e.g., only touching the first lane). Use `getVectorView(component, key)` to read/write packed vector data.
+
+### Documentation
+
+- Query docs updated with the new `subscribe` signature and behavior.
+- Added a focused page on replaying existing subscriptions.
+- Getting Started note updated to include `Types.Color` in vector access guidance.
+- Entity docs now call out vector‑view requirements explicitly.
+
+### Tests
+
+- Maintained 100% coverage. Added tests for Color initialization (clamping + defaults), vector access enforcement, and `replayExisting` subscribe behavior.
+
+### Migration
+
+- Replace any direct `getValue`/`setValue` usage on vector fields with `getVectorView`:
+
+  ```ts
+  // Before
+  // const v = e.getValue(Position, 'value'); // now throws
+  // e.setValue(Position, 'value', [x, y, z]); // now throws
+
+  // After
+  const v = e.getVectorView(Position, 'value');
+  v[0] += dx;
+  v[1] += dy;
+  v[2] += dz;
+  ```
+
+- If you want to initialize subscribers with entities that already match a query, pass `true` as the third arg:
+
+  ```ts
+  query.subscribe('qualify', onQualify, true);
+  ```
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
@@ -232,7 +283,7 @@ A focused release that streamlines the component API by removing lifecycle hooks
 - Added comprehensive examples of using query subscriptions for lifecycle tracking
 - Enhanced query documentation with component lifecycle tracking patterns
 
-## [2.2.0] - "Hyper Glide" - January 22, 2025
+## [2.2.0] - "Hyper Glide" - May 23, 2025
 
 A major release focusing on performance optimizations and comprehensive project infrastructure improvements.
 
