@@ -35,7 +35,7 @@ export class ComponentManager {
 	attachComponentToEntity(
 		entityIndex: number,
 		component: AnyComponent,
-		initialData: { [key: string]: unknown },
+		initialData: Record<string, unknown>,
 	): void {
 		assignInitialComponentData(component, entityIndex, initialData);
 	}

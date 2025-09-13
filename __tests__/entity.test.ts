@@ -266,6 +266,29 @@ describe('Entity Tests', () => {
 		expect(position[2]).toBe(6.0);
 	});
 
+	test('Vector types must use getVectorView for read/write', () => {
+		const entity = world.createEntity();
+		entity.addComponent(VelocityComponent, { velocity: [1, 2] });
+
+		// getValue should throw for vector types
+		expect(() => entity.getValue(VelocityComponent, 'velocity')).toThrow(
+			'getVectorView',
+		);
+
+		// setValue should throw for vector types
+		expect(() =>
+			entity.setValue(VelocityComponent, 'velocity', [3, 4]),
+		).toThrow('getVectorView');
+
+		// Proper way still works
+		const v = entity.getVectorView(VelocityComponent, 'velocity');
+		v[0] = 9;
+		v[1] = 8;
+		const viewAgain = entity.getVectorView(VelocityComponent, 'velocity');
+		expect(viewAgain[0]).toBe(9);
+		expect(viewAgain[1]).toBe(8);
+	});
+
 	test('String component data access', () => {
 		const entity = world.createEntity();
 		entity.addComponent(NameComponent, { name: 'TestEntity' });
@@ -386,7 +409,7 @@ describe('Entity Tests', () => {
 	test('entity references work beyond Int16 range', () => {
 		const world = new World({ entityCapacity: 33000 });
 		const RefComp = createComponent('RefComp', {
-			ref: { type: Types.Entity, default: null as any },
+			ref: { type: Types.Entity, default: null },
 		});
 		world.registerComponent(RefComp);
 

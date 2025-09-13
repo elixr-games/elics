@@ -1,4 +1,5 @@
 import { TypeValueToType } from './types.js';
+import type { Signal } from '@preact/signals-core';
 import { Query, QueryConfig } from './query.js';
 import {
 	System,
@@ -20,10 +21,13 @@ export interface WorldOptions {
 	entityReleaseCallback?: (entity: Entity) => void;
 }
 
+// Allow callers to provide only a subset of config keys
+export type SystemConfigData<S extends SystemSchema> = Partial<{
+	[K in keyof S]: TypeValueToType<S[K]['type']>;
+}>;
+
 export interface SystemOptions<S extends SystemSchema> {
-	configData: {
-		[K in keyof S]: TypeValueToType<S[K]['type']>;
-	};
+	configData: SystemConfigData<S>;
 	priority: number;
 }
 
@@ -81,12 +85,7 @@ export class World {
 			return this;
 		}
 
-		const {
-			configData = {} as {
-				[K in keyof S]: TypeValueToType<S[K]['type']>;
-			},
-			priority = 0,
-		} = options;
+		const { configData = {} as SystemConfigData<S>, priority = 0 } = options;
 
 		const queries = {} as Record<keyof Q, Query>;
 
@@ -99,9 +98,15 @@ export class World {
 
 		systemInstance.queries = queries;
 
-		(Object.keys(configData) as (keyof S)[]).forEach((key) => {
+		(
+			Object.entries(configData) as [
+				keyof S,
+				TypeValueToType<S[keyof S]['type']>,
+			][]
+		).forEach(([key, value]) => {
 			if (key in systemInstance.config) {
-				systemInstance.config[key].value = configData[key];
+				const cfg = systemInstance.config as Record<keyof S, Signal<unknown>>;
+				cfg[key].value = value as unknown;
 			}
 		});
 

@@ -230,6 +230,11 @@ world.registerSystem(MovementSystem);
 world.registerSystem(CombatSystem);
 ```
 
+> Note on vector fields: Components that use `Types.Vec2`, `Types.Vec3`, or
+> `Types.Vec4` must be accessed and mutated via `getVectorView(component, key)`.
+> Do not use `getValue`/`setValue` for these fields—EliCS enforces this at
+> runtime by throwing if you call those methods on vector data.
+
 ## Updating the World
 
 Update the world with `delta` and `time`.

@@ -113,7 +113,7 @@ export function assignInitialComponentData<
 >(
 	component: Component<S>,
 	index: number,
-	initialData: { [key: string]: any },
+	initialData: Record<string, unknown>,
 ): void {
 	const s = component.schema;
 	for (const key in s) {
@@ -124,11 +124,13 @@ export function assignInitialComponentData<
 		const input = initialData[key] ?? defaultValue;
 		switch (type) {
 			case Types.Entity:
-				dataRef[index] = input ? input.index : -1;
+				dataRef[index] = (input as { index: number } | null)
+					? (input as { index: number }).index
+					: -1;
 				break;
 			case Types.Enum:
-				assertValidEnumValue(input, schemaField.enum, key);
-				dataRef[index] = input;
+				assertValidEnumValue(input as string, schemaField.enum, key);
+				dataRef[index] = input as string;
 				break;
 			case Types.Int8:
 			case Types.Int16:
@@ -136,19 +138,29 @@ export function assignInitialComponentData<
 			case Types.Float64:
 				// For numeric types, validate range constraints if present
 				if ('min' in schemaField || 'max' in schemaField) {
-					assertValidRangeValue(input, schemaField.min, schemaField.max, key);
+					assertValidRangeValue(
+						input as number,
+						(schemaField as { min?: number }).min,
+						(schemaField as { max?: number }).max,
+						key,
+					);
 				}
-				dataRef[index] = input;
+				dataRef[index] = input as number;
 				break;
 			case Types.String:
+				(dataRef as Array<string>)[index] = input as string;
+				break;
 			case Types.Object:
-				dataRef[index] = input;
+				(dataRef as Array<unknown>)[index] = input as unknown;
 				break;
 			default:
 				if (length === 1) {
-					dataRef[index] = input;
+					dataRef[index] = input as number;
 				} else {
-					(dataRef as TypedArray).set(input, index * length);
+					(dataRef as TypedArray).set(
+						input as unknown as ArrayLike<number>,
+						index * length,
+					);
 				}
 				break;
 		}

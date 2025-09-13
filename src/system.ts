@@ -83,8 +83,15 @@ export function createSystem<S extends SystemSchema, Q extends SystemQueries>(
 			public queryManager: QueryManager,
 			public priority: number,
 		) {
+			type K = keyof S;
 			for (const key in schema) {
-				this.config[key] = signal(schema[key].default) as any;
+				const k = key as K;
+				// Initialize config signals with strongly-typed defaults
+				this.config[k] = signal(
+					schema[k].default as import('./types.js').TypeValueToType<
+						S[K]['type']
+					>,
+				) as unknown as SystemConfigSignals<S>[K];
 			}
 		}
 

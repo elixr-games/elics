@@ -171,6 +171,12 @@ getValue(component: Component, key: string): any;
   - `key`: The key for the value to retrieve.
 - **Returns:** The value associated with the specified key.
 
+::: warning Vector data access
+For vector/array fields (`Types.Vec2`, `Types.Vec3`, `Types.Vec4`), do not use `getValue()`.
+Instead, use `getVectorView(component, key)` to read the packed values. As of v3.2.0, calling
+`getValue()` for vector fields throws an error to prevent partial or incorrect reads.
+:::
+
 ### Entity.setValue
 
 Updates a value in a component associated with the entity.
@@ -184,6 +190,13 @@ setValue(component: Component, key: string, value: any): void;
   - `key`: The key of the value to update.
   - `value`: The new value to set.
 - **Returns:** `void`.
+
+::: warning Vector data writes
+For vector/array fields (`Types.Vec2`, `Types.Vec3`, `Types.Vec4`), do not use `setValue()`.
+Use the `TypedArray` returned by `getVectorView(component, key)` and write to it directly
+(`view[0] = ...; view.set([...])`). As of v3.2.0, calling `setValue()` for vector fields throws
+an error and guides you to use `getVectorView`.
+:::
 
 ### Entity.getVectorView
 

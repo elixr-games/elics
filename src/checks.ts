@@ -14,7 +14,7 @@ export enum ErrorMessages {
 export function assertCondition(
 	condition: boolean,
 	message: ErrorMessages,
-	object: any,
+	object: unknown,
 ): void {
 	if (CHECKS_ON && !condition) {
 		throw new Error(`${message}: ${object}`);

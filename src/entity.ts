@@ -96,18 +96,28 @@ export class Entity {
 			return null;
 		}
 
-		const data = (component.data as any)[key]?.[this.index];
+		const dataContainer = (component.data as Record<string, unknown>)[
+			key as string
+		] as unknown;
+		const indexed = dataContainer as { [index: number]: unknown } | undefined;
+		const data = indexed ? indexed[this.index] : undefined;
 		const type = schemaEntry.type as DataType;
 
 		switch (type) {
+			case Types.Vec2:
+			case Types.Vec3:
+			case Types.Vec4:
+				throw new Error(
+					'Array/vector types must be read via getVectorView(component, key).',
+				);
 			case Types.Boolean:
 				return Boolean(data) as TypeValueToType<C['schema'][K]['type']>;
 			case Types.Entity:
-				return data === -1
+				return (data as number) === -1
 					? null
-					: (this.entityManager.getEntityByIndex(data) as TypeValueToType<
-							C['schema'][K]['type']
-						>);
+					: (this.entityManager.getEntityByIndex(
+							data as number,
+						) as TypeValueToType<C['schema'][K]['type']>);
 			default:
 				return data as TypeValueToType<C['schema'][K]['type']>;
 		}
@@ -118,15 +128,30 @@ export class Entity {
 		key: K,
 		value: TypeValueToType<C['schema'][K]['type']>,
 	): void {
-		const componentData = (component.data as any)[key];
-		const schemaField = (component.schema as any)[key];
+		const componentData = (component.data as Record<string, unknown>)[
+			key as string
+		] as unknown;
+		const schemaField = (component.schema as Record<string, unknown>)[
+			key as string
+		] as unknown as { type: DataType; [k: string]: unknown };
 		const type = schemaField.type as DataType;
 
 		switch (type) {
+			case Types.Vec2:
+			case Types.Vec3:
+			case Types.Vec4:
+				throw new Error(
+					'Array/vector types must be written via getVectorView(component, key).',
+				);
 			case Types.Enum:
 				// enum property is guaranteed to exist due to initialization validation
-				assertValidEnumValue(value as string, schemaField.enum, key as string);
-				componentData[this.index] = value as string;
+				assertValidEnumValue(
+					value as string,
+					(schemaField as unknown as { enum: { [k: string]: string } }).enum,
+					key as string,
+				);
+				(componentData as { [idx: number]: unknown })[this.index] =
+					value as string;
 				break;
 			case Types.Int8:
 			case Types.Int16:
@@ -136,24 +161,26 @@ export class Entity {
 				if ('min' in schemaField || 'max' in schemaField) {
 					assertValidRangeValue(
 						value as number,
-						schemaField.min,
-						schemaField.max,
+						(schemaField as unknown as { min?: number }).min,
+						(schemaField as unknown as { max?: number }).max,
 						key as string,
 					);
 				}
-				componentData[this.index] = value as number;
+				(componentData as { [idx: number]: unknown })[this.index] =
+					value as number;
 				break;
 			case Types.Entity:
-				componentData[this.index] =
+				(componentData as { [idx: number]: unknown })[this.index] =
 					value === null ? -1 : (value as Entity).index;
 				break;
 			default:
-				componentData[this.index] = value;
+				(componentData as { [idx: number]: unknown })[this.index] =
+					value as unknown;
 				break;
 		}
 
 		// Notify only queries that depend on this component's values
-		(this.queryManager as any).updateEntityValue(this, component as any);
+		this.queryManager.updateEntityValue(this, component);
 	}
 
 	getVectorView<C extends AnyComponent, K extends VectorKeys<C>>(

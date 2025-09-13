@@ -61,7 +61,10 @@ export class Query {
 		// Value predicates: verify values
 		if (this.valuePredicates.length > 0) {
 			for (const p of this.valuePredicates) {
-				const v = entity.getValue(p.component, p.key as any);
+				const v = entity.getValue(
+					p.component,
+					p.key as keyof typeof p.component.schema,
+				);
 				switch (p.op) {
 					case 'eq':
 						if (v !== p.value) return false;
@@ -151,7 +154,12 @@ export class Query {
 		const rawPreds = queryConfig.where ?? [];
 		const preds: (ValuePredicate & { valueSet?: Set<unknown> })[] =
 			rawPreds.map((p) => {
-				const schema = (p.component.schema as any)[p.key];
+				const schema = (
+					p.component.schema as Record<
+						string,
+						import('./types.js').SchemaField<import('./types.js').DataType>
+					>
+				)[p.key];
 				if (!schema) {
 					throw new Error(
 						`Predicate key '${p.key}' not found on component ${p.component.id}`,
@@ -189,9 +197,7 @@ export class Query {
 						// eq, ne valid for all
 						break;
 				}
-				const np: ValuePredicate & { valueSet?: Set<unknown> } = {
-					...p,
-				} as any;
+				const np: ValuePredicate & { valueSet?: Set<unknown> } = { ...p };
 				if (p.op === 'in' || p.op === 'nin') {
 					np.valueSet = new Set(p.value as unknown[]);
 				}
