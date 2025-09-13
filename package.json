@@ -8,9 +8,9 @@
 	"types": "lib/index.d.ts",
 	"exports": {
 		".": {
+			"types": "./lib/index.d.ts",
 			"import": "./lib/index.js",
-			"require": "./lib/index.js",
-			"types": "./lib/index.d.ts"
+			"require": "./lib/index.js"
 		}
 	},
 	"sideEffects": false,
@@ -88,7 +88,7 @@
 		"rollup": "^4.35.0",
 		"ts-jest": "^29.3.4",
 		"typescript": "^5.8.2",
-		"vitepress": "^1.6.3"
+		"vitepress": "^2.0.0-alpha.12"
 	},
 	"dependencies": {
 		"@preact/signals-core": "^1.8.0"
