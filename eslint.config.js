@@ -18,6 +18,7 @@ export default [
 		rules: {
 			...typescript.configs.recommended.rules,
 			'@typescript-eslint/no-explicit-any': 'error',
+			curly: ['error', 'all'],
 			'@typescript-eslint/no-unused-vars': [
 				'error',
 				{
@@ -52,6 +53,7 @@ export default [
 		rules: {
 			...typescript.configs.recommended.rules,
 			'@typescript-eslint/no-explicit-any': 'off',
+			curly: ['error', 'all'],
 			'@typescript-eslint/no-unused-vars': [
 				'error',
 				{

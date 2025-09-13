@@ -12,7 +12,9 @@ export function packedIteration() {
 	const D = trait({ value: 1 });
 	const E = trait({ value: 1 });
 
-	for (let i = 0; i < 1000; i++) world.spawn(A, B, C, D, E);
+	for (let i = 0; i < 1000; i++) {
+		world.spawn(A, B, C, D, E);
+	}
 
 	const qA = cacheQuery(A);
 	const qB = cacheQuery(B);
@@ -65,10 +67,18 @@ export function simpleIteration() {
 	const D = trait({ value: 0 });
 	const E = trait({ value: 0 });
 
-	for (let i = 0; i < 1000; i++) world.spawn(A, B);
-	for (let i = 0; i < 1000; i++) world.spawn(A, B, C);
-	for (let i = 0; i < 1000; i++) world.spawn(A, B, C, D);
-	for (let i = 0; i < 1000; i++) world.spawn(A, B, C, E);
+	for (let i = 0; i < 1000; i++) {
+		world.spawn(A, B);
+	}
+	for (let i = 0; i < 1000; i++) {
+		world.spawn(A, B, C);
+	}
+	for (let i = 0; i < 1000; i++) {
+		world.spawn(A, B, C, D);
+	}
+	for (let i = 0; i < 1000; i++) {
+		world.spawn(A, B, C, E);
+	}
 
 	const qAB = cacheQuery(A, B);
 	const qCD = cacheQuery(C, D);
@@ -109,7 +119,9 @@ export function fragmentedIteration() {
 	const world = createWorld();
 	const Data = trait({ value: 0 });
 	const comps = [];
-	for (let i = 0; i < 26; i++) comps[i] = trait({ value: 0 });
+	for (let i = 0; i < 26; i++) {
+		comps[i] = trait({ value: 0 });
+	}
 
 	for (let i = 0; i < 26; i++) {
 		for (let j = 0; j < 100; j++) {
@@ -143,10 +155,14 @@ export function fragmentedIteration256() {
 	const world = createWorld();
 	const Data = trait({ value: 0 });
 	const comps = [];
-	for (let i = 0; i < 256; i++) comps[i] = trait({ value: 0 });
+	for (let i = 0; i < 256; i++) {
+		comps[i] = trait({ value: 0 });
+	}
 
 	for (let i = 0; i < 256; i++) {
-		for (let j = 0; j < 100; j++) world.spawn(comps[i], Data);
+		for (let j = 0; j < 100; j++) {
+			world.spawn(comps[i], Data);
+		}
 	}
 
 	const qData = cacheQuery(Data);
@@ -175,7 +191,9 @@ export function valueFilterManual() {
 	const world = createWorld();
 	const Value = trait({ value: 0 });
 
-	for (let i = 0; i < 5000; i++) world.spawn(Value);
+	for (let i = 0; i < 5000; i++) {
+		world.spawn(Value);
+	}
 
 	// initialize patterned values via a single query pass
 	world.query(Value).useStores(([v], entities) => {
@@ -202,14 +220,30 @@ export function valueFilterManual() {
 				for (let j = 0; j < entities.length; j++) {
 					const id = entities[j].id();
 					const val = v.value[id];
-					if (val === 5) eq++;
-					if (val !== 5) ne++;
-					if (val < 5) lt++;
-					if (val <= 5) le++;
-					if (val > 5) gt++;
-					if (val >= 5) ge++;
-					if (inSet.has(val)) ischk++;
-					if (!inSet.has(val)) nischk++;
+					if (val === 5) {
+						eq++;
+					}
+					if (val !== 5) {
+						ne++;
+					}
+					if (val < 5) {
+						lt++;
+					}
+					if (val <= 5) {
+						le++;
+					}
+					if (val > 5) {
+						gt++;
+					}
+					if (val >= 5) {
+						ge++;
+					}
+					if (inSet.has(val)) {
+						ischk++;
+					}
+					if (!inSet.has(val)) {
+						nischk++;
+					}
 				}
 			});
 			Value._lastCounts = eq + ne + lt + le + gt + ge + ischk + nischk;
@@ -225,7 +259,9 @@ export function entityCycle() {
 	const A = trait({ value: 0 });
 	const B = trait({ value: 0 });
 
-	for (let i = 0; i < 1000; i++) world.spawn(A);
+	for (let i = 0; i < 1000; i++) {
+		world.spawn(A);
+	}
 
 	return time(() => {
 		for (let i = 0; i < ITERATIONS; i++) {
@@ -248,7 +284,9 @@ export function addRemove() {
 	const A = trait({ value: 0 });
 	const B = trait({ value: 0 });
 
-	for (let i = 0; i < 1000; i++) world.spawn(A);
+	for (let i = 0; i < 1000; i++) {
+		world.spawn(A);
+	}
 
 	return time(() => {
 		for (let i = 0; i < ITERATIONS; i++) {

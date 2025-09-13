@@ -299,6 +299,61 @@ describe('Query Tests', () => {
 		expect(query1).toBe(query2);
 	});
 
+	test('subscribe qualify without replay does not emit for existing, but emits for future', () => {
+		const QComp = createComponent('QNoReplay', {
+			v: { type: Types.Int8, default: 0 },
+		});
+		world.registerComponent(QComp);
+		const e1 = world.createEntity().addComponent(QComp);
+		const q = world.queryManager.registerQuery({ required: [QComp] });
+		expect(q.entities.has(e1)).toBe(true);
+		const cb = jest.fn();
+		q.subscribe('qualify', cb); // default replayExisting = false
+		expect(cb).not.toHaveBeenCalled();
+		const e2 = world.createEntity().addComponent(QComp);
+		expect(cb).toHaveBeenCalledTimes(1);
+		expect(cb).toHaveBeenCalledWith(e2);
+	});
+
+	test('subscribe qualify with replay emits for existing and future', () => {
+		const QComp2 = createComponent('QWithReplay', {
+			v: { type: Types.Int8, default: 0 },
+		});
+		world.registerComponent(QComp2);
+		const e1 = world.createEntity().addComponent(QComp2);
+		const e2 = world.createEntity().addComponent(QComp2);
+		const q = world.queryManager.registerQuery({ required: [QComp2] });
+		expect(q.entities.size).toBe(2);
+		const cb = jest.fn();
+		q.subscribe('qualify', cb, true); // replay existing
+		// Should have replayed existing ones in some order
+		expect(cb.mock.calls.length).toBe(2);
+		expect(new Set(cb.mock.calls.map((args) => args[0]))).toEqual(
+			new Set([e1, e2]),
+		);
+		// Future qualification still triggers
+		const e3 = world.createEntity().addComponent(QComp2);
+		expect(cb).toHaveBeenCalledWith(e3);
+		expect(cb).toHaveBeenCalledTimes(3);
+	});
+
+	test('subscribe disqualify ignores replayExisting flag', () => {
+		const QComp3 = createComponent('QDisq', {
+			v: { type: Types.Int8, default: 0 },
+		});
+		world.registerComponent(QComp3);
+		const e = world.createEntity().addComponent(QComp3);
+		const q = world.queryManager.registerQuery({ required: [QComp3] });
+		expect(q.entities.has(e)).toBe(true);
+		const disq = jest.fn();
+		q.subscribe('disqualify', disq, true); // Should not replay anything
+		expect(disq).not.toHaveBeenCalled();
+		// Now disqualify by removing component
+		e.removeComponent(QComp3);
+		expect(disq).toHaveBeenCalledTimes(1);
+		expect(disq).toHaveBeenCalledWith(e);
+	});
+
 	test('Registering query with unregistered component auto-registers it', () => {
 		const UnregisteredComponent = createComponent('Unregistered', {
 			value: { type: Types.Int16, default: 0 },

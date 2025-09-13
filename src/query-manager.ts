@@ -157,8 +157,11 @@ export class QueryManager {
 				if (processed.has(q)) {
 					continue;
 				}
-				if (q.entities.delete(entity))
-					for (const cb of q.subscribers.disqualify) cb(entity);
+				if (q.entities.delete(entity)) {
+					for (const cb of q.subscribers.disqualify) {
+						cb(entity);
+					}
+				}
 				processed.add(q);
 			}
 		}

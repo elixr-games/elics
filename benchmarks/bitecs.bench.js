@@ -186,8 +186,9 @@ export function fragmentedIteration256() {
 	const world = createWorld();
 	const Data = defineComponent({ value: Types.f32 });
 	const comps = [];
-	for (let i = 0; i < 256; i++)
+	for (let i = 0; i < 256; i++) {
 		comps[i] = defineComponent({ value: Types.f32 });
+	}
 
 	const qData = defineQuery([Data]);
 	const qHi = defineQuery([comps[255]]);
@@ -246,14 +247,30 @@ export function valueFilterManual() {
 			for (let j = 0; j < ents.length; j++) {
 				const id = ents[j];
 				const v = Value.value[id];
-				if (v === 5) eq++;
-				if (v !== 5) ne++;
-				if (v < 5) lt++;
-				if (v <= 5) le++;
-				if (v > 5) gt++;
-				if (v >= 5) ge++;
-				if (inSet.has(v)) ischk++;
-				if (!inSet.has(v)) nischk++;
+				if (v === 5) {
+					eq++;
+				}
+				if (v !== 5) {
+					ne++;
+				}
+				if (v < 5) {
+					lt++;
+				}
+				if (v <= 5) {
+					le++;
+				}
+				if (v > 5) {
+					gt++;
+				}
+				if (v >= 5) {
+					ge++;
+				}
+				if (inSet.has(v)) {
+					ischk++;
+				}
+				if (!inSet.has(v)) {
+					nischk++;
+				}
 			}
 			Value._lastCounts = eq + ne + lt + le + gt + ge + ischk + nischk;
 		}

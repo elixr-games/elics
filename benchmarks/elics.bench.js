@@ -77,7 +77,9 @@ export function packedIteration() {
 	}
 
 	return time(() => {
-		for (let i = 0; i < ITERATIONS; i++) world.update(0, 0);
+		for (let i = 0; i < ITERATIONS; i++) {
+			world.update(0, 0);
+		}
 	});
 }
 
@@ -144,27 +146,33 @@ export function simpleIteration() {
 		.registerSystem(SystemCD)
 		.registerSystem(SystemCE);
 
-	for (let i = 0; i < 1000; i++)
+	for (let i = 0; i < 1000; i++) {
 		world.createEntity().addComponent(A).addComponent(B);
-	for (let i = 0; i < 1000; i++)
+	}
+	for (let i = 0; i < 1000; i++) {
 		world.createEntity().addComponent(A).addComponent(B).addComponent(C);
-	for (let i = 0; i < 1000; i++)
+	}
+	for (let i = 0; i < 1000; i++) {
 		world
 			.createEntity()
 			.addComponent(A)
 			.addComponent(B)
 			.addComponent(C)
 			.addComponent(D);
-	for (let i = 0; i < 1000; i++)
+	}
+	for (let i = 0; i < 1000; i++) {
 		world
 			.createEntity()
 			.addComponent(A)
 			.addComponent(B)
 			.addComponent(C)
 			.addComponent(E);
+	}
 
 	return time(() => {
-		for (let i = 0; i < ITERATIONS; i++) world.update(0, 0);
+		for (let i = 0; i < ITERATIONS; i++) {
+			world.update(0, 0);
+		}
 	});
 }
 
@@ -207,7 +215,9 @@ export function fragmentedIteration() {
 	}
 
 	return time(() => {
-		for (let i = 0; i < ITERATIONS; i++) world.update(0, 0);
+		for (let i = 0; i < ITERATIONS; i++) {
+			world.update(0, 0);
+		}
 	});
 }
 
@@ -249,7 +259,9 @@ export function fragmentedIteration256() {
 	}
 
 	return time(() => {
-		for (let i = 0; i < ITERATIONS; i++) world.update(0, 0);
+		for (let i = 0; i < ITERATIONS; i++) {
+			world.update(0, 0);
+		}
 	});
 }
 
@@ -285,14 +297,30 @@ export function valueFilterManual() {
 				nischk = 0;
 			for (const e of this.queries.q.entities) {
 				const v = Value.data.value[e.index];
-				if (v === eqVal) eq++;
-				if (v !== eqVal) ne++;
-				if (v < ltVal) lt++;
-				if (v <= leVal) le++;
-				if (v > gtVal) gt++;
-				if (v >= geVal) ge++;
-				if (inSet.has(v)) ischk++;
-				if (!inSet.has(v)) nischk++;
+				if (v === eqVal) {
+					eq++;
+				}
+				if (v !== eqVal) {
+					ne++;
+				}
+				if (v < ltVal) {
+					lt++;
+				}
+				if (v <= leVal) {
+					le++;
+				}
+				if (v > gtVal) {
+					gt++;
+				}
+				if (v >= geVal) {
+					ge++;
+				}
+				if (inSet.has(v)) {
+					ischk++;
+				}
+				if (!inSet.has(v)) {
+					nischk++;
+				}
 			}
 			// prevent V8 from optimizing away counters
 			Value._lastCounts = eq + ne + lt + le + gt + ge + ischk + nischk;
@@ -302,7 +330,9 @@ export function valueFilterManual() {
 	world.registerSystem(ValueFilterSystem);
 
 	return time(() => {
-		for (let i = 0; i < ITERATIONS; i++) world.update(0, 0);
+		for (let i = 0; i < ITERATIONS; i++) {
+			world.update(0, 0);
+		}
 	});
 }
 
@@ -330,9 +360,13 @@ export function entityCycle() {
 	}
 
 	world.registerComponent(A).registerComponent(B).registerSystem(CycleSystem);
-	for (let i = 0; i < 1000; i++) world.createEntity().addComponent(A);
+	for (let i = 0; i < 1000; i++) {
+		world.createEntity().addComponent(A);
+	}
 	return time(() => {
-		for (let i = 0; i < ITERATIONS; i++) world.update(0, 0);
+		for (let i = 0; i < ITERATIONS; i++) {
+			world.update(0, 0);
+		}
 	});
 }
 
@@ -366,8 +400,12 @@ export function addRemove() {
 		.registerComponent(A)
 		.registerComponent(B)
 		.registerSystem(AddRemoveSystem);
-	for (let i = 0; i < 1000; i++) world.createEntity().addComponent(A);
+	for (let i = 0; i < 1000; i++) {
+		world.createEntity().addComponent(A);
+	}
 	return time(() => {
-		for (let i = 0; i < ITERATIONS; i++) world.update(0, 0);
+		for (let i = 0; i < ITERATIONS; i++) {
+			world.update(0, 0);
+		}
 	});
 }

@@ -226,15 +226,22 @@ readonly entities: Set<Entity>;
 
 ### Query.subscribe
 
-Subscribe to notifications when entities qualify or disqualify based on the query criteria.
+Subscribe to notifications when entities qualify or disqualify based on the query criteria. You can optionally
+replay existing qualifying entities immediately when subscribing to `qualify`.
 
 ```ts
-subscribe(event: 'qualify' | 'disqualify', callback: (entity: Entity) => void): () => void;
+subscribe(
+  event: 'qualify' | 'disqualify',
+  callback: (entity: Entity) => void,
+  replayExisting?: boolean
+): () => void;
 ```
 
 - **Parameters:**
-  - `event`: Event type to subscribe to (`'qualify'` or `'disqualify'`)
-  - `callback`: Function to call when the event occurs
+  - `event`: Event type to subscribe to (`'qualify'` or `'disqualify'`).
+  - `callback`: Function to call when the event occurs.
+  - `replayExisting` (optional, default `false`): When `true` and `event === 'qualify'`, immediately invokes
+    `callback` once for every entity currently in `query.entities`. Ignored for `'disqualify'`.
 - **Returns:**
   - An unsubscribe function that removes the subscription
 

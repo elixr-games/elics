@@ -57,7 +57,9 @@ export class Query {
 			return false;
 		}
 		// Required: entity must contain all required bits
-		if (!entity.bitmask.contains(this.requiredMask)) return false;
+		if (!entity.bitmask.contains(this.requiredMask)) {
+			return false;
+		}
 		// Value predicates: verify values
 		if (this.valuePredicates.length > 0) {
 			for (const p of this.valuePredicates) {
@@ -67,10 +69,14 @@ export class Query {
 				);
 				switch (p.op) {
 					case 'eq':
-						if (v !== p.value) return false;
+						if (v !== p.value) {
+							return false;
+						}
 						break;
 					case 'ne':
-						if (v === p.value) return false;
+						if (v === p.value) {
+							return false;
+						}
 						break;
 					case 'lt':
 						if (
@@ -79,8 +85,9 @@ export class Query {
 								typeof p.value === 'number' &&
 								v < p.value
 							)
-						)
+						) {
 							return false;
+						}
 						break;
 					case 'le':
 						if (
@@ -89,8 +96,9 @@ export class Query {
 								typeof p.value === 'number' &&
 								v <= p.value
 							)
-						)
+						) {
 							return false;
+						}
 						break;
 					case 'gt':
 						if (
@@ -99,8 +107,9 @@ export class Query {
 								typeof p.value === 'number' &&
 								v > p.value
 							)
-						)
+						) {
 							return false;
+						}
 						break;
 					case 'ge':
 						if (
@@ -109,14 +118,19 @@ export class Query {
 								typeof p.value === 'number' &&
 								v >= p.value
 							)
-						)
+						) {
 							return false;
+						}
 						break;
 					case 'in':
-						if (!p.valueSet || !p.valueSet.has(v)) return false;
+						if (!p.valueSet || !p.valueSet.has(v)) {
+							return false;
+						}
 						break;
 					case 'nin':
-						if (p.valueSet && p.valueSet.has(v)) return false;
+						if (p.valueSet && p.valueSet.has(v)) {
+							return false;
+						}
 						break;
 				}
 			}
@@ -127,8 +141,14 @@ export class Query {
 	subscribe(
 		event: 'qualify' | 'disqualify',
 		callback: (entity: Entity) => void,
+		replayExisting: boolean = false,
 	): () => void {
 		this.subscribers[event].add(callback);
+		if (event === 'qualify' && replayExisting) {
+			for (const e of this.entities) {
+				callback(e);
+			}
+		}
 		return () => {
 			this.subscribers[event].delete(callback);
 		};
@@ -203,7 +223,9 @@ export class Query {
 				}
 				return np;
 			});
-		for (const p of preds) requiredMask.orInPlace(p.component.bitmask!);
+		for (const p of preds) {
+			requiredMask.orInPlace(p.component.bitmask!);
+		}
 		const whereStr = preds
 			.map(
 				(p) =>

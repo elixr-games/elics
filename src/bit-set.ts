@@ -18,7 +18,9 @@ export default class BitSet {
 	}
 
 	private ensure(wordIndex: number) {
-		if (wordIndex < this.words.length) return;
+		if (wordIndex < this.words.length) {
+			return;
+		}
 		const nextLen = Math.max(this.words.length << 1, wordIndex + 1);
 		const n = new Uint32Array(nextLen);
 		n.set(this.words);
@@ -30,8 +32,11 @@ export default class BitSet {
 		const b = bitIndex & 31;
 		this.ensure(w);
 		const mask = 1 << b;
-		if (value) this.words[w] |= mask;
-		else this.words[w] &= ~mask;
+		if (value) {
+			this.words[w] |= mask;
+		} else {
+			this.words[w] &= ~mask;
+		}
 	}
 
 	or(other: BitSet): BitSet {
@@ -80,14 +85,18 @@ export default class BitSet {
 		this.ensure(other.words.length - 1);
 		const a = this.words,
 			b = other.words;
-		for (let i = 0; i < b.length; i++) a[i] |= b[i];
+		for (let i = 0; i < b.length; i++) {
+			a[i] |= b[i];
+		}
 	}
 
 	andNotInPlace(other: BitSet): void {
 		const a = this.words,
 			b = other.words;
 		const max = Math.min(a.length, b.length);
-		for (let i = 0; i < max; i++) a[i] &= ~b[i];
+		for (let i = 0; i < max; i++) {
+			a[i] &= ~b[i];
+		}
 	}
 
 	equals(other: BitSet): boolean {
@@ -95,14 +104,20 @@ export default class BitSet {
 		for (let i = 0; i < max; i++) {
 			const a = this.words[i] ?? 0;
 			const b = other.words[i] ?? 0;
-			if (a !== b) return false;
+			if (a !== b) {
+				return false;
+			}
 		}
 		return true;
 	}
 
 	isEmpty(): boolean {
 		const w = this.words;
-		for (let i = 0; i < w.length; i++) if (w[i] !== 0) return false;
+		for (let i = 0; i < w.length; i++) {
+			if (w[i] !== 0) {
+				return false;
+			}
+		}
 		return true;
 	}
 
@@ -126,7 +141,9 @@ export default class BitSet {
 	}
 
 	toString(): string {
-		if (this.words.length === 1) return this.words[0].toString();
+		if (this.words.length === 1) {
+			return this.words[0].toString();
+		}
 		// Hex words from high->low to produce stable mask ids
 		let s = '';
 		for (let i = this.words.length - 1; i >= 0; i--) {
@@ -143,7 +160,9 @@ export default class BitSet {
 		for (let i = 0; i < n; i++) {
 			const aw = (a[i] ?? 0) >>> 0;
 			const bw = b[i] >>> 0;
-			if ((aw & bw) >>> 0 !== bw) return false;
+			if ((aw & bw) >>> 0 !== bw) {
+				return false;
+			}
 		}
 		return true;
 	}
@@ -152,7 +171,11 @@ export default class BitSet {
 		const a = this.words,
 			b = other.words;
 		const n = Math.min(a.length, b.length);
-		for (let i = 0; i < n; i++) if ((a[i] & b[i]) >>> 0 !== 0) return true;
+		for (let i = 0; i < n; i++) {
+			if ((a[i] & b[i]) >>> 0 !== 0) {
+				return true;
+			}
+		}
 		return false;
 	}
 }

@@ -51,11 +51,21 @@ export async function packedIteration() {
 		e = this.query((q) => q.current.with(E1).write);
 
 		execute() {
-			for (const ent of this.a.current) ent.write(A1).value *= 2;
-			for (const ent of this.b.current) ent.write(B1).value *= 2;
-			for (const ent of this.c.current) ent.write(C1).value *= 2;
-			for (const ent of this.d.current) ent.write(D1).value *= 2;
-			for (const ent of this.e.current) ent.write(E1).value *= 2;
+			for (const ent of this.a.current) {
+				ent.write(A1).value *= 2;
+			}
+			for (const ent of this.b.current) {
+				ent.write(B1).value *= 2;
+			}
+			for (const ent of this.c.current) {
+				ent.write(C1).value *= 2;
+			}
+			for (const ent of this.d.current) {
+				ent.write(D1).value *= 2;
+			}
+			for (const ent of this.e.current) {
+				ent.write(E1).value *= 2;
+			}
 		}
 	}
 
@@ -63,11 +73,15 @@ export async function packedIteration() {
 		defs: [A1, B1, C1, D1, E1, PackedSystem],
 	});
 	world.build((s) => {
-		for (let i = 0; i < 1000; i++) s.createEntity(A1, B1, C1, D1, E1);
+		for (let i = 0; i < 1000; i++) {
+			s.createEntity(A1, B1, C1, D1, E1);
+		}
 	});
 
 	const result = await timeAsync(async () => {
-		for (let i = 0; i < ITERATIONS; i++) await world.execute(0);
+		for (let i = 0; i < ITERATIONS; i++) {
+			await world.execute(0);
+		}
 	});
 	await world.terminate();
 	return result;
@@ -121,14 +135,24 @@ export async function simpleIteration() {
 		defs: [A2, B2, C2, D2, E2, SystemAB, SystemCD, SystemCE],
 	});
 	world.build((s) => {
-		for (let i = 0; i < 1000; i++) s.createEntity(A2, B2);
-		for (let i = 0; i < 1000; i++) s.createEntity(A2, B2, C2);
-		for (let i = 0; i < 1000; i++) s.createEntity(A2, B2, C2, D2);
-		for (let i = 0; i < 1000; i++) s.createEntity(A2, B2, C2, E2);
+		for (let i = 0; i < 1000; i++) {
+			s.createEntity(A2, B2);
+		}
+		for (let i = 0; i < 1000; i++) {
+			s.createEntity(A2, B2, C2);
+		}
+		for (let i = 0; i < 1000; i++) {
+			s.createEntity(A2, B2, C2, D2);
+		}
+		for (let i = 0; i < 1000; i++) {
+			s.createEntity(A2, B2, C2, E2);
+		}
 	});
 
 	const result = await timeAsync(async () => {
-		for (let i = 0; i < ITERATIONS; i++) await world.execute(0);
+		for (let i = 0; i < ITERATIONS; i++) {
+			await world.execute(0);
+		}
 	});
 	await world.terminate();
 	return result;
@@ -144,8 +168,12 @@ export async function fragmentedIteration() {
 		z = this.query((q) => q.current.with(comps[25]).write);
 
 		execute() {
-			for (const ent of this.data.current) ent.write(DataF).value *= 2;
-			for (const ent of this.z.current) ent.write(comps[25]).value *= 2;
+			for (const ent of this.data.current) {
+				ent.write(DataF).value *= 2;
+			}
+			for (const ent of this.z.current) {
+				ent.write(comps[25]).value *= 2;
+			}
 		}
 	}
 
@@ -161,7 +189,9 @@ export async function fragmentedIteration() {
 	});
 
 	const result = await timeAsync(async () => {
-		for (let i = 0; i < ITERATIONS; i++) await world.execute(0);
+		for (let i = 0; i < ITERATIONS; i++) {
+			await world.execute(0);
+		}
 	});
 	await world.terminate();
 	return result;
@@ -177,8 +207,12 @@ export async function fragmentedIteration256() {
 		hi = this.query((q) => q.current.with(comps[255]).write);
 
 		execute() {
-			for (const ent of this.data.current) ent.write(DataF).value *= 2;
-			for (const ent of this.hi.current) ent.write(comps[255]).value *= 2;
+			for (const ent of this.data.current) {
+				ent.write(DataF).value *= 2;
+			}
+			for (const ent of this.hi.current) {
+				ent.write(comps[255]).value *= 2;
+			}
 		}
 	}
 
@@ -187,11 +221,15 @@ export async function fragmentedIteration256() {
 	});
 	world.build((s) => {
 		for (let i = 0; i < 256; i++) {
-			for (let j = 0; j < 100; j++) s.createEntity(comps[i], DataF);
+			for (let j = 0; j < 100; j++) {
+				s.createEntity(comps[i], DataF);
+			}
 		}
 	});
 	const result = await timeAsync(async () => {
-		for (let i = 0; i < ITERATIONS; i++) await world.execute(0);
+		for (let i = 0; i < ITERATIONS; i++) {
+			await world.execute(0);
+		}
 	});
 	await world.terminate();
 	return result;
@@ -222,14 +260,30 @@ export async function valueFilterManual() {
 			const inSet = new Set([1, 3, 5, 7, 9]);
 			for (const ent of this.q.current) {
 				const v = ent.read(ValueF).value;
-				if (v === eqVal) eq++;
-				if (v !== eqVal) ne++;
-				if (v < ltVal) lt++;
-				if (v <= leVal) le++;
-				if (v > gtVal) gt++;
-				if (v >= geVal) ge++;
-				if (inSet.has(v)) ischk++;
-				if (!inSet.has(v)) nischk++;
+				if (v === eqVal) {
+					eq++;
+				}
+				if (v !== eqVal) {
+					ne++;
+				}
+				if (v < ltVal) {
+					lt++;
+				}
+				if (v <= leVal) {
+					le++;
+				}
+				if (v > gtVal) {
+					gt++;
+				}
+				if (v >= geVal) {
+					ge++;
+				}
+				if (inSet.has(v)) {
+					ischk++;
+				}
+				if (!inSet.has(v)) {
+					nischk++;
+				}
 			}
 			ValueF._lastCounts = eq + ne + lt + le + gt + ge + ischk + nischk;
 		}
@@ -244,7 +298,9 @@ export async function valueFilterManual() {
 	});
 
 	const result = await timeAsync(async () => {
-		for (let i = 0; i < ITERATIONS; i++) await world.execute(0);
+		for (let i = 0; i < ITERATIONS; i++) {
+			await world.execute(0);
+		}
 	});
 	await world.terminate();
 	return result;
@@ -275,11 +331,15 @@ export async function entityCycle() {
 		maxLimboComponents: 10000,
 	});
 	world.build((s) => {
-		for (let i = 0; i < 1000; i++) s.createEntity(A3);
+		for (let i = 0; i < 1000; i++) {
+			s.createEntity(A3);
+		}
 	});
 
 	const result = await timeAsync(async () => {
-		for (let i = 0; i < ITERATIONS; i++) await world.execute(0);
+		for (let i = 0; i < ITERATIONS; i++) {
+			await world.execute(0);
+		}
 	});
 	await world.terminate();
 	return result;
@@ -310,11 +370,15 @@ export async function addRemove() {
 		maxLimboComponents: 10000,
 	});
 	world.build((s) => {
-		for (let i = 0; i < 1000; i++) s.createEntity(A4);
+		for (let i = 0; i < 1000; i++) {
+			s.createEntity(A4);
+		}
 	});
 
 	const result = await timeAsync(async () => {
-		for (let i = 0; i < ITERATIONS; i++) await world.execute(0);
+		for (let i = 0; i < ITERATIONS; i++) {
+			await world.execute(0);
+		}
 	});
 	await world.terminate();
 	return result;
