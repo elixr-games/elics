@@ -173,6 +173,49 @@ describe('Component Tests', () => {
 		expect(TestComponent.typeId).toBe(firstTypeId); // TypeId should not change
 	});
 
+	test('Color type clamps values on init and warns', () => {
+		const ColorComp = createComponent('ColorTest', {
+			c: { type: Types.Color, default: [1, 1, 1, 1] },
+		});
+		const warn = jest.spyOn(console, 'warn').mockImplementation();
+		const w = new World({ checksOn: false });
+		w.registerComponent(ColorComp);
+		const e = w.createEntity();
+		// Out of range values should clamp
+		e.addComponent(ColorComp, { c: [-0.5, 0.5, 2, 1.2] as any });
+		const view = e.getVectorView(ColorComp, 'c');
+		expect(view[0]).toBe(0);
+		expect(view[1]).toBeCloseTo(0.5, 5);
+		expect(view[2]).toBe(1);
+		expect(view[3]).toBeCloseTo(1, 5);
+		expect(warn).toHaveBeenCalled();
+		warn.mockRestore();
+	});
+
+	test('Color init without default uses [1,1,1,1] and no warn; undefined channel falls back to 1', () => {
+		const ColorNoDefault = createComponent('ColorNoDefault', {
+			c: { type: Types.Color },
+		} as any);
+		const warn = jest.spyOn(console, 'warn').mockImplementation();
+		const w = new World({ checksOn: false });
+		w.registerComponent(ColorNoDefault);
+		const e1 = w.createEntity();
+		e1.addComponent(ColorNoDefault);
+		const v1 = (e1 as any).getVectorView(ColorNoDefault, 'c');
+		expect(Array.from(v1)).toEqual([1, 1, 1, 1]);
+		expect(warn).not.toHaveBeenCalled();
+		// now add with an undefined channel in initial data, expect fallback to 1 and no warn
+		const e2 = w.createEntity();
+		e2.addComponent(ColorNoDefault, { c: [0.25, undefined, 0.75, 0] as any });
+		const v2 = (e2 as any).getVectorView(ColorNoDefault, 'c');
+		expect(v2[0]).toBeCloseTo(0.25, 5);
+		expect(v2[1]).toBeCloseTo(1, 5); // fallback
+		expect(v2[2]).toBeCloseTo(0.75, 5);
+		expect(v2[3]).toBeCloseTo(0, 5);
+		expect(warn).not.toHaveBeenCalled();
+		warn.mockRestore();
+	});
+
 	test('hasComponent returns false for unregistered components', () => {
 		const UnregisteredComponent = createComponent('Unregistered1', {
 			value: { type: Types.Boolean, default: false },

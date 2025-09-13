@@ -153,6 +153,28 @@ export function assignInitialComponentData<
 			case Types.Object:
 				(dataRef as Array<unknown>)[index] = input as unknown;
 				break;
+			case Types.Color: {
+				const length = TypedArrayMap[type].length;
+				const arr = (input as [number, number, number, number]) ?? [1, 1, 1, 1];
+				let clamped = false;
+				for (let i = 0; i < 4; i++) {
+					let v = arr[i] ?? 1;
+					if (v < 0) {
+						v = 0;
+						clamped = true;
+					} else if (v > 1) {
+						v = 1;
+						clamped = true;
+					}
+					(dataRef as TypedArray)[index * length + i] = v;
+				}
+				if (clamped) {
+					console.warn(
+						`Color values out of range for ${component.id}.${key}; clamped to [0,1].`,
+					);
+				}
+				break;
+			}
 			default:
 				if (length === 1) {
 					dataRef[index] = input as number;

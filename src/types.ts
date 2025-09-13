@@ -10,6 +10,7 @@ export type DataType =
 	| 'Vec2'
 	| 'Vec3'
 	| 'Vec4'
+	| 'Color'
 	| 'Enum';
 
 export enum Types {
@@ -24,6 +25,7 @@ export enum Types {
 	Vec2 = 'Vec2',
 	Vec3 = 'Vec3',
 	Vec4 = 'Vec4',
+	Color = 'Color',
 	Enum = 'Enum',
 }
 
@@ -60,6 +62,7 @@ export const TypedArrayMap: {
 	Vec2: { arrayConstructor: Float32Array, length: 2 },
 	Vec3: { arrayConstructor: Float32Array, length: 3 },
 	Vec4: { arrayConstructor: Float32Array, length: 4 },
+	Color: { arrayConstructor: Float32Array, length: 4 },
 	Enum: { arrayConstructor: Array, length: 1 },
 };
 
@@ -79,11 +82,13 @@ export type TypeValueToType<T extends DataType> = T extends
 					? [number, number, number]
 					: T extends 'Vec4'
 						? [number, number, number, number]
-						: T extends 'Entity'
-							? import('./entity.js').Entity | null
-							: T extends 'Object'
-								? unknown
-								: never;
+						: T extends 'Color'
+							? [number, number, number, number]
+							: T extends 'Entity'
+								? import('./entity.js').Entity | null
+								: T extends 'Object'
+									? unknown
+									: never;
 
 export type DataArrayToType<T extends DataType> = T extends
 	| 'Int8'
@@ -95,6 +100,7 @@ export type DataArrayToType<T extends DataType> = T extends
 	| 'Vec2'
 	| 'Vec3'
 	| 'Vec4'
+	| 'Color'
 	? TypedArray
 	: T extends 'String' | 'Enum'
 		? Array<string>
@@ -154,7 +160,12 @@ export type SchemaField<T extends DataType> = T extends 'Enum'
 											type: T;
 											default: [number, number, number, number];
 										}
-									: never;
+									: T extends 'Color'
+										? {
+												type: T;
+												default?: [number, number, number, number];
+											}
+										: never;
 
 export type TypedSchema<T extends DataType> = Record<string, SchemaField<T>>;
 

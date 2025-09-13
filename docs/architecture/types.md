@@ -21,6 +21,7 @@ The **Types** enum in EliCS provides a set of predefined data types that can be 
 | Types.Vec2    | [number, number]                 | 2D vector                              | Float32Array    |
 | Types.Vec3    | [number, number, number]         | 3D vector                              | Float32Array    |
 | Types.Vec4    | [number, number, number, number] | 4D vector or quaternion                | Float32Array    |
+| Types.Color   | [number, number, number, number] | RGBA color (0..1)                      | Float32Array    |
 | Types.Enum    | string                           | Enumerated value with string constants | `Array<string>` |
 
 ## Enum Type

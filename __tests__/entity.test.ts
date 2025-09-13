@@ -289,6 +289,33 @@ describe('Entity Tests', () => {
 		expect(viewAgain[1]).toBe(8);
 	});
 
+	test('Color setValue throws; mutate via getVectorView; getValue throws', () => {
+		const world = new World({ checksOn: false });
+		const ColorComp = createComponent('ColorE', {
+			c: { type: Types.Color, default: [1, 1, 1, 1] },
+		});
+		world.registerComponent(ColorComp);
+		const e = world.createEntity();
+		e.addComponent(ColorComp);
+		// setValue should throw for Color
+		expect(() =>
+			e.setValue(ColorComp, 'c' as any, [0, 0.5, 1, 0.25] as any),
+		).toThrow('getVectorView');
+		// mutate through vector view
+		const v = e.getVectorView(ColorComp, 'c');
+		v[0] = 0;
+		v[1] = 0.5;
+		v[2] = 1;
+		v[3] = 0.25;
+		const again = e.getVectorView(ColorComp, 'c');
+		expect(again[0]).toBeCloseTo(0, 5);
+		expect(again[1]).toBeCloseTo(0.5, 5);
+		expect(again[2]).toBeCloseTo(1, 5);
+		expect(again[3]).toBeCloseTo(0.25, 5);
+		// getValue should throw for Color
+		expect(() => e.getValue(ColorComp, 'c' as any)).toThrow('getVectorView');
+	});
+
 	test('String component data access', () => {
 		const entity = world.createEntity();
 		entity.addComponent(NameComponent, { name: 'TestEntity' });

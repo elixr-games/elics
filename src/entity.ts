@@ -107,6 +107,7 @@ export class Entity {
 			case Types.Vec2:
 			case Types.Vec3:
 			case Types.Vec4:
+			case Types.Color:
 				throw new Error(
 					'Array/vector types must be read via getVectorView(component, key).',
 				);
@@ -140,6 +141,7 @@ export class Entity {
 			case Types.Vec2:
 			case Types.Vec3:
 			case Types.Vec4:
+			case Types.Color:
 				throw new Error(
 					'Array/vector types must be written via getVectorView(component, key).',
 				);
