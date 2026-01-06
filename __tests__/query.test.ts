@@ -849,3 +849,205 @@ test('Multiple disqualify subscriptions all fire on entity removal', () => {
 	expect(disq1).toHaveBeenCalledWith(e);
 	expect(disq2).toHaveBeenCalledWith(e);
 });
+
+test('Query with multiple excluded components', () => {
+	const w = new World({ checksOn: false });
+	const A = createComponent('MultiExclA', {
+		v: { type: Types.Int8, default: 0 },
+	});
+	const B = createComponent('MultiExclB', {
+		v: { type: Types.Int8, default: 0 },
+	});
+	const C = createComponent('MultiExclC', {
+		v: { type: Types.Int8, default: 0 },
+	});
+	const Req = createComponent('MultiExclReq', {
+		v: { type: Types.Int8, default: 0 },
+	});
+	w.registerComponent(A)
+		.registerComponent(B)
+		.registerComponent(C)
+		.registerComponent(Req);
+
+	const query = w.queryManager.registerQuery({
+		required: [Req],
+		excluded: [A, B, C],
+	});
+
+	const e1 = w.createEntity().addComponent(Req); // matches
+	const e2 = w.createEntity().addComponent(Req).addComponent(A); // excluded by A
+	const e3 = w.createEntity().addComponent(Req).addComponent(B); // excluded by B
+	const e4 = w.createEntity().addComponent(Req).addComponent(C); // excluded by C
+	const e5 = w.createEntity().addComponent(Req).addComponent(A).addComponent(B); // excluded by both
+
+	expect(query.entities.has(e1)).toBe(true);
+	expect(query.entities.has(e2)).toBe(false);
+	expect(query.entities.has(e3)).toBe(false);
+	expect(query.entities.has(e4)).toBe(false);
+	expect(query.entities.has(e5)).toBe(false);
+
+	// Remove excluded component, should qualify
+	e2.removeComponent(A);
+	expect(query.entities.has(e2)).toBe(true);
+});
+
+test('Query with excluded and value predicates combined', () => {
+	const w = new World({ checksOn: false });
+	const Tag = createComponent('ExclValTag', {
+		v: { type: Types.Int8, default: 0 },
+	});
+	const Num = createComponent('ExclValNum', {
+		value: { type: Types.Int16, default: 0 },
+	});
+	w.registerComponent(Tag).registerComponent(Num);
+
+	const query = w.queryManager.registerQuery({
+		required: [Num],
+		excluded: [Tag],
+		where: [gt(Num, 'value', 50)],
+	});
+
+	const e1 = w.createEntity().addComponent(Num, { value: 100 }); // matches
+	const e2 = w
+		.createEntity()
+		.addComponent(Num, { value: 100 })
+		.addComponent(Tag); // excluded
+	const e3 = w.createEntity().addComponent(Num, { value: 30 }); // value too low
+	const e4 = w
+		.createEntity()
+		.addComponent(Num, { value: 30 })
+		.addComponent(Tag); // both fail
+
+	expect(query.entities.has(e1)).toBe(true);
+	expect(query.entities.has(e2)).toBe(false);
+	expect(query.entities.has(e3)).toBe(false);
+	expect(query.entities.has(e4)).toBe(false);
+});
+
+test('Value predicate exact boundary matches', () => {
+	const w = new World({ checksOn: false });
+	const Num = createComponent('BoundaryNum', {
+		value: { type: Types.Int16, default: 0 },
+	});
+	w.registerComponent(Num);
+
+	// Test exact boundary with lt/le/gt/ge
+	const qLt50 = w.queryManager.registerQuery({
+		required: [Num],
+		where: [lt(Num, 'value', 50)],
+	});
+	const qLe50 = w.queryManager.registerQuery({
+		required: [Num],
+		where: [le(Num, 'value', 50)],
+	});
+	const qGt50 = w.queryManager.registerQuery({
+		required: [Num],
+		where: [gt(Num, 'value', 50)],
+	});
+	const qGe50 = w.queryManager.registerQuery({
+		required: [Num],
+		where: [ge(Num, 'value', 50)],
+	});
+
+	const e49 = w.createEntity().addComponent(Num, { value: 49 });
+	const e50 = w.createEntity().addComponent(Num, { value: 50 });
+	const e51 = w.createEntity().addComponent(Num, { value: 51 });
+
+	// lt 50: only 49
+	expect(qLt50.entities.has(e49)).toBe(true);
+	expect(qLt50.entities.has(e50)).toBe(false);
+	expect(qLt50.entities.has(e51)).toBe(false);
+
+	// le 50: 49 and 50
+	expect(qLe50.entities.has(e49)).toBe(true);
+	expect(qLe50.entities.has(e50)).toBe(true);
+	expect(qLe50.entities.has(e51)).toBe(false);
+
+	// gt 50: only 51
+	expect(qGt50.entities.has(e49)).toBe(false);
+	expect(qGt50.entities.has(e50)).toBe(false);
+	expect(qGt50.entities.has(e51)).toBe(true);
+
+	// ge 50: 50 and 51
+	expect(qGe50.entities.has(e49)).toBe(false);
+	expect(qGe50.entities.has(e50)).toBe(true);
+	expect(qGe50.entities.has(e51)).toBe(true);
+});
+
+test('Value change across predicate boundary triggers qualification change', () => {
+	const w = new World({ checksOn: false });
+	const Num = createComponent('CrossBoundary', {
+		value: { type: Types.Int16, default: 0 },
+	});
+	w.registerComponent(Num);
+
+	const query = w.queryManager.registerQuery({
+		required: [Num],
+		where: [ge(Num, 'value', 100)],
+	});
+
+	const qualify = jest.fn();
+	const disqualify = jest.fn();
+	query.subscribe('qualify', qualify);
+	query.subscribe('disqualify', disqualify);
+
+	const e = w.createEntity().addComponent(Num, { value: 50 });
+	expect(query.entities.has(e)).toBe(false);
+	expect(qualify).not.toHaveBeenCalled();
+
+	// Cross boundary upward
+	e.setValue(Num, 'value', 100);
+	expect(query.entities.has(e)).toBe(true);
+	expect(qualify).toHaveBeenCalledWith(e);
+
+	// Cross boundary downward
+	e.setValue(Num, 'value', 99);
+	expect(query.entities.has(e)).toBe(false);
+	expect(disqualify).toHaveBeenCalledWith(e);
+});
+
+test('Subscribe with replayExisting on empty query', () => {
+	const w = new World({ checksOn: false });
+	const Comp = createComponent('EmptyReplay', {
+		v: { type: Types.Int8, default: 0 },
+	});
+	w.registerComponent(Comp);
+
+	const query = w.queryManager.registerQuery({ required: [Comp] });
+	expect(query.entities.size).toBe(0);
+
+	const cb = jest.fn();
+	query.subscribe('qualify', cb, true); // replay on empty
+
+	// Should not have been called since query is empty
+	expect(cb).not.toHaveBeenCalled();
+
+	// Future entities should still trigger
+	const e = w.createEntity().addComponent(Comp);
+	expect(cb).toHaveBeenCalledWith(e);
+});
+
+test('Unsubscribe and immediate resubscribe', () => {
+	const w = new World({ checksOn: false });
+	const Comp = createComponent('ResubTest', {
+		v: { type: Types.Int8, default: 0 },
+	});
+	w.registerComponent(Comp);
+
+	const query = w.queryManager.registerQuery({ required: [Comp] });
+
+	const cb = jest.fn();
+	const unsub = query.subscribe('qualify', cb);
+
+	// Unsubscribe
+	unsub();
+
+	// Immediately resubscribe
+	query.subscribe('qualify', cb);
+
+	const e = w.createEntity().addComponent(Comp);
+
+	// Should only be called once (from the resubscription)
+	expect(cb).toHaveBeenCalledTimes(1);
+	expect(cb).toHaveBeenCalledWith(e);
+});

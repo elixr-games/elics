@@ -857,4 +857,82 @@ describe('Entity Tests', () => {
 		expect(entity.getValue(ReferenceComponent, 'target')).toBeNull();
 		expect(ReferenceComponent.data.target[entity.index]).toBe(-1);
 	});
+
+	test('Int8 exact boundaries', () => {
+		const Int8Comp = createComponent('Int8Bounds', {
+			value: { type: Types.Int8, default: 0, min: -128, max: 127 },
+		});
+		world.registerComponent(Int8Comp);
+		const entity = world.createEntity();
+		entity.addComponent(Int8Comp);
+
+		// Exact boundaries should succeed
+		entity.setValue(Int8Comp, 'value', -128);
+		expect(entity.getValue(Int8Comp, 'value')).toBe(-128);
+
+		entity.setValue(Int8Comp, 'value', 127);
+		expect(entity.getValue(Int8Comp, 'value')).toBe(127);
+
+		// Beyond boundaries should fail
+		expect(() => entity.setValue(Int8Comp, 'value', -129)).toThrow(
+			'Value out of range',
+		);
+		expect(() => entity.setValue(Int8Comp, 'value', 128)).toThrow(
+			'Value out of range',
+		);
+	});
+
+	test('Int16 exact boundaries', () => {
+		const Int16Comp = createComponent('Int16Bounds', {
+			value: { type: Types.Int16, default: 0, min: -32768, max: 32767 },
+		});
+		world.registerComponent(Int16Comp);
+		const entity = world.createEntity();
+		entity.addComponent(Int16Comp);
+
+		entity.setValue(Int16Comp, 'value', -32768);
+		expect(entity.getValue(Int16Comp, 'value')).toBe(-32768);
+
+		entity.setValue(Int16Comp, 'value', 32767);
+		expect(entity.getValue(Int16Comp, 'value')).toBe(32767);
+
+		expect(() => entity.setValue(Int16Comp, 'value', -32769)).toThrow(
+			'Value out of range',
+		);
+		expect(() => entity.setValue(Int16Comp, 'value', 32768)).toThrow(
+			'Value out of range',
+		);
+	});
+
+	test('Entity data isolation between entities', () => {
+		const e1 = world.createEntity();
+		const e2 = world.createEntity();
+
+		e1.addComponent(PositionComponent, { x: 10, y: 20 });
+		e2.addComponent(PositionComponent, { x: 100, y: 200 });
+
+		// Modifying e1 should not affect e2
+		e1.setValue(PositionComponent, 'x', 50);
+		expect(e1.getValue(PositionComponent, 'x')).toBe(50);
+		expect(e2.getValue(PositionComponent, 'x')).toBe(100);
+
+		// And vice versa
+		e2.setValue(PositionComponent, 'y', 500);
+		expect(e1.getValue(PositionComponent, 'y')).toBe(20);
+		expect(e2.getValue(PositionComponent, 'y')).toBe(500);
+	});
+
+	test('Entity reference to destroyed entity returns null', () => {
+		const e1 = world.createEntity();
+		const e2 = world.createEntity();
+		e1.addComponent(ReferenceComponent, { target: e2 });
+
+		expect(e1.getValue(ReferenceComponent, 'target')).toBe(e2);
+
+		// Destroy e2
+		e2.destroy();
+
+		// Reference should now resolve to null (entity lookup returns null)
+		expect(e1.getValue(ReferenceComponent, 'target')).toBeNull();
+	});
 });
