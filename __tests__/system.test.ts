@@ -272,4 +272,150 @@ describe('System Tests', () => {
 
 		consoleSpy.mockRestore();
 	});
+
+	test('Unregistering non-existent system is a no-op', () => {
+		class NonExistentSystem extends createSystem() {}
+		expect(() => world.unregisterSystem(NonExistentSystem)).not.toThrow();
+		expect(world.hasSystem(NonExistentSystem)).toBe(false);
+	});
+
+	test('Systems with equal priority maintain registration order', () => {
+		const executionOrder: string[] = [];
+
+		class SystemA extends createSystem() {
+			update(): void {
+				executionOrder.push('A');
+			}
+		}
+		class SystemB extends createSystem() {
+			update(): void {
+				executionOrder.push('B');
+			}
+		}
+		class SystemC extends createSystem() {
+			update(): void {
+				executionOrder.push('C');
+			}
+		}
+
+		// All registered with same priority (default 0)
+		world.registerSystem(SystemA);
+		world.registerSystem(SystemB);
+		world.registerSystem(SystemC);
+
+		world.update(0, 1);
+
+		expect(executionOrder).toEqual(['A', 'B', 'C']);
+	});
+
+	test('Negative priority values order correctly', () => {
+		const executionOrder: string[] = [];
+
+		class NegativeSystem extends createSystem() {
+			update(): void {
+				executionOrder.push('Negative');
+			}
+		}
+		class ZeroSystem extends createSystem() {
+			update(): void {
+				executionOrder.push('Zero');
+			}
+		}
+		class PositiveSystem extends createSystem() {
+			update(): void {
+				executionOrder.push('Positive');
+			}
+		}
+
+		world.registerSystem(PositiveSystem, { priority: 10 });
+		world.registerSystem(NegativeSystem, { priority: -10 });
+		world.registerSystem(ZeroSystem, { priority: 0 });
+
+		world.update(0, 1);
+
+		expect(executionOrder).toEqual(['Negative', 'Zero', 'Positive']);
+	});
+
+	test('System config supports multiple schema types', () => {
+		class MultiConfigSystem extends createSystem(
+			{},
+			{
+				intVal: { type: Types.Int16, default: 0 },
+				floatVal: { type: Types.Float32, default: 0.0 },
+				boolVal: { type: Types.Boolean, default: false },
+				strVal: { type: Types.String, default: '' },
+			},
+		) {}
+
+		world.registerSystem(MultiConfigSystem, {
+			configData: {
+				intVal: 42,
+				floatVal: 3.14,
+				boolVal: true,
+				strVal: 'test',
+			},
+		});
+
+		const sys = world.getSystem(MultiConfigSystem);
+		expect(sys!.config.intVal.value).toBe(42);
+		expect(sys!.config.floatVal.value).toBeCloseTo(3.14, 2);
+		expect(sys!.config.boolVal.value).toBe(true);
+		expect(sys!.config.strVal.value).toBe('test');
+	});
+
+	test('System destroy callback is invoked before removal', () => {
+		const calls: string[] = [];
+
+		class TrackedSystem extends createSystem() {
+			destroy(): void {
+				// At destroy time, we should still be in the systems list
+				calls.push('destroy');
+			}
+		}
+
+		world.registerSystem(TrackedSystem);
+		expect(world.hasSystem(TrackedSystem)).toBe(true);
+
+		world.unregisterSystem(TrackedSystem);
+		expect(calls).toEqual(['destroy']);
+		expect(world.hasSystem(TrackedSystem)).toBe(false);
+	});
+
+	test('System can modify entities during update', () => {
+		class SpawnerSystem extends createSystem({
+			targets: { required: [PositionComponent] },
+		}) {
+			public spawnedEntity: any = null;
+
+			update(): void {
+				// Create a new entity during update
+				this.spawnedEntity = this.createEntity();
+				this.spawnedEntity.addComponent(PositionComponent, { x: 99, y: 99 });
+			}
+		}
+
+		world.registerSystem(SpawnerSystem);
+		const system = world.getSystem(SpawnerSystem) as SpawnerSystem;
+
+		world.update(0, 1);
+
+		expect(system.spawnedEntity).toBeDefined();
+		expect(system.spawnedEntity.getValue(PositionComponent, 'x')).toBe(99);
+	});
+
+	test('System with empty queries object works', () => {
+		class EmptyQuerySystem extends createSystem({}) {
+			public updated = false;
+
+			update(): void {
+				this.updated = true;
+			}
+		}
+
+		world.registerSystem(EmptyQuerySystem);
+		const sys = world.getSystem(EmptyQuerySystem) as EmptyQuerySystem;
+
+		world.update(0, 1);
+		expect(sys.updated).toBe(true);
+	});
 });

@@ -699,3 +699,153 @@ test('Registering query auto-registers unregistered predicate component', () => 
 	expect(q).toBeDefined();
 	expect(w.hasComponent(Pred)).toBe(true);
 });
+
+test('Multiple subscriptions to same event all fire', () => {
+	const w = new World({ checksOn: false });
+	const Comp = createComponent('MultiSub', {
+		v: { type: Types.Int8, default: 0 },
+	});
+	w.registerComponent(Comp);
+
+	const q = w.queryManager.registerQuery({ required: [Comp] });
+
+	const cb1 = jest.fn();
+	const cb2 = jest.fn();
+	const cb3 = jest.fn();
+
+	q.subscribe('qualify', cb1);
+	q.subscribe('qualify', cb2);
+	q.subscribe('qualify', cb3);
+
+	const e = w.createEntity().addComponent(Comp);
+
+	expect(cb1).toHaveBeenCalledWith(e);
+	expect(cb2).toHaveBeenCalledWith(e);
+	expect(cb3).toHaveBeenCalledWith(e);
+});
+
+test('Unsubscribed callbacks are not called', () => {
+	const w = new World({ checksOn: false });
+	const Comp = createComponent('UnsubTest', {
+		v: { type: Types.Int8, default: 0 },
+	});
+	w.registerComponent(Comp);
+
+	const q = w.queryManager.registerQuery({ required: [Comp] });
+
+	const cb1 = jest.fn();
+	const cb2 = jest.fn();
+
+	const unsub1 = q.subscribe('qualify', cb1);
+	q.subscribe('qualify', cb2);
+
+	// Unsubscribe cb1
+	unsub1();
+
+	const e = w.createEntity().addComponent(Comp);
+
+	expect(cb1).not.toHaveBeenCalled();
+	expect(cb2).toHaveBeenCalledWith(e);
+});
+
+test('Query with multiple value predicates on same component (AND logic)', () => {
+	const w = new World({ checksOn: false });
+	const NumComp = createComponent('NumMulti', {
+		value: { type: Types.Int16, default: 50 },
+	});
+	w.registerComponent(NumComp);
+
+	// Query for value > 10 AND value < 100
+	const query = w.queryManager.registerQuery({
+		required: [NumComp],
+		where: [
+			{ component: NumComp, key: 'value', op: 'gt', value: 10 },
+			{ component: NumComp, key: 'value', op: 'lt', value: 100 },
+		],
+	});
+
+	const e1 = w.createEntity().addComponent(NumComp, { value: 50 }); // matches
+	const e2 = w.createEntity().addComponent(NumComp, { value: 5 }); // too low
+	const e3 = w.createEntity().addComponent(NumComp, { value: 150 }); // too high
+	const e4 = w.createEntity().addComponent(NumComp, { value: 11 }); // edge: just above 10
+
+	expect(query.entities.has(e1)).toBe(true);
+	expect(query.entities.has(e2)).toBe(false);
+	expect(query.entities.has(e3)).toBe(false);
+	expect(query.entities.has(e4)).toBe(true);
+});
+
+test('Boolean value predicates with eq/ne', () => {
+	const w = new World({ checksOn: false });
+	const BoolComp = createComponent('BoolPred', {
+		flag: { type: Types.Boolean, default: false },
+	});
+	w.registerComponent(BoolComp);
+
+	const qTrue = w.queryManager.registerQuery({
+		required: [BoolComp],
+		where: [eq(BoolComp, 'flag', true)],
+	});
+	const qFalse = w.queryManager.registerQuery({
+		required: [BoolComp],
+		where: [eq(BoolComp, 'flag', false)],
+	});
+
+	const e1 = w.createEntity().addComponent(BoolComp, { flag: true });
+	const e2 = w.createEntity().addComponent(BoolComp, { flag: false });
+
+	expect(qTrue.entities.has(e1)).toBe(true);
+	expect(qTrue.entities.has(e2)).toBe(false);
+	expect(qFalse.entities.has(e1)).toBe(false);
+	expect(qFalse.entities.has(e2)).toBe(true);
+});
+
+test('String predicates with empty strings and special characters', () => {
+	const w = new World({ checksOn: false });
+	const StrComp = createComponent('StrPred', {
+		name: { type: Types.String, default: '' },
+	});
+	w.registerComponent(StrComp);
+
+	const qEmpty = w.queryManager.registerQuery({
+		required: [StrComp],
+		where: [eq(StrComp, 'name', '')],
+	});
+	const qSpecial = w.queryManager.registerQuery({
+		required: [StrComp],
+		where: [eq(StrComp, 'name', 'héllo-wörld_123')],
+	});
+
+	const e1 = w.createEntity().addComponent(StrComp, { name: '' });
+	const e2 = w
+		.createEntity()
+		.addComponent(StrComp, { name: 'héllo-wörld_123' });
+	const e3 = w.createEntity().addComponent(StrComp, { name: 'hello' });
+
+	expect(qEmpty.entities.has(e1)).toBe(true);
+	expect(qEmpty.entities.has(e2)).toBe(false);
+	expect(qSpecial.entities.has(e2)).toBe(true);
+	expect(qSpecial.entities.has(e3)).toBe(false);
+});
+
+test('Multiple disqualify subscriptions all fire on entity removal', () => {
+	const w = new World({ checksOn: false });
+	const Comp = createComponent('MultiDisq', {
+		v: { type: Types.Int8, default: 0 },
+	});
+	w.registerComponent(Comp);
+
+	const q = w.queryManager.registerQuery({ required: [Comp] });
+
+	const disq1 = jest.fn();
+	const disq2 = jest.fn();
+
+	q.subscribe('disqualify', disq1);
+	q.subscribe('disqualify', disq2);
+
+	const e = w.createEntity().addComponent(Comp);
+	e.removeComponent(Comp);
+
+	expect(disq1).toHaveBeenCalledWith(e);
+	expect(disq2).toHaveBeenCalledWith(e);
+});

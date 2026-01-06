@@ -814,6 +814,39 @@ describe('Entity Tests', () => {
 		expect(world.componentManager.getComponentByTypeId(999)).toBeNull();
 	});
 
+	test('Double destruction is safe', () => {
+		const entity = world.createEntity();
+		entity.addComponent(PositionComponent);
+		entity.destroy();
+		expect(entity.active).toBe(false);
+
+		// Second destroy should not throw
+		expect(() => entity.destroy()).not.toThrow();
+		expect(entity.active).toBe(false);
+	});
+
+	test('Vector view cache is cleared when component is removed', () => {
+		const entity = world.createEntity();
+		entity.addComponent(VectorComponent, { position: [1, 2, 3] });
+		const view1 = entity.getVectorView(VectorComponent, 'position');
+		expect(view1[0]).toBe(1);
+
+		entity.removeComponent(VectorComponent);
+		entity.addComponent(VectorComponent, { position: [4, 5, 6] });
+		const view2 = entity.getVectorView(VectorComponent, 'position');
+
+		// Views should be different instances after re-add
+		expect(view1).not.toBe(view2);
+		expect(view2[0]).toBe(4);
+	});
+
+	test('Entity referencing itself', () => {
+		const entity = world.createEntity();
+		entity.addComponent(ReferenceComponent, { target: entity });
+
+		expect(entity.getValue(ReferenceComponent, 'target')).toBe(entity);
+	});
+
 	test('Entity setValue with null entity value', () => {
 		// Test the uncovered branch in entity.ts:148 (null case)
 		const entity = world.createEntity();
