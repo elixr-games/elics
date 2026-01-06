@@ -28,6 +28,8 @@ export class Entity {
 
 	public active = true;
 
+	public generation = 0;
+
 	private vectorViews: Map<AnyComponent, Map<string, TypedArray>> = new Map();
 
 	constructor(
@@ -114,11 +116,9 @@ export class Entity {
 			case Types.Boolean:
 				return Boolean(data) as TypeValueToType<C['schema'][K]['type']>;
 			case Types.Entity:
-				return (data as number) === -1
-					? null
-					: (this.entityManager.getEntityByIndex(
-							data as number,
-						) as TypeValueToType<C['schema'][K]['type']>);
+				return this.entityManager.getEntityByPackedRef(
+					data as number,
+				) as TypeValueToType<C['schema'][K]['type']>;
 			default:
 				return data as TypeValueToType<C['schema'][K]['type']>;
 		}
@@ -173,7 +173,7 @@ export class Entity {
 				break;
 			case Types.Entity:
 				(componentData as { [idx: number]: unknown })[this.index] =
-					value === null ? -1 : (value as Entity).index;
+					this.entityManager.packEntityRef(value as Entity | null);
 				break;
 			default:
 				(componentData as { [idx: number]: unknown })[this.index] =
