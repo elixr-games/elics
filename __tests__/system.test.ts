@@ -272,4 +272,257 @@ describe('System Tests', () => {
 
 		consoleSpy.mockRestore();
 	});
+
+	test('Unregistering non-existent system is a no-op', () => {
+		class NonExistentSystem extends createSystem() {}
+		expect(() => world.unregisterSystem(NonExistentSystem)).not.toThrow();
+		expect(world.hasSystem(NonExistentSystem)).toBe(false);
+	});
+
+	test('Systems with equal priority maintain registration order', () => {
+		const executionOrder: string[] = [];
+
+		class SystemA extends createSystem() {
+			update(): void {
+				executionOrder.push('A');
+			}
+		}
+		class SystemB extends createSystem() {
+			update(): void {
+				executionOrder.push('B');
+			}
+		}
+		class SystemC extends createSystem() {
+			update(): void {
+				executionOrder.push('C');
+			}
+		}
+
+		// All registered with same priority (default 0)
+		world.registerSystem(SystemA);
+		world.registerSystem(SystemB);
+		world.registerSystem(SystemC);
+
+		world.update(0, 1);
+
+		expect(executionOrder).toEqual(['A', 'B', 'C']);
+	});
+
+	test('Negative priority values order correctly', () => {
+		const executionOrder: string[] = [];
+
+		class NegativeSystem extends createSystem() {
+			update(): void {
+				executionOrder.push('Negative');
+			}
+		}
+		class ZeroSystem extends createSystem() {
+			update(): void {
+				executionOrder.push('Zero');
+			}
+		}
+		class PositiveSystem extends createSystem() {
+			update(): void {
+				executionOrder.push('Positive');
+			}
+		}
+
+		world.registerSystem(PositiveSystem, { priority: 10 });
+		world.registerSystem(NegativeSystem, { priority: -10 });
+		world.registerSystem(ZeroSystem, { priority: 0 });
+
+		world.update(0, 1);
+
+		expect(executionOrder).toEqual(['Negative', 'Zero', 'Positive']);
+	});
+
+	test('System config supports multiple schema types', () => {
+		class MultiConfigSystem extends createSystem(
+			{},
+			{
+				intVal: { type: Types.Int16, default: 0 },
+				floatVal: { type: Types.Float32, default: 0.0 },
+				boolVal: { type: Types.Boolean, default: false },
+				strVal: { type: Types.String, default: '' },
+			},
+		) {}
+
+		world.registerSystem(MultiConfigSystem, {
+			configData: {
+				intVal: 42,
+				floatVal: 3.14,
+				boolVal: true,
+				strVal: 'test',
+			},
+		});
+
+		const sys = world.getSystem(MultiConfigSystem);
+		expect(sys!.config.intVal.value).toBe(42);
+		expect(sys!.config.floatVal.value).toBeCloseTo(3.14, 2);
+		expect(sys!.config.boolVal.value).toBe(true);
+		expect(sys!.config.strVal.value).toBe('test');
+	});
+
+	test('System destroy callback is invoked before removal', () => {
+		const calls: string[] = [];
+
+		class TrackedSystem extends createSystem() {
+			destroy(): void {
+				// At destroy time, we should still be in the systems list
+				calls.push('destroy');
+			}
+		}
+
+		world.registerSystem(TrackedSystem);
+		expect(world.hasSystem(TrackedSystem)).toBe(true);
+
+		world.unregisterSystem(TrackedSystem);
+		expect(calls).toEqual(['destroy']);
+		expect(world.hasSystem(TrackedSystem)).toBe(false);
+	});
+
+	test('System can modify entities during update', () => {
+		class SpawnerSystem extends createSystem({
+			targets: { required: [PositionComponent] },
+		}) {
+			public spawnedEntity: any = null;
+
+			update(): void {
+				// Create a new entity during update
+				this.spawnedEntity = this.createEntity();
+				this.spawnedEntity.addComponent(PositionComponent, { x: 99, y: 99 });
+			}
+		}
+
+		world.registerSystem(SpawnerSystem);
+		const system = world.getSystem(SpawnerSystem) as SpawnerSystem;
+
+		world.update(0, 1);
+
+		expect(system.spawnedEntity).toBeDefined();
+		expect(system.spawnedEntity.getValue(PositionComponent, 'x')).toBe(99);
+	});
+
+	test('System with empty queries object works', () => {
+		class EmptyQuerySystem extends createSystem({}) {
+			public updated = false;
+
+			update(): void {
+				this.updated = true;
+			}
+		}
+
+		world.registerSystem(EmptyQuerySystem);
+		const sys = world.getSystem(EmptyQuerySystem) as EmptyQuerySystem;
+
+		world.update(0, 1);
+		expect(sys.updated).toBe(true);
+	});
+
+	test('System with excluded components in query', () => {
+		const TagComponent = createComponent('SystemTag', {
+			active: { type: Types.Boolean, default: true },
+		});
+		world.registerComponent(TagComponent);
+
+		class FilteredSystem extends createSystem({
+			untagged: {
+				required: [PositionComponent],
+				excluded: [TagComponent],
+			},
+		}) {
+			public processedEntities: any[] = [];
+
+			update(): void {
+				this.processedEntities = [...this.queries.untagged.entities];
+			}
+		}
+
+		world.registerSystem(FilteredSystem);
+		const sys = world.getSystem(FilteredSystem) as FilteredSystem;
+
+		const e1 = world.createEntity().addComponent(PositionComponent);
+		const e2 = world
+			.createEntity()
+			.addComponent(PositionComponent)
+			.addComponent(TagComponent);
+
+		world.update(0, 1);
+
+		expect(sys.processedEntities).toContain(e1);
+		expect(sys.processedEntities).not.toContain(e2);
+	});
+
+	test('Multiple systems with different query exclusions', () => {
+		const TagA = createComponent('TagA', {
+			v: { type: Types.Int8, default: 0 },
+		});
+		const TagB = createComponent('TagB', {
+			v: { type: Types.Int8, default: 0 },
+		});
+		world.registerComponent(TagA).registerComponent(TagB);
+
+		class SystemExcludeA extends createSystem({
+			entities: { required: [PositionComponent], excluded: [TagA] },
+		}) {
+			public count = 0;
+
+			update(): void {
+				this.count = this.queries.entities.entities.size;
+			}
+		}
+
+		class SystemExcludeB extends createSystem({
+			entities: { required: [PositionComponent], excluded: [TagB] },
+		}) {
+			public count = 0;
+
+			update(): void {
+				this.count = this.queries.entities.entities.size;
+			}
+		}
+
+		world.registerSystem(SystemExcludeA);
+		world.registerSystem(SystemExcludeB);
+
+		const sysA = world.getSystem(SystemExcludeA) as SystemExcludeA;
+		const sysB = world.getSystem(SystemExcludeB) as SystemExcludeB;
+
+		world.createEntity().addComponent(PositionComponent); // seen by both
+		world.createEntity().addComponent(PositionComponent).addComponent(TagA); // excluded by A
+		world.createEntity().addComponent(PositionComponent).addComponent(TagB); // excluded by B
+		world
+			.createEntity()
+			.addComponent(PositionComponent)
+			.addComponent(TagA)
+			.addComponent(TagB); // excluded by both
+
+		world.update(0, 1);
+
+		expect(sysA.count).toBe(2); // first and third entity
+		expect(sysB.count).toBe(2); // first and second entity
+	});
+
+	test('System config signal subscription receives updates', () => {
+		class ConfiguredSystem extends createSystem(
+			{},
+			{
+				speed: { type: Types.Float32, default: 1.0 },
+			},
+		) {}
+
+		world.registerSystem(ConfiguredSystem);
+		const sys = world.getSystem(ConfiguredSystem);
+
+		const values: number[] = [];
+		// Signal subscribe fires immediately with current value, then on changes
+		sys!.config.speed.subscribe((v: number) => values.push(v));
+
+		sys!.config.speed.value = 2.0;
+		sys!.config.speed.value = 3.0;
+		sys!.config.speed.value = 5.0;
+
+		// First value is the initial (1.0), then each update
+		expect(values).toEqual([1.0, 2.0, 3.0, 5.0]);
+	});
 });

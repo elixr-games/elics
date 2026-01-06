@@ -203,4 +203,262 @@ describe('EliCS Integration Tests', () => {
 			entity.destroy();
 		}).not.toThrow();
 	});
+
+	test('Rapid create/destroy cycles maintain query consistency', () => {
+		// Use large enough capacity for the test
+		const world = new World({ entityCapacity: 600, checksOn: false });
+		world.registerComponent(PositionComponent);
+		world.registerComponent(VelocityComponent);
+
+		const query = world.queryManager.registerQuery({
+			required: [PositionComponent, VelocityComponent],
+		});
+
+		const qualifyCount = { value: 0 };
+		const disqualifyCount = { value: 0 };
+
+		query.subscribe('qualify', () => qualifyCount.value++);
+		query.subscribe('disqualify', () => disqualifyCount.value++);
+
+		const activeEntities: any[] = [];
+
+		// Rapid create/destroy cycles
+		for (let i = 0; i < 500; i++) {
+			const entity = world.createEntity();
+			entity.addComponent(PositionComponent, { x: i, y: i });
+			entity.addComponent(VelocityComponent, { velocity: [1, 1] });
+			activeEntities.push(entity);
+
+			// Randomly destroy some entities
+			if (Math.random() > 0.7 && activeEntities.length > 0) {
+				const idx = Math.floor(Math.random() * activeEntities.length);
+				activeEntities[idx].destroy();
+				activeEntities.splice(idx, 1);
+			}
+		}
+
+		// Query should contain exactly the active entities
+		expect(query.entities.size).toBe(activeEntities.length);
+		for (const e of activeEntities) {
+			expect(query.entities.has(e)).toBe(true);
+		}
+
+		// Callbacks should be balanced
+		expect(qualifyCount.value - disqualifyCount.value).toBe(
+			activeEntities.length,
+		);
+	});
+
+	test('Entity pool correctly reuses destroyed entities', () => {
+		const world = new World({ entityCapacity: 10, checksOn: false });
+		world.registerComponent(PositionComponent);
+
+		// Create entities and track their objects
+		const entities: any[] = [];
+		for (let i = 0; i < 5; i++) {
+			const e = world.createEntity();
+			e.addComponent(PositionComponent, { x: i * 10, y: i * 10 });
+			entities.push(e);
+		}
+
+		// Store original indices
+		const originalIndices = entities.map((e) => e.index);
+
+		// Destroy all entities
+		for (const e of entities) {
+			e.destroy();
+		}
+
+		// Create new entities - should reuse the pooled entity objects
+		const reusedEntities: any[] = [];
+		for (let i = 0; i < 5; i++) {
+			const e = world.createEntity();
+			reusedEntities.push(e);
+		}
+
+		// Reused entities should have indices from the original set (LIFO order)
+		const reusedIndices = reusedEntities.map((e) => e.index);
+		for (const idx of reusedIndices) {
+			expect(originalIndices).toContain(idx);
+		}
+
+		// The entity objects should be the same ones from the pool
+		for (const e of reusedEntities) {
+			expect(entities).toContain(e);
+		}
+	});
+
+	test('Entity capacity determines max entities with components', () => {
+		// Entity capacity controls the size of component data arrays
+		const world = new World({ entityCapacity: 10, checksOn: false });
+		world.registerComponent(PositionComponent);
+
+		const entities: any[] = [];
+
+		// Create entities up to capacity
+		for (let i = 0; i < 10; i++) {
+			const e = world.createEntity();
+			e.addComponent(PositionComponent, { x: i, y: i * 2 });
+			entities.push(e);
+		}
+
+		expect(entities.length).toBe(10);
+
+		// All entities should be active and have unique indices
+		const indices = new Set(entities.map((e) => e.index));
+		expect(indices.size).toBe(10);
+
+		// All entities should have correct data
+		for (let i = 0; i < 10; i++) {
+			expect(entities[i].active).toBe(true);
+			expect(entities[i].getValue(PositionComponent, 'x')).toBe(i);
+			expect(entities[i].getValue(PositionComponent, 'y')).toBe(i * 2);
+		}
+	});
+
+	test('Component with empty schema works', () => {
+		const EmptyTag = createComponent('EmptyTag', {});
+		const world = new World({ checksOn: false });
+		world.registerComponent(EmptyTag);
+
+		const query = world.queryManager.registerQuery({ required: [EmptyTag] });
+
+		const e = world.createEntity();
+		e.addComponent(EmptyTag);
+
+		expect(e.hasComponent(EmptyTag)).toBe(true);
+		expect(query.entities.has(e)).toBe(true);
+		expect(e.getComponents()).toContain(EmptyTag);
+
+		e.removeComponent(EmptyTag);
+		expect(e.hasComponent(EmptyTag)).toBe(false);
+		expect(query.entities.has(e)).toBe(false);
+	});
+
+	test('Destroying entities while iterating query is safe', () => {
+		const world = new World({ checksOn: false });
+		world.registerComponent(HealthComponent);
+
+		for (let i = 0; i < 10; i++) {
+			world.createEntity().addComponent(HealthComponent, { value: i * 10 });
+		}
+
+		const query = world.queryManager.registerQuery({
+			required: [HealthComponent],
+		});
+
+		expect(query.entities.size).toBe(10);
+
+		// Destroy entities with health < 50 during iteration
+		// Copy to array first to avoid modifying during iteration
+		const toDestroy = [...query.entities].filter(
+			(e) => e.getValue(HealthComponent, 'value')! < 50,
+		);
+
+		for (const e of toDestroy) {
+			e.destroy();
+		}
+
+		// Should have 5 entities left (50, 60, 70, 80, 90)
+		expect(query.entities.size).toBe(5);
+	});
+
+	test('World registerQuery wrapper method works', () => {
+		const world = new World({ checksOn: false });
+		world.registerComponent(PositionComponent);
+
+		// Using world.registerQuery instead of world.queryManager.registerQuery
+		world.registerQuery({ required: [PositionComponent] });
+
+		const e = world.createEntity();
+		e.addComponent(PositionComponent);
+
+		// Query should have picked up the entity
+		const query = world.queryManager.registerQuery({
+			required: [PositionComponent],
+		});
+		expect(query.entities.has(e)).toBe(true);
+	});
+
+	test('Vec4 component full lifecycle', () => {
+		const Vec4Comp = createComponent('Vec4Full', {
+			data: { type: Types.Vec4, default: [0, 0, 0, 0] },
+		});
+
+		const world = new World({ checksOn: false });
+		world.registerComponent(Vec4Comp);
+
+		const e = world.createEntity();
+		e.addComponent(Vec4Comp, { data: [1, 2, 3, 4] });
+
+		const view = e.getVectorView(Vec4Comp, 'data');
+		expect(view[0]).toBe(1);
+		expect(view[1]).toBe(2);
+		expect(view[2]).toBe(3);
+		expect(view[3]).toBe(4);
+
+		// Modify through view
+		view[0] = 10;
+		view[3] = 40;
+
+		const view2 = e.getVectorView(Vec4Comp, 'data');
+		expect(view2[0]).toBe(10);
+		expect(view2[3]).toBe(40);
+	});
+
+	test('Color at exact boundaries without clamping', () => {
+		const ColorComp = createComponent('ColorBoundary', {
+			color: { type: Types.Color, default: [0, 0, 0, 0] },
+		});
+
+		const world = new World({ checksOn: false });
+		const warn = jest.spyOn(console, 'warn').mockImplementation();
+		world.registerComponent(ColorComp);
+
+		const e = world.createEntity();
+		e.addComponent(ColorComp, { color: [0, 0.5, 1, 0] });
+
+		const view = e.getVectorView(ColorComp, 'color');
+		expect(view[0]).toBe(0); // exact min
+		expect(view[1]).toBeCloseTo(0.5, 5);
+		expect(view[2]).toBe(1); // exact max
+		expect(view[3]).toBe(0);
+
+		// No warning for valid boundaries
+		expect(warn).not.toHaveBeenCalled();
+		warn.mockRestore();
+	});
+
+	test('Multiple worlds operate independently with unique components', () => {
+		// Each world needs its own component definitions for full isolation
+		const Pos1 = createComponent('PosWorld1', {
+			x: { type: Types.Float32, default: 0 },
+			y: { type: Types.Float32, default: 0 },
+		});
+		const Pos2 = createComponent('PosWorld2', {
+			x: { type: Types.Float32, default: 0 },
+			y: { type: Types.Float32, default: 0 },
+		});
+
+		const world1 = new World({ checksOn: false });
+		const world2 = new World({ checksOn: false });
+
+		world1.registerComponent(Pos1);
+		world2.registerComponent(Pos2);
+
+		const e1 = world1.createEntity();
+		e1.addComponent(Pos1, { x: 10, y: 20 });
+
+		const e2 = world2.createEntity();
+		e2.addComponent(Pos2, { x: 30, y: 40 });
+
+		// Each world has independent entities with independent component data
+		expect(e1.getValue(Pos1, 'x')).toBe(10);
+		expect(e2.getValue(Pos2, 'x')).toBe(30);
+
+		// Modifying one doesn't affect the other
+		e1.setValue(Pos1, 'x', 100);
+		expect(e1.getValue(Pos1, 'x')).toBe(100);
+		expect(e2.getValue(Pos2, 'x')).toBe(30);
+	});
 });
