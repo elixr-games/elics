@@ -11,6 +11,11 @@
 			"types": "./lib/index.d.ts",
 			"import": "./lib/index.js",
 			"require": "./lib/index.js"
+		},
+		"./debug": {
+			"types": "./lib/debug/index.d.ts",
+			"import": "./lib/debug/index.js",
+			"require": "./lib/debug/index.js"
 		}
 	},
 	"sideEffects": false,
