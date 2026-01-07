@@ -140,6 +140,7 @@ export function assignInitialComponentData<
 				break;
 			case Types.Int8:
 			case Types.Int16:
+			case Types.Int32:
 			case Types.Float32:
 			case Types.Float64:
 				// For numeric types, validate range constraints if present

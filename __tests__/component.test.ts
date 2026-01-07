@@ -54,6 +54,27 @@ describe('Component Tests', () => {
 		expect(entity.getValue(HealthComponent, 'value')).toBe(100); // Default value
 	});
 
+	test('Int32 type component works correctly', () => {
+		const ExperienceComponent = createComponent('Experience', {
+			points: { type: Types.Int32, default: 0, min: 0 },
+		});
+
+		world.registerComponent(ExperienceComponent);
+		const entity = world.createEntity();
+		entity.addComponent(ExperienceComponent);
+
+		// Default value should be 0
+		expect(entity.getValue(ExperienceComponent, 'points')).toBe(0);
+
+		// Set and get values
+		entity.setValue(ExperienceComponent, 'points', 50000);
+		expect(entity.getValue(ExperienceComponent, 'points')).toBe(50000);
+
+		// Test large Int32 value (larger than Int16 max of 32767)
+		entity.setValue(ExperienceComponent, 'points', 100000);
+		expect(entity.getValue(ExperienceComponent, 'points')).toBe(100000);
+	});
+
 	test('Query subscribe callbacks can track component lifecycle', () => {
 		// Create a test component
 		const TrackingComponent = createComponent('Tracking', {

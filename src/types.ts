@@ -1,6 +1,7 @@
 export type DataType =
 	| 'Int8'
 	| 'Int16'
+	| 'Int32'
 	| 'Entity'
 	| 'Float32'
 	| 'Float64'
@@ -16,6 +17,7 @@ export type DataType =
 export enum Types {
 	Int8 = 'Int8',
 	Int16 = 'Int16',
+	Int32 = 'Int32',
 	Entity = 'Entity',
 	Float32 = 'Float32',
 	Float64 = 'Float64',
@@ -53,6 +55,7 @@ export const TypedArrayMap: {
 } = {
 	Int8: { arrayConstructor: Int8Array, length: 1 },
 	Int16: { arrayConstructor: Int16Array, length: 1 },
+	Int32: { arrayConstructor: Int32Array, length: 1 },
 	Entity: { arrayConstructor: Int32Array, length: 1 },
 	Float32: { arrayConstructor: Float32Array, length: 1 },
 	Float64: { arrayConstructor: Float64Array, length: 1 },
@@ -69,6 +72,7 @@ export const TypedArrayMap: {
 export type TypeValueToType<T extends DataType> = T extends
 	| 'Int8'
 	| 'Int16'
+	| 'Int32'
 	| 'Float32'
 	| 'Float64'
 	? number
@@ -93,6 +97,7 @@ export type TypeValueToType<T extends DataType> = T extends
 export type DataArrayToType<T extends DataType> = T extends
 	| 'Int8'
 	| 'Int16'
+	| 'Int32'
 	| 'Entity'
 	| 'Float32'
 	| 'Float64'
@@ -118,7 +123,7 @@ export type SchemaField<T extends DataType> = T extends 'Enum'
 			default: TypeValueToType<T>;
 			enum: EnumType;
 		}
-	: T extends 'Int8' | 'Int16' | 'Float32' | 'Float64'
+	: T extends 'Int8' | 'Int16' | 'Int32' | 'Float32' | 'Float64'
 		? {
 				type: T;
 				default: TypeValueToType<T>;

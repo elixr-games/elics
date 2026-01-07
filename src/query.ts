@@ -196,6 +196,7 @@ export class Query {
 							!(
 								t === Types.Int8 ||
 								t === Types.Int16 ||
+								t === Types.Int32 ||
 								t === Types.Float32 ||
 								t === Types.Float64
 							)
