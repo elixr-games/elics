@@ -85,6 +85,7 @@ export default defineConfig({
 					{ text: 'Query', link: '/architecture/query' },
 					{ text: 'System', link: '/architecture/system' },
 					{ text: 'World', link: '/architecture/world' },
+					{ text: 'Debugger', link: '/architecture/debugger' },
 				],
 			},
 			{ text: 'Benchmarks', link: '/benchmarks' },
