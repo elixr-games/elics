@@ -123,11 +123,17 @@ export function assignInitialComponentData<
 		const dataRef = component.data[key];
 		const input = initialData[key] ?? defaultValue;
 		switch (type) {
-			case Types.Entity:
-				dataRef[index] = (input as { index: number } | null)
-					? (input as { index: number }).index
+			case Types.Entity: {
+				const entityInput = input as {
+					index: number;
+					generation: number;
+				} | null;
+				dataRef[index] = entityInput
+					? ((entityInput.generation & 0xff) << 24) |
+						(entityInput.index & 0xffffff)
 					: -1;
 				break;
+			}
 			case Types.Enum:
 				assertValidEnumValue(input as string, schemaField.enum, key);
 				dataRef[index] = input as string;

@@ -935,4 +935,46 @@ describe('Entity Tests', () => {
 		// Reference should now resolve to null (entity lookup returns null)
 		expect(e1.getValue(ReferenceComponent, 'target')).toBeNull();
 	});
+
+	test('Entity reference returns null after target destroyed and index reused', () => {
+		const e1 = world.createEntity();
+		const e2 = world.createEntity();
+		const e2Index = e2.index;
+
+		e1.addComponent(ReferenceComponent, { target: e2 });
+		expect(e1.getValue(ReferenceComponent, 'target')).toBe(e2);
+
+		// Destroy e2
+		e2.destroy();
+
+		// Create a new entity which should get e2's recycled index
+		const e3 = world.createEntity();
+		expect(e3.index).toBe(e2Index);
+
+		// e3 should have incremented generation
+		expect(e3.generation).toBe(1);
+
+		// e1's reference should be null (not e3!) because e2 was destroyed
+		// The generation counter ensures we don't incorrectly resolve to e3
+		const target = e1.getValue(ReferenceComponent, 'target');
+		expect(target).toBeNull();
+		expect(target).not.toBe(e3);
+	});
+
+	test('Entity generation wraps correctly after 256 reuses', () => {
+		let entity = world.createEntity();
+		const initialIndex = entity.index;
+		expect(entity.generation).toBe(0);
+
+		// Destroy and recreate 256 times to wrap generation
+		for (let i = 0; i < 256; i++) {
+			entity.destroy();
+			entity = world.createEntity();
+			expect(entity.index).toBe(initialIndex);
+			expect(entity.generation).toBe((i + 1) & 0xff);
+		}
+
+		// After 256 reuses, generation should wrap back to 0
+		expect(entity.generation).toBe(0);
+	});
 });
