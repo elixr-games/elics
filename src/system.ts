@@ -9,6 +9,7 @@ import { World } from './world.js';
 export type SystemSchemaField =
 	| { type: 'Int8'; default: number }
 	| { type: 'Int16'; default: number }
+	| { type: 'Int32'; default: number }
 	| { type: 'Float32'; default: number }
 	| { type: 'Float64'; default: number }
 	| { type: 'Boolean'; default: boolean }
