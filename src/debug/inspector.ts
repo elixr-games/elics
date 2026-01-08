@@ -28,7 +28,7 @@ export function createEntityInspector(world: World): EntityInspector {
 			try {
 				values[key] = entity.getValue(component, key);
 			} catch {
-				// Component might not be attached, skip
+				// Component might not be attached or value unavailable
 				values[key] = undefined;
 			}
 		}

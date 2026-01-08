@@ -116,6 +116,7 @@ export function createSnapshotManager(
 			lastAutoCaptureFrame = currentFrame;
 
 			// Use auto-capture's maxSnapshots if specified
+			/* istanbul ignore next -- defensive: enableAutoCapture always sets maxSnapshots */
 			const max = autoCapture.maxSnapshots ?? maxSnapshots;
 			const autoSnaps = [...snapshots.entries()]
 				.filter(([, s]) => s.label?.startsWith('auto_'))

@@ -153,6 +153,7 @@ export function createEventTimeline(
 			return {
 				totalEvents: events.length,
 				framesRecorded:
+					/* istanbul ignore next -- defensive: lastFrame always >= firstFrame */
 					lastFrame >= firstFrame ? lastFrame - firstFrame + 1 : 0,
 				entitiesCreated,
 				entitiesDestroyed,

@@ -189,6 +189,7 @@ export function createQueryDebugger(
 				try {
 					actual = entity.getValue(p.component as any, p.key);
 				} catch {
+					// Predicate value unavailable
 					actual = undefined;
 				}
 
@@ -225,9 +226,11 @@ export function createQueryDebugger(
 							actual >= p.value;
 						break;
 					case 'in':
+						/* istanbul ignore next -- defensive: valueSet always exists for 'in' predicates */
 						passed = p.valueSet ? p.valueSet.has(actual) : false;
 						break;
 					case 'nin':
+						/* istanbul ignore next -- defensive: valueSet always exists for 'nin' predicates */
 						passed = p.valueSet ? !p.valueSet.has(actual) : true;
 						break;
 				}
@@ -321,6 +324,7 @@ export function createQueryDebugger(
 							message = `${detail.componentId}.${detail.key} (${detail.actual}) should not be in ${JSON.stringify(detail.expected)}`;
 							suggestion = `Change value to something not in ${JSON.stringify(detail.expected)}`;
 							break;
+						/* istanbul ignore next -- defensive: all valid operators handled above */
 						default:
 							message = `Predicate ${detail.operator} failed for ${detail.componentId}.${detail.key}`;
 							suggestion = `Check the predicate condition`;

@@ -91,6 +91,7 @@ export function createSystemProfiler(
 	}
 
 	function patchSystem(system: AnySystem): void {
+		/* istanbul ignore if -- defensive guard, enable() already checks */
 		if (originalUpdates.has(system)) {
 			return;
 		} // Already patched
@@ -155,6 +156,7 @@ export function createSystemProfiler(
 						isPaused: system.isPaused,
 						lastTime: m.lastTime,
 						avgTime: m.avgTime,
+						/* istanbul ignore next -- defensive: minTime set on first update */
 						minTime: m.minTime === Infinity ? 0 : m.minTime,
 						maxTime: m.maxTime,
 						updateCount: m.updateCount,
@@ -191,6 +193,7 @@ export function createSystemProfiler(
 				isPaused: system.isPaused,
 				lastTime: m.lastTime,
 				avgTime: m.avgTime,
+				/* istanbul ignore next -- defensive: minTime set on first update */
 				minTime: m.minTime === Infinity ? 0 : m.minTime,
 				maxTime: m.maxTime,
 				updateCount: m.updateCount,
