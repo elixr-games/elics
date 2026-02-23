@@ -119,6 +119,17 @@ describe('Component Tests', () => {
 		expect(disqualifyCallback).toHaveBeenCalledTimes(1);
 	});
 
+	test('FilePath component initialization', () => {
+		const AssetComp = createComponent('AssetComp', {
+			path: { type: Types.FilePath, default: '' },
+		});
+		const w = new World({ checksOn: false });
+		w.registerComponent(AssetComp);
+		const e = w.createEntity();
+		e.addComponent(AssetComp, { path: '/assets/model.gltf' });
+		expect(e.getValue(AssetComp, 'path')).toBe('/assets/model.gltf');
+	});
+
 	test('Enum component initialization', () => {
 		const Direction = {
 			North: 'north',

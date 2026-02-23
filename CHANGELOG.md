@@ -1,5 +1,21 @@
 # Changelog
 
+## [3.4.0] - "Pathfinder" - February 23, 2026
+
+Adds a FilePath data type for downstream editor integration, enabling editor tooling to distinguish file-picker fields from plain text inputs.
+
+### Added
+
+- FilePath type: `Types.FilePath`, stored as `Array<string>`, defaulting to `''`. Behaves identically to `Types.String` at runtime but provides a distinct discriminator for editor field mapping.
+
+### Documentation
+
+- Types reference updated with FilePath entry.
+
+### Tests
+
+- Maintained 100% coverage. Added tests for FilePath initialization and getValue/setValue operations.
+
 ## [3.3.0] - "Prologue" - September 13, 2025
 
 A polish release setting the stage for next week’s unveil. It adds a Color type, opt‑in replay for existing query matches, stricter typing, and consistent vector access semantics — all while keeping performance crisp and coverage at 100%.

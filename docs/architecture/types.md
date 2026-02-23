@@ -8,21 +8,22 @@ The **Types** enum in EliCS provides a set of predefined data types that can be 
 
 ## Supported Types
 
-| Type          | JavaScript Type                  | Description                            | Data Array Type |
-| ------------- | -------------------------------- | -------------------------------------- | --------------- |
-| Types.Int8    | number                           | 8-bit integer                          | Int8Array       |
-| Types.Int16   | number                           | 16-bit integer                         | Int16Array      |
-| Types.Entity  | Entity                           | Reference to another entity            | Int16Array      |
-| Types.Float32 | number                           | 32-bit floating point number           | Float32Array    |
-| Types.Float64 | number                           | 64-bit floating point number           | Float64Array    |
-| Types.Boolean | boolean                          | True/false value                       | Uint8Array      |
-| Types.String  | string                           | Text string                            | `Array<string>` |
-| Types.Object  | object                           | JavaScript object                      | `Array<any>`    |
-| Types.Vec2    | [number, number]                 | 2D vector                              | Float32Array    |
-| Types.Vec3    | [number, number, number]         | 3D vector                              | Float32Array    |
-| Types.Vec4    | [number, number, number, number] | 4D vector or quaternion                | Float32Array    |
-| Types.Color   | [number, number, number, number] | RGBA color (0..1)                      | Float32Array    |
-| Types.Enum    | string                           | Enumerated value with string constants | `Array<string>` |
+| Type           | JavaScript Type                  | Description                            | Data Array Type |
+| -------------- | -------------------------------- | -------------------------------------- | --------------- |
+| Types.Int8     | number                           | 8-bit integer                          | Int8Array       |
+| Types.Int16    | number                           | 16-bit integer                         | Int16Array      |
+| Types.Entity   | Entity                           | Reference to another entity            | Int16Array      |
+| Types.Float32  | number                           | 32-bit floating point number           | Float32Array    |
+| Types.Float64  | number                           | 64-bit floating point number           | Float64Array    |
+| Types.Boolean  | boolean                          | True/false value                       | Uint8Array      |
+| Types.String   | string                           | Text string                            | `Array<string>` |
+| Types.FilePath | string                           | File system path                       | `Array<string>` |
+| Types.Object   | object                           | JavaScript object                      | `Array<any>`    |
+| Types.Vec2     | [number, number]                 | 2D vector                              | Float32Array    |
+| Types.Vec3     | [number, number, number]         | 3D vector                              | Float32Array    |
+| Types.Vec4     | [number, number, number, number] | 4D vector or quaternion                | Float32Array    |
+| Types.Color    | [number, number, number, number] | RGBA color (0..1)                      | Float32Array    |
+| Types.Enum     | string                           | Enumerated value with string constants | `Array<string>` |
 
 ## Enum Type
 

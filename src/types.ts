@@ -7,6 +7,7 @@ export type DataType =
 	| 'Float64'
 	| 'Boolean'
 	| 'String'
+	| 'FilePath'
 	| 'Object'
 	| 'Vec2'
 	| 'Vec3'
@@ -23,6 +24,7 @@ export enum Types {
 	Float64 = 'Float64',
 	Boolean = 'Boolean',
 	String = 'String',
+	FilePath = 'FilePath',
 	Object = 'Object',
 	Vec2 = 'Vec2',
 	Vec3 = 'Vec3',
@@ -61,6 +63,7 @@ export const TypedArrayMap: {
 	Float64: { arrayConstructor: Float64Array, length: 1 },
 	Boolean: { arrayConstructor: Uint8Array, length: 1 },
 	String: { arrayConstructor: Array, length: 1 },
+	FilePath: { arrayConstructor: Array, length: 1 },
 	Object: { arrayConstructor: Array, length: 1 },
 	Vec2: { arrayConstructor: Float32Array, length: 2 },
 	Vec3: { arrayConstructor: Float32Array, length: 3 },
@@ -78,7 +81,7 @@ export type TypeValueToType<T extends DataType> = T extends
 	? number
 	: T extends 'Boolean'
 		? boolean
-		: T extends 'String' | 'Enum'
+		: T extends 'String' | 'FilePath' | 'Enum'
 			? string
 			: T extends 'Vec2'
 				? [number, number]
@@ -107,7 +110,7 @@ export type DataArrayToType<T extends DataType> = T extends
 	| 'Vec4'
 	| 'Color'
 	? TypedArray
-	: T extends 'String' | 'Enum'
+	: T extends 'String' | 'FilePath' | 'Enum'
 		? Array<string>
 		: T extends 'Object'
 			? Array<unknown>
@@ -145,7 +148,7 @@ export type SchemaField<T extends DataType> = T extends 'Enum'
 							type: T;
 							default: boolean;
 						}
-					: T extends 'String'
+					: T extends 'String' | 'FilePath'
 						? {
 								type: T;
 								default: string;

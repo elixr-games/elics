@@ -154,6 +154,7 @@ export function assignInitialComponentData<
 				}
 				dataRef[index] = input as number;
 				break;
+			case Types.FilePath:
 			case Types.String:
 				(dataRef as Array<string>)[index] = input as string;
 				break;

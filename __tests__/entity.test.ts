@@ -316,6 +316,20 @@ describe('Entity Tests', () => {
 		expect(() => e.getValue(ColorComp, 'c' as any)).toThrow('getVectorView');
 	});
 
+	test('FilePath component data access', () => {
+		const entity = world.createEntity();
+		const FileComp = createComponent('FileComp', {
+			path: { type: Types.FilePath, default: '' },
+		});
+		world.registerComponent(FileComp);
+		entity.addComponent(FileComp, { path: '/textures/brick.png' });
+
+		expect(entity.getValue(FileComp, 'path')).toBe('/textures/brick.png');
+
+		entity.setValue(FileComp, 'path', './models/tree.glb');
+		expect(entity.getValue(FileComp, 'path')).toBe('./models/tree.glb');
+	});
+
 	test('String component data access', () => {
 		const entity = world.createEntity();
 		entity.addComponent(NameComponent, { name: 'TestEntity' });
