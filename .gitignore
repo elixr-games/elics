@@ -20,5 +20,6 @@ node_modules/
 version.ts
 coverage/*
 
-CLAUDE.md
+CLAUDE.local.md
 AGENTS.md
+.claude/settings.local.json

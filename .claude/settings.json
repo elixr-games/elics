@@ -1,0 +1,24 @@
+{
+	"permissions": {
+		"allow": [
+			"Bash(gh pr *)",
+			"Bash(gh release *)",
+			"Bash(gh run *)",
+			"Bash(git pull *)",
+			"Bash(git add *)",
+			"Bash(git commit *)",
+			"Bash(git push *)",
+			"Bash(git tag *)",
+			"Bash(git log *)",
+			"Bash(git status *)",
+			"Bash(git diff *)",
+			"Bash(npm install *)",
+			"Bash(npm ci *)",
+			"Bash(npm run typecheck *)",
+			"Bash(npm run lint *)",
+			"Bash(npm run build *)",
+			"Bash(npm test *)"
+		],
+		"deny": []
+	}
+}
